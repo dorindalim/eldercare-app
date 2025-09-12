@@ -1,20 +1,27 @@
+// app/Authentication/Signup.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+
 import { useAuth } from "../../src/auth/AuthProvider";
 import AuthTopBar, { LangCode } from "../../src/components/AuthTopBar";
 import Screen from "../../src/components/Screen";
+import { supabase } from "../../src/lib/supabase";
+
+const PORTAL_BASE_URL =
+  "https://dorindalim.github.io/eldercare-app/ec-portal.html";
 
 export default function Signup() {
   const router = useRouter();
@@ -44,21 +51,58 @@ export default function Signup() {
   );
 
   const onSubmit = async () => {
-    if (!phone.trim() || password.length < 6 || password !== confirm) {
+    if (!canSubmit) {
       return Alert.alert(
         t("alerts.signupInvalidTitle"),
         t("alerts.signupInvalidBody")
       );
     }
-    const ok = await registerWithPhone(phone, password);
+
+    // 1) Create the user (AuthProvider writes session)
+    const ok = await registerWithPhone(phone.trim(), password);
     if (!ok) {
       return Alert.alert(
         t("alerts.signupFailedTitle"),
         t("alerts.signupFailedBody")
       );
     }
-    // go to elderly onboarding step 1
-    router.replace("/Elderly/Onboarding/ElderlyForm");
+
+    try {
+      // 2) Look up the new user's id, then ensure EC link token
+      const { data: userRec, error: userErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone.trim())
+        .maybeSingle();
+
+      if (userErr || !userRec?.id) throw userErr || new Error("No user id");
+
+      const { data: token, error: linkErr } = await supabase.rpc(
+        "ec_ensure_link",
+        { p_user: userRec.id }
+      );
+      if (linkErr || !token) throw linkErr || new Error("No token");
+
+      // 3) Share the portal link with the EC right away (optional but great for demo)
+      const portalUrl = `${PORTAL_BASE_URL}?token=${encodeURIComponent(
+        token as string
+      )}`;
+      await Share.share({
+        message:
+          `Emergency Contact Portal link:\n${portalUrl}\n\n` +
+          `On first open, set a 4+ digit PIN. Use the same PIN next time to unlock.`,
+      });
+    } catch (e: any) {
+      // Not fatal for signup — you can still continue onboarding
+      console.warn("ensure link/share failed:", e?.message || e);
+      Alert.alert(
+        "Note",
+        "Signed up, but couldn't prepare the EC link right now. You can resend it later from Profile."
+      );
+    }
+
+    // 4) Continue to elderly onboarding step 1
+    router.replace("/Onboarding/ElderlyForm");
   };
 
   return (

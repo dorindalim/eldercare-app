@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -30,7 +30,7 @@ export default function Login() {
     await AsyncStorage.setItem("lang", code);
   };
 
-  const goHome = () => router.replace("/Elderly/tabs/HomePage");
+  const goHome = () => router.replace("/tabs/HomePage");
 
   const onSendCode = async () => {
     const exists = await startPhoneSignIn(phone);

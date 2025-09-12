@@ -20,9 +20,9 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useAuth } from "../../src/auth/AuthProvider";
-import TopBar, { LangCode } from "../../src/components/TopBar";
-import { supabase } from "../../src/lib/supabase";
+import { useAuth } from "../src/auth/AuthProvider";
+import TopBar, { LangCode } from "../src/components/TopBar";
+import { supabase } from "../src/lib/supabase";
 
 export default function EditBasic() {
   const router = useRouter();

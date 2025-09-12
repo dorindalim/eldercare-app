@@ -1,20 +1,21 @@
 // app/index.tsx
-import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { Redirect } from "expo-router";
 import { useAuth } from "../src/auth/AuthProvider";
 
 export default function Index() {
   const { session, loading } = useAuth();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (loading) return;
-    if (!session) return router.replace("/Authentication/LogIn");
-    if (!session.role) return router.replace("/Shared/RoleSelection");
-    if (session.role === "elderly")
-      return router.replace("/Elderly/tabs/HomePage");
-    return router.replace("/Caregiver/tabs");
-  }, [loading, session]);
+  if (loading) return null;
 
-  return null;
+  if (!session) {
+    return <Redirect href="/Authentication/LogIn" />;
+  }
+
+  // Send new users to onboarding step 1
+  if (!session.onboardingCompleted) {
+    return <Redirect href="/Onboarding/ElderlyForm" />;
+  }
+
+  // Otherwise to the elderly home tab
+  return <Redirect href="/tabs/HomePage" />;
 }

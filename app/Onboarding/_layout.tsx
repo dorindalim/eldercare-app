@@ -1,11 +1,11 @@
+// app/Onboarding/_layout.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack, useRouter } from "expo-router";
-import React from "react";
+import { Slot, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Alert, View } from "react-native";
+import { Alert, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../../src/auth/AuthProvider";
-import TopBar, { LangCode } from "../../../src/components/TopBar";
+import { useAuth } from "../../src/auth/AuthProvider";
+import TopBar, { LangCode } from "../../src/components/TopBar";
 
 export default function ElderlyOnboardingLayout() {
   const router = useRouter();
@@ -18,7 +18,11 @@ export default function ElderlyOnboardingLayout() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: "#F8FAFC" }}
+      edges={["top", "left", "right"]}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang}
@@ -30,9 +34,8 @@ export default function ElderlyOnboardingLayout() {
           router.replace("/Authentication/LogIn");
         }}
       />
-
       <View style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Slot />
       </View>
     </SafeAreaView>
   );

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Modal,
   Platform,
@@ -143,6 +143,7 @@ export default function TopBar({
 
 const s = StyleSheet.create({
   topBar: {
+    height: 56,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -160,7 +161,7 @@ const s = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 64 : 54,
+    top: 56 + 8,
     left: 12,
     right: 12,
     backgroundColor: "#FFF",

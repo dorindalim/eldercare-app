@@ -3,16 +3,16 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useAuth } from "../../../src/auth/AuthProvider";
-import TopBar, { LangCode } from "../../../src/components/TopBar";
-import { useCheckins } from "../../../src/hooks/useCheckIns";
-import { supabase } from "../../../src/lib/supabase";
-import { useAppSettings } from "../../../src/Providers/SettingsProvider";
+import { useAuth } from "../../src/auth/AuthProvider";
+import TopBar, { LangCode } from "../../src/components/TopBar";
+import { useCheckins } from "../../src/hooks/useCheckIns";
+import { supabase } from "../../src/lib/supabase";
+import { useAppSettings } from "../../src/Providers/SettingsProvider";
 
 type EmergencyContact = {
   name?: string | null;
@@ -229,7 +229,7 @@ export default function ElderlyProfile() {
           </View>
 
           <Pressable
-            onPress={() => router.push("/Elderly/EditBasic")}
+            onPress={() => router.push("/EditBasic")}
             style={s.linkRow}
           >
             <Ionicons name="create-outline" size={18} />
@@ -332,10 +332,7 @@ export default function ElderlyProfile() {
             </Text>
             <Text style={[s.v, { fontSize: textScalePx }]}>{coins}</Text>
           </View>
-          <Pressable
-            style={s.btn}
-            onPress={() => router.push("/Elderly/tabs/Rewards")}
-          >
+          <Pressable style={s.btn} onPress={() => router.push("/tabs/Rewards")}>
             <Text style={s.btnText}>{t("rewards.button")}</Text>
           </Pressable>
         </View>

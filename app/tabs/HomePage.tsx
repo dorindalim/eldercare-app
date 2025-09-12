@@ -11,10 +11,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../../src/auth/AuthProvider";
-import CheckinCard from "../../../src/components/CheckinCard";
-import TopBar, { LangCode } from "../../../src/components/TopBar";
-import { useCheckins } from "../../../src/hooks/useCheckIns";
+import { useAuth } from "../../src/auth/AuthProvider";
+import CheckinCard from "../../src/components/CheckinCard";
+import TopBar, { LangCode } from "../../src/components/TopBar";
+import { useCheckins } from "../../src/hooks/useCheckIns";
 
 export default function ElderlyHome() {
   const router = useRouter();
@@ -61,21 +61,21 @@ export default function ElderlyHome() {
           onPress={handleCheckin}
           weekChecks={weekChecks}
           coins={coins}
-          onPressRewards={() => router.push("/Elderly/tabs/Rewards")}
+          onPressRewards={() => router.push("/tabs/Rewards")}
         />
 
         {/* Feature buttons in 2 rows */}
         <View style={s.row}>
           <Pressable
             style={s.rect}
-            onPress={() => router.push("/Elderly/tabs/Navigation")}
+            onPress={() => router.push("/tabs/Navigation")}
           >
             <Ionicons name="business-outline" size={28} color="#222" />
             <Text style={s.rectText}>{t("home.nearby")}</Text>
           </Pressable>
           <Pressable
             style={s.rect}
-            onPress={() => router.push("/Elderly/tabs/Community")}
+            onPress={() => router.push("/tabs/Community")}
           >
             <Ionicons name="people-circle-outline" size={28} color="#222" />
             <Text style={s.rectText}>{t("home.activities")}</Text>
@@ -83,17 +83,11 @@ export default function ElderlyHome() {
         </View>
 
         <View style={s.row}>
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/Elderly/tabs/Health")}
-          >
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Health")}>
             <Ionicons name="calendar-outline" size={28} color="#222" />
             <Text style={s.rectText}>{t("home.appt")}</Text>
           </Pressable>
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/Elderly/tabs/Health")}
-          >
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Health")}>
             <Ionicons name="medkit-outline" size={28} color="#222" />
             <Text style={s.rectText}>{t("home.meds")}</Text>
           </Pressable>
