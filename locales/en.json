@@ -1,0 +1,151 @@
+{
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Please enter your phone number",
+      "phoneLabel": "Phone number",
+      "phonePH": "+65 9123 4567",
+      "getCode": "Get code",
+      "codeLabel": "Verification code",
+      "codePH": "Enter 6-digit code",
+      "verify": "Verify & Sign In",
+      "noAccount": "Don’t have an account?",
+      "signup": "Sign up"
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "Use your mobile number to sign up",
+      "phoneLabel": "Phone number",
+      "phonePH": "+65 9123 4567",
+      "passwordLabel": "Password",
+      "passwordPH": "Create a password",
+      "confirmLabel": "Confirm password",
+      "confirmPH": "Re-enter password",
+      "button": "Sign up",
+      "haveAccount": "Already have an account?",
+      "login": "Log in"
+    }
+  },
+
+  "alerts": {
+    "codeSentTitle": "Code sent",
+    "codeSentBody": "Use 123456 for now (mock).",
+    "sendFailedTitle": "Oops",
+    "sendFailedBody": "Account is not registered.",
+    "invalidCodeTitle": "Invalid code",
+    "invalidCodeBody": "Please check and try again.",
+    "signupInvalidTitle": "Check details",
+    "signupInvalidBody": "Phone and password are required. Password must be at least 6 characters.",
+    "passwordMismatchTitle": "Passwords don’t match",
+    "passwordMismatchBody": "Please re-enter your password.",
+    "signupFailedTitle": "Sign up failed",
+    "signupFailedBody": "That phone may already be registered.",
+    "noAccountTitle": "No account found",
+    "noAccountBody": "You’ll be redirected to sign up."
+  },
+
+  "elderlyOnboarding": {
+    "title": "Please fill in these fields",
+    "namePH": "Full Name",
+    "yobPH": "Year of Birth (e.g. 1950)",
+    "genderLabel": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "na": "Prefer not to say",
+    "finish": "Finish",
+    "alertIncompleteTitle": "Please complete all fields",
+    "saveErrorTitle": "Error",
+    "saveErrorMsg": "Failed to save profile. Please try again.",
+    "emergencySectionTitle": "Emergency contact",
+    "ecNamePH": "Emergency Contact Name",
+    "ecRelationPH": "Relationship (e.g. daughter, neighbour)",
+    "ecPhonePH": "Emergency Contact Phone",
+    "ecEmailPH": "Emergency Contact Email (optional)"
+  },
+
+  "elderlyConditions": {
+    "title": "Medical Conditions",
+    "conditionTitle": "Condition {{index}}",
+    "remove": "Remove",
+    "conditionPH": "Condition (e.g., Hypertension)",
+    "medicationsPH": "Medications (comma-separated)",
+    "medicationFrequencyPH": "Medication frequency (e.g., twice daily)",
+    "doctorPH": "Doctor (optional)",
+    "clinicPH": "Clinic (optional)",
+    "appointmentsPH": "Appointments / notes (optional)",
+    "addCondition": "Add another condition",
+    "finish": "Finish & Go Home",
+    "medsLabel": "Medications",
+    "medNamePH": "Medication name (e.g., Metformin)",
+    "medFreqPH": "Frequency (e.g., twice daily)",
+    "removeMed": "Remove",
+    "addMed": "Add medication",
+    "assistive": {
+      "label": "Assistive devices",
+      "walking_cane": "Walking cane",
+      "wheelchair": "Wheelchair",
+      "hearing_aid": "Hearing aid",
+      "glasses": "Glasses",
+      "other": "Other",
+      "otherPH": "Please specify (e.g., grab bar at home)"
+    },
+    "drugAllergiesPH": "Any known drug allergies?",
+    "publicNotePH": "Note to public (e.g., please call this number if found disoriented)"
+  },
+
+  "home": {
+    "imActive": "I’m Active",
+    "tapToCheckIn": "Tap to check in",
+    "checkedIn": "Checked in today",
+    "nearby": "Nearby Facilities",
+    "activities": "Community Activities",
+    "appt": "Appointment Reminders",
+    "meds": "Medication Reminders",
+    "sos": "SOS"
+  },
+
+  "profile": {
+    "basicInfo": "Basic Information",
+    "editBasic": "Edit basic details",
+    "healthCard": "Emergency Health Card",
+    "emergencyContacts": "Emergency Contacts",
+    "drugAllergy": "Drug Allergy",
+    "conditions": "Conditions",
+    "assistive": "Assistive needs",
+    "publicNote": "Note for public",
+    "editCard": "Edit Card",
+    "showQr": "Show QR",
+    "lockScreenHint": "Tip: Add this card to your lock screen widget so helpers can view it without unlocking your phone.",
+    "inactivityAlerts": "Inactivity alert (hrs)",
+    "sosNotify": "SOS notifications",
+    "locationShare": "Real-time location sharing",
+    "accessibility": "Accessibility",
+    "tts": "Text to speech",
+    "textSize": "Text size",
+    "accessibilityNote": "Large text and simple contrast help readability. You can also use the speaker button to read screens aloud.",
+    "activity": "Activity & Rewards",
+    "streak": "Current streak (days)",
+    "coins": "Total coins",
+    "navigation": "Navigation",
+    "accessibleRoutes": "Prefer accessible routes (lifts/ramps)",
+    "remindEvery10": "Destination reminder every 10 mins",
+    "navigationNote": "You can change route and reminder preferences here later. Real-time clinic wait times and safe routes show in the map screen.",
+    "community": "Community",
+    "ccActivities": "Show nearby community activities",
+    "viewActivities": "View activities"
+  },
+
+  "rewards": {
+    "button": "Rewards",
+    "coin": "coin",
+    "coins": "coins"
+  },
+
+  "common": {
+    "on": "On",
+    "off": "Off",
+    "ok": "OK",
+    "save": "Save",
+    "cancel": "Cancel"
+  }
+}

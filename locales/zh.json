@@ -1,0 +1,150 @@
+{
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "请输入您的手机号码",
+      "phoneLabel": "手机号码",
+      "phonePH": "+65 9123 4567",
+      "getCode": "获取验证码",
+      "codeLabel": "验证码",
+      "codePH": "输入 6 位验证码",
+      "verify": "验证并登录",
+      "noAccount": "还没有账户？",
+      "signup": "注册"
+    },
+    "signup": {
+      "title": "创建账户",
+      "subtitle": "使用手机号注册",
+      "phoneLabel": "手机号码",
+      "phonePH": "+65 9123 4567",
+      "passwordLabel": "密码",
+      "passwordPH": "创建一个密码",
+      "confirmLabel": "确认密码",
+      "confirmPH": "再次输入密码",
+      "button": "注册",
+      "haveAccount": "已经有账户？",
+      "login": "登录"
+    }
+  },
+
+  "alerts": {
+    "codeSentTitle": "验证码已发送",
+    "codeSentBody": "目前请使用 123456（模拟）。",
+    "sendFailedTitle": "提示",
+    "sendFailedBody": "该手机号尚未注册。",
+    "invalidCodeTitle": "验证码无效",
+    "invalidCodeBody": "请检查后重试。",
+    "signupInvalidTitle": "请检查信息",
+    "signupInvalidBody": "需要填写手机号和密码。密码至少 6 个字符。",
+    "passwordMismatchTitle": "两次密码不一致",
+    "passwordMismatchBody": "请重新输入密码。",
+    "signupFailedTitle": "注册失败",
+    "signupFailedBody": "该手机号可能已注册。",
+    "noAccountTitle": "未找到账户",
+    "noAccountBody": "将为您跳转到注册页面。"
+  },
+
+  "elderlyOnboarding": {
+    "title": "请填写以下信息",
+    "namePH": "姓名",
+    "yobPH": "出生年份（例如 1950）",
+    "genderLabel": "性别",
+    "male": "男",
+    "female": "女",
+    "na": "不便透露",
+    "finish": "完成",
+    "alertIncompleteTitle": "请填写所有必填项",
+    "saveErrorTitle": "错误",
+    "saveErrorMsg": "保存资料失败，请稍后重试。",
+    "emergencySectionTitle": "紧急联系人",
+    "ecNamePH": "紧急联系人姓名",
+    "ecRelationPH": "与您的关系（例如 女儿、邻居）",
+    "ecPhonePH": "紧急联系人电话",
+    "ecEmailPH": "紧急联系人邮箱（可选）"
+  },
+
+  "elderlyConditions": {
+    "title": "健康状况",
+    "conditionTitle": "病况 {{index}}",
+    "remove": "删除",
+    "conditionPH": "病症（例如：高血压）",
+    "medicationsPH": "药物（用逗号分隔）",
+    "medicationFrequencyPH": "用药频率（例如：每日两次）",
+    "doctorPH": "医生（可选）",
+    "clinicPH": "诊所（可选）",
+    "appointmentsPH": "预约 / 备注（可选）",
+    "addCondition": "添加另一项病症",
+    "finish": "完成并返回主页",
+    "medsLabel": "用药",
+    "medNamePH": "药物名称（例如：二甲双胍）",
+    "medFreqPH": "用药频率（例如：每日两次）",
+    "removeMed": "删除",
+    "addMed": "添加药物",
+    "assistive": {
+      "label": "辅助器具",
+      "walking_cane": "拐杖",
+      "wheelchair": "轮椅",
+      "hearing_aid": "助听器",
+      "glasses": "眼镜",
+      "other": "其他",
+      "otherPH": "请说明（例如：家中安装扶手）"
+    },
+    "drugAllergiesPH": "任何已知药物过敏或不良反应",
+    "publicNotePH": "给公众的备注（例如：若迷路请拨打此号码）"
+  },
+
+  "home": {
+    "imActive": "我很活跃",
+    "tapToCheckIn": "点此签到",
+    "checkedIn": "今日已签到",
+    "nearby": "附近设施",
+    "activities": "社区活动",
+    "appt": "就诊提醒",
+    "meds": "用药提醒",
+    "sos": "SOS"
+  },
+
+  "profile": {
+    "basicInfo": "基本信息",
+    "editBasic": "编辑基本资料",
+    "healthCard": "紧急健康卡",
+    "emergencyContacts": "紧急联系人",
+    "drugAllergy": "药物过敏",
+    "conditions": "病况",
+    "assistive": "辅助需求",
+    "publicNote": "公开备注",
+    "editCard": "编辑卡片",
+    "showQr": "显示二维码",
+    "lockScreenHint": "提示：可将此卡添加到锁屏小组件，方便他人无需解锁即可查看。",
+    "inactivityAlerts": "不活跃提醒（小时）",
+    "sosNotify": "SOS 通知",
+    "locationShare": "实时位置共享",
+    "accessibility": "无障碍",
+    "tts": "文字转语音",
+    "textSize": "文字大小",
+    "accessibilityNote": "较大的文字和清晰的对比度有助于阅读。您也可以使用朗读按钮朗读屏幕内容。",
+    "activity": "活动与奖励",
+    "streak": "当前连续天数",
+    "coins": "总金币数",
+    "navigation": "导航",
+    "accessibleRoutes": "优先无障碍路线（电梯/坡道）",
+    "remindEvery10": "每 10 分钟目的地提醒",
+    "navigationNote": "您可在此更改路线与提醒偏好。地图会显示实时候诊时间与安全路线。",
+    "community": "社区",
+    "ccActivities": "显示附近社区活动",
+    "viewActivities": "查看活动"
+  },
+
+  "rewards": {
+    "button": "奖励",
+    "coin": "金币",
+    "coins": "金币"
+  },
+
+  "common": {
+    "on": "开",
+    "off": "关",
+    "ok": "好的"
+  }
+}
+

@@ -1,0 +1,150 @@
+{
+  "auth": {
+    "login": {
+      "title": "Selamat kembali",
+      "subtitle": "Sila masukkan nombor telefon anda",
+      "phoneLabel": "Nombor telefon",
+      "phonePH": "+65 9123 4567",
+      "getCode": "Dapatkan kod",
+      "codeLabel": "Kod pengesahan",
+      "codePH": "Masukkan kod 6 digit",
+      "verify": "Sahkan & Log Masuk",
+      "noAccount": "Tiada akaun?",
+      "signup": "Daftar"
+    },
+    "signup": {
+      "title": "Cipta akaun anda",
+      "subtitle": "Daftar menggunakan nombor telefon",
+      "phoneLabel": "Nombor telefon",
+      "phonePH": "+65 9123 4567",
+      "passwordLabel": "Kata laluan",
+      "passwordPH": "Cipta kata laluan",
+      "confirmLabel": "Sahkan kata laluan",
+      "confirmPH": "Masukkan semula kata laluan",
+      "button": "Daftar",
+      "haveAccount": "Sudah ada akaun?",
+      "login": "Log masuk"
+    }
+  },
+
+  "alerts": {
+    "codeSentTitle": "Kod dihantar",
+    "codeSentBody": "Buat masa ini gunakan 123456 (olokan).",
+    "sendFailedTitle": "Maaf",
+    "sendFailedBody": "Akaun belum didaftarkan.",
+    "invalidCodeTitle": "Kod tidak sah",
+    "invalidCodeBody": "Sila semak dan cuba lagi.",
+    "signupInvalidTitle": "Semak butiran",
+    "signupInvalidBody": "Nombor telefon dan kata laluan diperlukan. Kata laluan mesti sekurang-kurangnya 6 aksara.",
+    "passwordMismatchTitle": "Kata laluan tidak sepadan",
+    "passwordMismatchBody": "Sila masukkan semula kata laluan.",
+    "signupFailedTitle": "Pendaftaran gagal",
+    "signupFailedBody": "Nombor telefon itu mungkin telah didaftarkan.",
+    "noAccountTitle": "Akaun tidak ditemui",
+    "noAccountBody": "Anda akan dialihkan ke halaman pendaftaran."
+  },
+
+  "elderlyOnboarding": {
+    "title": "Sila isi maklumat berikut",
+    "namePH": "Nama penuh",
+    "yobPH": "Tahun lahir (cth. 1950)",
+    "genderLabel": "Jantina",
+    "male": "Lelaki",
+    "female": "Perempuan",
+    "na": "Tidak ingin dinyatakan",
+    "finish": "Selesai",
+    "alertIncompleteTitle": "Sila lengkapkan semua medan",
+    "saveErrorTitle": "Ralat",
+    "saveErrorMsg": "Gagal menyimpan profil. Sila cuba lagi.",
+    "emergencySectionTitle": "Kenalan kecemasan",
+    "ecNamePH": "Nama kenalan kecemasan",
+    "ecRelationPH": "Hubungan (cth. anak, jiran)",
+    "ecPhonePH": "Telefon kenalan kecemasan",
+    "ecEmailPH": "Emel kenalan kecemasan (pilihan)"
+  },
+
+  "elderlyConditions": {
+    "title": "Keadaan Kesihatan",
+    "conditionTitle": "Keadaan {{index}}",
+    "remove": "Buang",
+    "conditionPH": "Keadaan (cth: Hipertensi)",
+    "medicationsPH": "Ubat-ubatan (dipisahkan dengan koma)",
+    "medicationFrequencyPH": "Kekerapan ubat (cth: dua kali sehari)",
+    "doctorPH": "Doktor (pilihan)",
+    "clinicPH": "Klinik (pilihan)",
+    "appointmentsPH": "Temu janji / nota (pilihan)",
+    "addCondition": "Tambah keadaan lain",
+    "finish": "Selesai & Pergi ke Laman Utama",
+    "medsLabel": "Ubat-ubatan",
+    "medNamePH": "Nama ubat (cth: Metformin)",
+    "medFreqPH": "Kekerapan (cth: dua kali sehari)",
+    "removeMed": "Buang",
+    "addMed": "Tambah ubat",
+    "assistive": {
+      "label": "Alat bantuan",
+      "walking_cane": "Tongkat",
+      "wheelchair": "Kerusi roda",
+      "hearing_aid": "Alat bantu dengar",
+      "glasses": "Cermin mata",
+      "other": "Lain-lain",
+      "otherPH": "Sila nyatakan (cth: palang sokongan di rumah)"
+    },
+    "drugAllergiesPH": "Sebarang alahan ubat atau reaksi buruk yang diketahui",
+    "publicNotePH": "Nota kepada orang awam (cth: hubungi nombor ini jika ditemui dalam keadaan keliru)"
+  },
+
+  "home": {
+    "imActive": "Saya Aktif",
+    "tapToCheckIn": "Ketuk untuk daftar hadir",
+    "checkedIn": "Sudah daftar hadir hari ini",
+    "nearby": "Kemudahan Berdekatan",
+    "activities": "Aktiviti Komuniti",
+    "appt": "Peringatan Temu Janji",
+    "meds": "Peringatan Ubat",
+    "sos": "SOS"
+  },
+
+  "profile": {
+    "basicInfo": "Maklumat Asas",
+    "editBasic": "Edit butiran asas",
+    "healthCard": "Kad Kesihatan Kecemasan",
+    "emergencyContacts": "Kenalan Kecemasan",
+    "drugAllergy": "Alergi Ubat",
+    "conditions": "Keadaan",
+    "assistive": "Keperluan bantuan",
+    "publicNote": "Nota untuk umum",
+    "editCard": "Edit Kad",
+    "showQr": "Tunjukkan QR",
+    "lockScreenHint": "Petua: Tambahkan kad ini pada widget skrin kunci supaya orang lain boleh melihat tanpa membuka telefon.",
+    "inactivityAlerts": "Amaran tidak aktif (jam)",
+    "sosNotify": "Notifikasi SOS",
+    "locationShare": "Perkongsian lokasi masa nyata",
+    "accessibility": "Kebolehcapaian",
+    "tts": "Teks-ke-pertuturan",
+    "textSize": "Saiz teks",
+    "accessibilityNote": "Teks besar dan kontras ringkas membantu keterbacaan. Anda juga boleh gunakan butang suara untuk membaca skrin.",
+    "activity": "Aktiviti & Ganjaran",
+    "streak": "Rentetan semasa (hari)",
+    "coins": "Jumlah syiling",
+    "navigation": "Navigasi",
+    "accessibleRoutes": "Utamakan laluan boleh capai (lif/landai)",
+    "remindEvery10": "Peringatan destinasi setiap 10 minit",
+    "navigationNote": "Anda boleh ubah keutamaan laluan dan peringatan di sini. Masa menunggu klinik dan laluan selamat ditunjukkan pada peta.",
+    "community": "Komuniti",
+    "ccActivities": "Tunjukkan aktiviti komuniti berdekatan",
+    "viewActivities": "Lihat aktiviti"
+  },
+
+  "rewards": {
+    "button": "Ganjaran",
+    "coin": "syiling",
+    "coins": "syiling"
+  },
+
+  "common": {
+    "on": "Hidup",
+    "off": "Mati",
+    "ok": "OK"
+  }
+}
+
