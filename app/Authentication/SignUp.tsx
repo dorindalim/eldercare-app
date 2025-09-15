@@ -21,7 +21,7 @@ import Screen from "../../src/components/Screen";
 import { supabase } from "../../src/lib/supabase";
 
 const PORTAL_BASE_URL =
-  "https://dorindalim.github.io/eldercare-app/ec-portal.html";
+  "https://dorindalim.github.io/eldercare-app/ECPortal.html";
 
 export default function Signup() {
   const router = useRouter();

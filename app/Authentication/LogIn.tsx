@@ -25,6 +25,7 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState("");
 
+  // store language setting to make sure language is changed for whole app
   const setLanguage = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);

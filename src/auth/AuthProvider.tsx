@@ -226,7 +226,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { success: true };
   };
 
-  // NEW: saves conditions + per-medication frequencies + optional extras on profile
+  // condition + medication + extra (e.g. allergy/assistance)
   const saveElderlyConditions = async (
     conds: ElderlyConditionInput[],
     extras?: ElderlyHealthExtras
