@@ -170,11 +170,20 @@ function render(resp) {
   el('main').style.display='';
 
   const prof = resp.profile || {};
-  const em = prof.emergency || {};
-  el('ec_name').value = em.emergency_name || em.name || '';
-  el('ec_relation').value = em.emergency_relation || em.relation || '';
-  el('ec_phone').value = em.emergency_phone || em.phone || '';
-  el('ec_email').value = em.emergency_email || em.email || '';
+
+// derive an object the UI expects, from flat columns
+  const em = {
+    name:     prof.emergency_name ?? prof.name ?? '',
+    relation: prof.emergency_relation ?? prof.relation ?? '',
+    phone:    prof.emergency_phone ?? prof.phone ?? '',
+    email:    prof.emergency_email ?? prof.email ?? '',
+  };
+
+  el('ec_name').value     = em.name;
+  el('ec_relation').value = em.relation;
+  el('ec_phone').value    = em.phone;
+  el('ec_email').value    = em.email;
+
 
   const ex = prof; // extras live on profiles
   el('drug_allergies').value = ex.drug_allergies || '';
