@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Emergency Contact Portal</title>
-  <script src="https://esm.sh/@supabase/supabase-js@2"></script>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto; background:#f8fafc; margin:0}
     .wrap{max-width:880px; margin:0 auto; padding:16px}
@@ -72,7 +71,8 @@
   </div>
 </div>
 
-<script type="module">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
 const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";     // <-- replace
 const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";                        // <-- replace
 const supabase = window.supabase.createClient(PROJECT_URL, ANON_KEY);
