@@ -214,7 +214,8 @@ export default function ElderlyConditions() {
     // Ask backend to issue/reuse a link ONLY if basics + conditions exist
     try {
       const { data: token, error } = await supabase.rpc(
-        "ec_issue_link_if_ready"
+        "ec_issue_link_if_ready",
+        {}
       );
       if (error) {
         console.warn("ec_issue_link_if_ready:", error.message);
