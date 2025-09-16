@@ -213,17 +213,30 @@ export default function ElderlyConditions() {
 
     // Ask backend to issue/reuse a link ONLY if basics + conditions exist
     try {
-      const { data: token, error } = await supabase.rpc(
-        "ec_issue_link_if_ready",
-        {}
-      );
-      if (error) {
-        console.warn("ec_issue_link_if_ready:", error.message);
-      } else if (token) {
-        const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(
-          token as string
-        )}`;
-        await Share.share({ message: CAREGIVER_MESSAGE(url) });
+      // make sure we have the logged-in user's id
+      const { data: userRes } = await supabase.auth.getUser();
+      const userId = userRes?.user?.id;
+
+      if (!userId) {
+        console.warn("No user in session");
+      } else {
+        // call the param'd RPC that verifies caller === p_user
+        const { data: token, error } = await supabase.rpc(
+          "ec_issue_link_if_ready_for",
+          { p_user: userId }
+        );
+
+        if (error) {
+          console.warn("ec_issue_link_if_ready_for error:", error.message);
+        } else if (token) {
+          const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(
+            token as string
+          )}`;
+          await Share.share({ message: CAREGIVER_MESSAGE(url) });
+        } else {
+          // profile not ready (basics or conditions missing per your SQL rule)
+          console.log("Profile not ready yet; no token returned");
+        }
       }
     } catch (e: any) {
       console.warn("share link failed:", e?.message || e);
