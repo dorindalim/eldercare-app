@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -18,10 +17,6 @@ import {
 import { useAuth } from "../../src/auth/AuthProvider";
 import AuthTopBar, { LangCode } from "../../src/components/AuthTopBar";
 import Screen from "../../src/components/Screen";
-import { supabase } from "../../src/lib/supabase";
-
-const PORTAL_BASE_URL =
-  "https://dorindalim.github.io/eldercare-app/ECPortal.html";
 
 export default function Signup() {
   const router = useRouter();
@@ -66,42 +61,7 @@ export default function Signup() {
         t("alerts.signupFailedBody")
       );
     }
-
-    try {
-      // 2) Look up the new user's id, then ensure EC link token
-      const { data: userRec, error: userErr } = await supabase
-        .from("users")
-        .select("id")
-        .eq("phone", phone.trim())
-        .maybeSingle();
-
-      if (userErr || !userRec?.id) throw userErr || new Error("No user id");
-
-      const { data: token, error: linkErr } = await supabase.rpc(
-        "ec_ensure_link",
-        { p_user: userRec.id }
-      );
-      if (linkErr || !token) throw linkErr || new Error("No token");
-
-      // 3) Share the portal link with the EC right away (optional but great for demo)
-      const portalUrl = `${PORTAL_BASE_URL}?token=${encodeURIComponent(
-        token as string
-      )}`;
-      await Share.share({
-        message:
-          `Emergency Contact Portal link:\n${portalUrl}\n\n` +
-          `On first open, set a 4+ digit PIN. Use the same PIN next time to unlock.`,
-      });
-    } catch (e: any) {
-      // Not fatal for signup — you can still continue onboarding
-      console.warn("ensure link/share failed:", e?.message || e);
-      Alert.alert(
-        "Note",
-        "Signed up, but couldn't prepare the EC link right now. You can resend it later from Profile."
-      );
-    }
-
-    // 4) Continue to elderly onboarding step 1
+    // 2) Create the profile
     router.replace("/Onboarding/ElderlyForm");
   };
 

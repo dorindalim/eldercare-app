@@ -6,6 +6,7 @@ import {
   Alert,
   Platform,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +16,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
+import { supabase } from "../../src/lib/supabase";
 
 type Med = { name: string; frequency: string };
 type ConditionCard = {
@@ -25,6 +27,9 @@ type ConditionCard = {
   meds: Med[];
 };
 
+const PORTAL_BASE_URL =
+  "https://dorindalim.github.io/eldercare-app/ECPortal.html";
+
 const ASSISTIVE_OPTIONS = [
   { key: "walking_cane", labelKey: "elderlyConditions.assistive.walking_cane" },
   { key: "wheelchair", labelKey: "elderlyConditions.assistive.wheelchair" },
@@ -32,6 +37,12 @@ const ASSISTIVE_OPTIONS = [
   { key: "glasses", labelKey: "elderlyConditions.assistive.glasses" },
   { key: "other", labelKey: "elderlyConditions.assistive.other" },
 ];
+
+// Message the elderly can send to caregiver
+const CAREGIVER_MESSAGE = (url: string) =>
+  `Hi! This is my Emergency Contact Portal link:\n\n${url}\n\n` +
+  `Please keep it safe. On first open, set a 4+ digit PIN. ` +
+  `Use the same PIN next time to unlock. Thank you!`;
 
 export default function ElderlyConditions() {
   const router = useRouter();
@@ -197,7 +208,26 @@ export default function ElderlyConditions() {
       );
     }
 
+    // Mark onboarding complete
     await markOnboarding(true);
+
+    // Ask backend to issue/reuse a link ONLY if basics + conditions exist
+    try {
+      const { data: token, error } = await supabase.rpc(
+        "ec_issue_link_if_ready"
+      );
+      if (error) {
+        console.warn("ec_issue_link_if_ready:", error.message);
+      } else if (token) {
+        const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(
+          token as string
+        )}`;
+        await Share.share({ message: CAREGIVER_MESSAGE(url) });
+      }
+    } catch (e: any) {
+      console.warn("share link failed:", e?.message || e);
+    }
+
     router.replace("/tabs/HomePage");
   };
 
@@ -214,7 +244,9 @@ export default function ElderlyConditions() {
         showsVerticalScrollIndicator={false}
       >
         <View style={s.card}>
-          <Text style={s.heading}>{t("elderlyConditions.title")}</Text>
+          <Text style={s.heading}>
+            {t("elderlyConditions.title", "Health Conditions & Medications")}
+          </Text>
 
           {conditions.map((c, idx) => (
             <View key={idx} style={s.cardInner}>
@@ -231,13 +263,16 @@ export default function ElderlyConditions() {
                   ]}
                 >
                   <Text style={s.removeBtnText}>
-                    {t("elderlyConditions.remove")}
+                    {t("elderlyConditions.remove", "Remove")}
                   </Text>
                 </Pressable>
               </View>
 
               <TextInput
-                placeholder={t("elderlyConditions.conditionPH")}
+                placeholder={t(
+                  "elderlyConditions.conditionPH",
+                  "Condition (e.g., Diabetes)"
+                )}
                 placeholderTextColor="#9CA3AF"
                 value={c.condition}
                 onChangeText={(v) => setCond(idx, { condition: v })}
@@ -245,7 +280,7 @@ export default function ElderlyConditions() {
               />
 
               <TextInput
-                placeholder={t("elderlyConditions.doctorPH")}
+                placeholder={t("elderlyConditions.doctorPH", "Doctor")}
                 placeholderTextColor="#9CA3AF"
                 value={c.doctor}
                 onChangeText={(v) => setCond(idx, { doctor: v })}
@@ -253,7 +288,7 @@ export default function ElderlyConditions() {
               />
 
               <TextInput
-                placeholder={t("elderlyConditions.clinicPH")}
+                placeholder={t("elderlyConditions.clinicPH", "Clinic/Hospital")}
                 placeholderTextColor="#9CA3AF"
                 value={c.clinic}
                 onChangeText={(v) => setCond(idx, { clinic: v })}
@@ -261,7 +296,10 @@ export default function ElderlyConditions() {
               />
 
               <TextInput
-                placeholder={t("elderlyConditions.appointmentsPH")}
+                placeholder={t(
+                  "elderlyConditions.appointmentsPH",
+                  "Appointment notes"
+                )}
                 placeholderTextColor="#9CA3AF"
                 value={c.appointments}
                 onChangeText={(v) => setCond(idx, { appointments: v })}
@@ -269,11 +307,13 @@ export default function ElderlyConditions() {
                 multiline
               />
 
-              <Text style={s.subLabel}>{t("elderlyConditions.medsLabel")}</Text>
+              <Text style={s.subLabel}>
+                {t("elderlyConditions.medsLabel", "Medications")}
+              </Text>
               {c.meds.map((m, mIdx) => (
                 <View key={mIdx} style={s.medRow}>
                   <TextInput
-                    placeholder={t("elderlyConditions.medNamePH")}
+                    placeholder={t("elderlyConditions.medNamePH", "Name")}
                     placeholderTextColor="#9CA3AF"
                     value={m.name}
                     onChangeText={(v) => setMed(idx, mIdx, { name: v })}
@@ -281,7 +321,7 @@ export default function ElderlyConditions() {
                   />
                   <View style={{ width: 8 }} />
                   <TextInput
-                    placeholder={t("elderlyConditions.medFreqPH")}
+                    placeholder={t("elderlyConditions.medFreqPH", "Frequency")}
                     placeholderTextColor="#9CA3AF"
                     value={m.frequency}
                     onChangeText={(v) => setMed(idx, mIdx, { frequency: v })}
@@ -292,7 +332,7 @@ export default function ElderlyConditions() {
                     style={[s.smallBtn, { marginLeft: 8 }]}
                   >
                     <Text style={s.smallBtnText}>
-                      {t("elderlyConditions.removeMed")}
+                      {t("elderlyConditions.removeMed", "Remove")}
                     </Text>
                   </Pressable>
                 </View>
@@ -302,7 +342,7 @@ export default function ElderlyConditions() {
                 style={[s.addBtn, { marginTop: 8 }]}
               >
                 <Text style={s.addBtnText}>
-                  {t("elderlyConditions.addMed")}
+                  {t("elderlyConditions.addMed", "Add medication")}
                 </Text>
               </Pressable>
             </View>
@@ -310,12 +350,12 @@ export default function ElderlyConditions() {
 
           <Pressable onPress={addCondition} style={s.addBtn}>
             <Text style={s.addBtnText}>
-              {t("elderlyConditions.addCondition")}
+              {t("elderlyConditions.addCondition", "Add condition")}
             </Text>
           </Pressable>
 
           <Text style={[s.heading, { marginTop: 8 }]}>
-            {t("elderlyConditions.assistive.label")}
+            {t("elderlyConditions.assistive.label", "Assistive needs")}
           </Text>
           <View style={s.chipsRow}>
             {ASSISTIVE_OPTIONS.map((opt) => {
@@ -335,7 +375,10 @@ export default function ElderlyConditions() {
 
           {assistive.includes("other") && (
             <TextInput
-              placeholder={t("elderlyConditions.assistive.otherPH")}
+              placeholder={t(
+                "elderlyConditions.assistive.otherPH",
+                "Other (specify)"
+              )}
               placeholderTextColor="#9CA3AF"
               value={assistiveOther}
               onChangeText={setAssistiveOther}
@@ -344,7 +387,10 @@ export default function ElderlyConditions() {
           )}
 
           <TextInput
-            placeholder={t("elderlyConditions.drugAllergiesPH")}
+            placeholder={t(
+              "elderlyConditions.drugAllergiesPH",
+              "Drug allergies (e.g., Penicillin or NIL)"
+            )}
             placeholderTextColor="#9CA3AF"
             value={drugAllergies}
             onChangeText={setDrugAllergies}
@@ -353,7 +399,10 @@ export default function ElderlyConditions() {
           />
 
           <TextInput
-            placeholder={t("elderlyConditions.publicNotePH")}
+            placeholder={t(
+              "elderlyConditions.publicNotePH",
+              "Public note (e.g., If found lost, please call …)"
+            )}
             placeholderTextColor="#9CA3AF"
             value={publicNote}
             onChangeText={setPublicNote}
@@ -366,7 +415,9 @@ export default function ElderlyConditions() {
             disabled={!canSubmit}
             style={[s.btn, !canSubmit && s.btnDisabled]}
           >
-            <Text style={s.btnText}>{t("elderlyConditions.finish")}</Text>
+            <Text style={s.btnText}>
+              {t("elderlyConditions.finish", "Finish")}
+            </Text>
           </Pressable>
 
           <View style={{ height: 24 }} />
