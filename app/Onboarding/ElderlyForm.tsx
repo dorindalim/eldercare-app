@@ -1,4 +1,3 @@
-// app/Onboarding/ElderlyBasics.tsx
 import { useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

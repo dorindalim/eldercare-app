@@ -1,4 +1,3 @@
-// app/Onboarding/ElderlyConditions.tsx
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -211,16 +210,13 @@ export default function ElderlyConditions() {
     // Mark onboarding complete
     await markOnboarding(true);
 
-    // Ask backend to issue/reuse a link ONLY if basics + conditions exist
+    // Ask backend to issue/reuse a link only if basics + conditions exist
     try {
-      // make sure we have the logged-in user's id
-      const { data: userRes } = await supabase.auth.getUser();
-      const userId = userRes?.user?.id;
+      const userId = session?.userId;
 
       if (!userId) {
         console.warn("No user in session");
       } else {
-        // call the param'd RPC that verifies caller === p_user
         const { data: token, error } = await supabase.rpc(
           "ec_issue_link_if_ready_for",
           { p_user: userId }
@@ -234,7 +230,6 @@ export default function ElderlyConditions() {
           )}`;
           await Share.share({ message: CAREGIVER_MESSAGE(url) });
         } else {
-          // profile not ready (basics or conditions missing per your SQL rule)
           console.log("Profile not ready yet; no token returned");
         }
       }
