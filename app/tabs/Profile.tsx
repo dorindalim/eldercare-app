@@ -18,8 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import TopBar, { LangCode } from "../../src/components/TopBar";
-// ✅ use the account-scoped version and correct filename/casing
-import { useCheckins } from "../../src/hooks/useCheckIns";
+import { useCheckins } from "../../src/hooks/useCheckIns"; // account-scoped
 import { supabase } from "../../src/lib/supabase";
 import { useAppSettings } from "../../src/Providers/SettingsProvider";
 
@@ -54,8 +53,12 @@ export default function ElderlyProfile() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
-  // ✅ account-scoped coins/today from the hook
-  const { coins, todayChecked } = useCheckins(session?.userId);
+
+  // ✅ account-scoped check-in data (streak comes from the hook)
+  const { coins, todayChecked, weekChecks, streak } = useCheckins(
+    session?.userId
+  );
+
   const { textScale, setTextScale } = useAppSettings();
 
   // data states
@@ -66,7 +69,6 @@ export default function ElderlyProfile() {
   const [drugAllergies, setDrugAllergies] = useState<string>("");
   const [publicNote, setPublicNote] = useState<string>("");
   const [conditions, setConditions] = useState<ConditionItem[]>([]);
-  const [streak, setStreak] = useState(0);
 
   // language via TopBar
   const setLang = async (code: LangCode) => {
@@ -152,40 +154,6 @@ export default function ElderlyProfile() {
       loadData();
     }, [loadData])
   );
-
-  // 🔁 Per-user streak from per-user key
-  useEffect(() => {
-    if (!session?.userId) {
-      setStreak(0);
-      return;
-    }
-    const DATES_KEY = `checkin_dates_${session.userId}_v1`;
-    const iso = (d = new Date()) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-        d.getDate()
-      ).padStart(2, "0")}`;
-    const addDays = (date: Date, n: number) => {
-      const d = new Date(date);
-      d.setDate(d.getDate() + n);
-      return d;
-    };
-
-    (async () => {
-      const raw = (await AsyncStorage.getItem(DATES_KEY)) || "[]";
-      let dates: string[] = [];
-      try {
-        dates = JSON.parse(raw);
-      } catch {}
-      const set = new Set(dates);
-      let s = 0;
-      let cur = new Date();
-      while (set.has(iso(cur))) {
-        s += 1;
-        cur = addDays(cur, -1);
-      }
-      setStreak(s);
-    })();
-  }, [session?.userId, todayChecked, coins]);
 
   // global text sizing
   const textScalePx = useMemo(() => {
@@ -405,7 +373,7 @@ export default function ElderlyProfile() {
           )}
         </View>
 
-        {/* Activity & Rewards (✅ account-scoped) */}
+        {/* Activity & Rewards */}
         <View style={s.card}>
           <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
             {t("profile.activity")}

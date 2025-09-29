@@ -1,28 +1,20 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useMemo, useState } from "react";
 
-const DATES_BASE = "checkin_dates_v1";
-const COINS_BASE = "coins_total_v1";
-
-const k = (base: string, userId?: string | null) =>
-  userId ? `${base}:${userId}` : base;
-
+// ——— helpers ———
 function isoDate(d = new Date()) {
   const y = d.getFullYear();
   const m = `${d.getMonth() + 1}`.padStart(2, "0");
   const day = `${d.getDate()}`.padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-
 function startOfWeek(date = new Date()) {
   const d = new Date(date);
-  // Monday as start of week
-  const day = (d.getDay() + 6) % 7;
+  const day = (d.getDay() + 6) % 7; // Monday = 0
   d.setDate(d.getDate() - day);
   d.setHours(0, 0, 0, 0);
   return d;
 }
-
 function datesThisWeek(date = new Date()) {
   const start = startOfWeek(date);
   return Array.from({ length: 7 }, (_, i) => {
@@ -31,61 +23,53 @@ function datesThisWeek(date = new Date()) {
     return isoDate(d);
   });
 }
+function computeStreak(days: Set<string>) {
+  let s = 0;
+  const cur = new Date();
+  // count backwards from TODAY; if today isn't checked, streak starts at 0
+  while (days.has(isoDate(cur))) {
+    s += 1;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return s;
+}
 
-/**
- * Account-scoped checkins.
- * Pass the current user's id. If no userId is provided, the hook becomes a no-op with zeros.
- */
-export function useCheckins(userId?: string | null) {
+// ——— HOOK ———
+export function useCheckins(userId?: string) {
+  // fall back to a stable bucket if user not known yet
+  const datesKey = `checkin_dates_${userId ?? "anon"}_v1`;
+  const coinsKey = `coins_total_${userId ?? "anon"}_v1`;
+
   const [loading, setLoading] = useState(true);
   const [checkedDates, setCheckedDates] = useState<Set<string>>(new Set());
   const [coins, setCoins] = useState(0);
+  const [streak, setStreak] = useState(0);
 
-  // Reset state when user changes
+  // load when user changes
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       setLoading(true);
-
-      // No user? show empty state
-      if (!userId) {
-        if (!cancelled) {
-          setCheckedDates(new Set());
-          setCoins(0);
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
-        const datesKey = k(DATES_BASE, userId);
-        const coinsKey = k(COINS_BASE, userId);
+        const rawDates = (await AsyncStorage.getItem(datesKey)) || "[]";
+        const arr: string[] = JSON.parse(rawDates);
+        if (!cancelled) setCheckedDates(new Set(arr));
 
-        const [rawDates, rawCoins] = await Promise.all([
-          AsyncStorage.getItem(datesKey),
-          AsyncStorage.getItem(coinsKey),
-        ]);
-
-        const arr: string[] = rawDates ? JSON.parse(rawDates) : [];
-        if (!cancelled) {
-          setCheckedDates(new Set(arr));
-          setCoins(rawCoins ? Number(rawCoins) || 0 : 0);
-        }
-      } catch {
-        if (!cancelled) {
-          setCheckedDates(new Set());
-          setCoins(0);
-        }
+        const rawCoins = await AsyncStorage.getItem(coinsKey);
+        if (!cancelled) setCoins(rawCoins ? Number(rawCoins) || 0 : 0);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [datesKey, coinsKey]);
+
+  // recompute streak whenever dates change
+  useEffect(() => {
+    setStreak(computeStreak(checkedDates));
+  }, [checkedDates]);
 
   const todayIso = isoDate();
   const week = useMemo(() => datesThisWeek(), []);
@@ -97,11 +81,7 @@ export function useCheckins(userId?: string | null) {
   );
 
   const checkInToday = async () => {
-    if (!userId) return { ok: false as const, reason: "no-user" as const };
-    if (todayChecked) return { ok: false as const, reason: "already-checked" as const };
-
-    const datesKey = k(DATES_BASE, userId);
-    const coinsKey = k(COINS_BASE, userId);
+    if (todayChecked) return { ok: false, reason: "already-checked" as const };
 
     const next = new Set(checkedDates);
     next.add(todayIso);
@@ -113,14 +93,15 @@ export function useCheckins(userId?: string | null) {
     await AsyncStorage.setItem(datesKey, JSON.stringify(Array.from(next)));
     await AsyncStorage.setItem(coinsKey, String(nextCoins));
 
+    // streak will update via effect on checkedDates
     return { ok: true as const };
   };
 
   const __devReset = async () => {
-    if (!userId) return;
-    await AsyncStorage.multiRemove([k(DATES_BASE, userId), k(COINS_BASE, userId)]);
+    await AsyncStorage.multiRemove([datesKey, coinsKey]);
     setCheckedDates(new Set());
     setCoins(0);
+    setStreak(0);
   };
 
   return {
@@ -129,6 +110,7 @@ export function useCheckins(userId?: string | null) {
     weekChecks,
     todayChecked,
     checkInToday,
+    streak,
     __devReset,
   };
 }
