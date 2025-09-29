@@ -73,6 +73,7 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx>({} as any);
 export const useAuth = () => useContext(Ctx);
 
+// mock OTP flow state
 let pendingPhone: string | null = null;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -80,6 +81,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If you later add AsyncStorage-based session persistence,
+    // hydrate here and flip loading when done.
     setLoading(false);
   }, []);
 
@@ -191,10 +194,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<SaveResult> => {
     if (!session) return { success: false, error: "No session" };
 
+    // Guard YOB for invalid values -> null
+    const yobNum = Number(profile.year_of_birth);
+    const year_of_birth =
+      Number.isFinite(yobNum) && yobNum > 1900 && yobNum < 3000 ? yobNum : null;
+
     const payload = {
       user_id: session.userId,
-      name: profile.name?.trim(),
-      year_of_birth: Number(profile.year_of_birth),
+      name: profile.name?.trim() || null,
+      year_of_birth,
       gender: profile.gender,
       phone: profile.phone ?? session.phone ?? null,
       emergency_name:
@@ -226,82 +234,120 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { success: true };
   };
 
-  // condition + medication + extra (e.g. allergy/assistance)
+  /**
+   * SAVE CONDITIONS (REPLACE MODE) + EXTRAS
+   * - Always updates extras (allows clearing using nulls)
+   * - Deletes existing conditions/meds for user, then inserts the new set
+   * - Inserts each condition and then its medications (captures condition_id)
+   * - Works with your UI "NIL" rows (you already build those client-side)
+   */
   const saveElderlyConditions = async (
     conds: ElderlyConditionInput[],
     extras?: ElderlyHealthExtras
   ) => {
     if (!session) return { success: false };
 
-    // 1) Save extras onto profile (optional)
-    if (
-      extras &&
-      (extras.assistive_needs?.length ||
-        extras.drug_allergies ||
-        extras.public_note)
-    ) {
+    // 1) ALWAYS update extras (so clearing values works)
+    {
       const { error: profErr } = await supabase
         .from("elderly_profiles")
         .update({
-          assistive_needs: extras.assistive_needs ?? null,
-          drug_allergies: extras.drug_allergies ?? null,
-          public_note: extras.public_note ?? null,
+          assistive_needs:
+            extras?.assistive_needs && extras.assistive_needs.length
+              ? extras.assistive_needs
+              : null,
+          drug_allergies: extras?.drug_allergies?.trim()
+            ? extras.drug_allergies.trim()
+            : null,
+          public_note: extras?.public_note?.trim()
+            ? extras.public_note.trim()
+            : null,
         })
         .eq("user_id", session.userId);
+
       if (profErr) {
         console.error("saveElderlyConditions profile update error:", profErr);
         return { success: false };
       }
     }
 
-    // 2) If no conditions, we're done
-    if (!conds?.length) return { success: true };
+    // 2) REPLACE MODE: wipe existing rows for this user
+    {
+      const { data: oldConds, error: fetchErr } = await supabase
+        .from("elderly_conditions")
+        .select("id")
+        .eq("user_id", session.userId);
 
-    // 3) Insert conditions
-    const conditionRows = conds.map((c) => ({
-      user_id: session.userId,
-      condition: c.condition,
-      doctor: c.doctor || null,
-      clinic: c.clinic || null,
-      appointments: c.appointments || null,
-    }));
+      if (fetchErr) {
+        console.error("fetch existing conditions error:", fetchErr);
+        return { success: false };
+      }
 
-    const { data: insertedConds, error: condErr } = await supabase
-      .from("elderly_conditions")
-      .insert(conditionRows)
-      .select("id");
+      const oldIds = (oldConds || []).map((c: any) => c.id);
+      if (oldIds.length) {
+        const { error: delMedsErr } = await supabase
+          .from("elderly_medications")
+          .delete()
+          .in("condition_id", oldIds);
+        if (delMedsErr) {
+          console.error("delete meds error:", delMedsErr);
+          return { success: false };
+        }
 
-    if (condErr) {
-      console.error("saveElderlyConditions conditions error:", condErr);
-      return { success: false };
+        const { error: delCondsErr } = await supabase
+          .from("elderly_conditions")
+          .delete()
+          .eq("user_id", session.userId);
+        if (delCondsErr) {
+          console.error("delete conditions error:", delCondsErr);
+          return { success: false };
+        }
+      }
     }
 
-    // 4) Insert medications (per condition, with frequency)
-    const medsToInsert: {
-      condition_id: string;
-      name: string;
-      frequency?: string | null;
-    }[] = [];
-    insertedConds.forEach((row, idx) => {
-      const meds = conds[idx]?.medications || [];
-      meds
-        .filter((m) => m?.name?.trim())
-        .forEach((m) =>
-          medsToInsert.push({
-            condition_id: row.id,
-            name: m.name.trim(),
-            frequency: m.frequency?.trim() || null,
-          })
-        );
-    });
+    // 3) If no conditions to insert, done (extras already updated)
+    if (!conds?.length) return { success: true };
 
-    if (medsToInsert.length > 0) {
-      const { error: medsErr } = await supabase
-        .from("elderly_medications")
-        .insert(medsToInsert);
-      if (medsErr) {
-        console.error("saveElderlyConditions meds error:", medsErr);
+    // 4) Insert each condition + its meds
+    for (const c of conds) {
+      // insert one condition, capture id
+      const { data: inserted, error: condErr } = await supabase
+        .from("elderly_conditions")
+        .insert([
+          {
+            user_id: session.userId,
+            condition: c.condition || null,
+            doctor: c.doctor || null,
+            clinic: c.clinic || null,
+            appointments: c.appointments || null,
+          },
+        ])
+        .select("id")
+        .single();
+
+      if (condErr || !inserted?.id) {
+        console.error("insert condition error:", condErr);
         return { success: false };
+      }
+
+      // meds (including "NIL" rows produced by the UI)
+      const meds = c.medications || [];
+      const medsRows = meds
+        .filter((m) => (m?.name ?? "").trim().length > 0)
+        .map((m) => ({
+          condition_id: inserted.id,
+          name: m.name.trim(),
+          frequency: m.frequency?.trim() || null,
+        }));
+
+      if (medsRows.length) {
+        const { error: medsErr } = await supabase
+          .from("elderly_medications")
+          .insert(medsRows);
+        if (medsErr) {
+          console.error("insert meds error:", medsErr);
+          return { success: false };
+        }
       }
     }
 

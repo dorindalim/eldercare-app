@@ -5,11 +5,20 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import TopBar, { LangCode } from "../../src/components/TopBar";
+// ✅ use the account-scoped version and correct filename/casing
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 import { useAppSettings } from "../../src/Providers/SettingsProvider";
@@ -30,11 +39,23 @@ type ConditionItem = {
   meds: { name: string; frequency?: string | null }[];
 };
 
+const PORTAL_BASE_URL =
+  "https://dorindalim.github.io/eldercare-app/ECPortal.html";
+const CAREGIVER_MESSAGE = (url: string) =>
+  `Hi! This is my Emergency Contact Portal link:\n\n${url}\n\n` +
+  `Please keep it safe. On first open, set a 4+ digit PIN. ` +
+  `Use the same PIN next time to unlock. Thank you!`;
+
+// helper: normalize NIL
+const isNil = (v?: string | null) =>
+  typeof v === "string" && v.trim().toUpperCase() === "NIL";
+
 export default function ElderlyProfile() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
-  const { coins, todayChecked } = useCheckins();
+  // ✅ account-scoped coins/today from the hook
+  const { coins, todayChecked } = useCheckins(session?.userId);
   const { textScale, setTextScale } = useAppSettings();
 
   // data states
@@ -132,9 +153,13 @@ export default function ElderlyProfile() {
     }, [loadData])
   );
 
-  // streak (same storage as your checkin hook)
+  // 🔁 Per-user streak from per-user key
   useEffect(() => {
-    const DATES_KEY = "checkin_dates_v1";
+    if (!session?.userId) {
+      setStreak(0);
+      return;
+    }
+    const DATES_KEY = `checkin_dates_${session.userId}_v1`;
     const iso = (d = new Date()) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
         d.getDate()
@@ -160,7 +185,7 @@ export default function ElderlyProfile() {
       }
       setStreak(s);
     })();
-  }, [todayChecked, coins]);
+  }, [session?.userId, todayChecked, coins]);
 
   // global text sizing
   const textScalePx = useMemo(() => {
@@ -194,6 +219,48 @@ export default function ElderlyProfile() {
     return assistiveNeeds.map(prettifyAssistive).join(", ");
   }, [assistiveNeeds, i18n.language]);
 
+  // --- Share EC Portal link ---
+  const onShareEcPortal = useCallback(async () => {
+    if (!session?.userId) {
+      Alert.alert("Not logged in", "Please log in again.");
+      return;
+    }
+
+    // 1) Try to get the latest token from ec_links
+    const { data: linkRow } = await supabase
+      .from("ec_links")
+      .select("token")
+      .eq("user_id", session.userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let token: string | null = linkRow?.token ?? null;
+
+    // 2) Optional fallback: RPC to issue/reuse
+    if (!token) {
+      const { data: rpcToken, error: rpcErr } = await supabase.rpc(
+        "ec_issue_link_if_ready_for",
+        { p_user: session.userId }
+      );
+      if (rpcErr)
+        console.warn("ec_issue_link_if_ready_for error:", rpcErr.message);
+      token = rpcToken ?? null;
+    }
+
+    if (!token) {
+      Alert.alert(
+        "No portal link yet",
+        "Your profile may be incomplete, or a link hasn’t been created."
+      );
+      return;
+    }
+
+    const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(token)}`;
+    await Share.share({ message: CAREGIVER_MESSAGE(url) });
+  }, [session?.userId]);
+
+  // Render
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: "#F8FAFC" }}
@@ -293,29 +360,52 @@ export default function ElderlyProfile() {
             </Text>
           </View>
 
-          {/* Conditions */}
-          {!!conditions.length && (
+          {/* Share EC Portal link button */}
+          <Pressable style={s.btn} onPress={onShareEcPortal}>
+            <Text style={s.btnText}>Share EC Portal link</Text>
+          </Pressable>
+        </View>
+
+        {/* Conditions */}
+        <View style={s.card}>
+          <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
+            {t("profile.conditions")}
+          </Text>
+
+          {conditions.length === 0 ? (
+            <Text style={[s.v, { fontSize: textScalePx }]}>–</Text>
+          ) : (
             <View style={s.block}>
-              <Text style={[s.k, { fontSize: textScalePx }]}>
-                {t("profile.conditions")}
-              </Text>
-              {conditions.map((c) => (
-                <Text key={c.id} style={[s.v, { fontSize: textScalePx }]}>
-                  • {c.condition || "-"}
-                  {c.meds?.length
-                    ? ` (${c.meds
-                        .map((m) =>
-                          m.frequency ? `${m.name} — ${m.frequency}` : m.name
-                        )
-                        .join("; ")})`
-                    : ""}
-                </Text>
-              ))}
+              {conditions.map((c) => {
+                const condName =
+                  !c.condition || isNil(c.condition) ? "–" : c.condition;
+
+                const medsClean = (c.meds || [])
+                  .filter((m) => m.name && !isNil(m.name))
+                  .map((m) => {
+                    const name = m.name;
+                    const freq =
+                      m.frequency && !isNil(m.frequency)
+                        ? ` — ${m.frequency}`
+                        : "";
+                    return `${name}${freq}`;
+                  });
+
+                const medsPart =
+                  medsClean.length > 0 ? ` (${medsClean.join("; ")})` : "";
+
+                return (
+                  <Text key={c.id} style={[s.v, { fontSize: textScalePx }]}>
+                    • {condName}
+                    {medsPart}
+                  </Text>
+                );
+              })}
             </View>
           )}
         </View>
 
-        {/* Activity & Rewards */}
+        {/* Activity & Rewards (✅ account-scoped) */}
         <View style={s.card}>
           <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
             {t("profile.activity")}
@@ -337,7 +427,7 @@ export default function ElderlyProfile() {
           </Pressable>
         </View>
 
-        {/* Accessibility (global text size, TTS removed) */}
+        {/* Accessibility (global text size) */}
         <View style={s.card}>
           <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
             {t("profile.accessibility")}

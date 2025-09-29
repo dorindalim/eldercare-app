@@ -13,7 +13,7 @@
     label{display:block; font-weight:700; color:#374151; margin:6px 0 4px}
     input,textarea{width:100%; padding:10px; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; font-size:14px; color:#111827}
     textarea{min-height:72px}
-    .row{display:flex; gap:8px}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .btn{background:#111827; color:#fff; font-weight:800; border:none; border-radius:10px; padding:10px 14px; cursor:pointer}
     .btn.secondary{background:#fff; color:#111827; border:1px solid #111827}
     .chip{border:1px solid #d1d5db; padding:8px 12px; border-radius:999px; cursor:pointer; user-select:none; font-weight:800; display:inline-block; margin:4px 6px 0 0}
@@ -60,7 +60,18 @@
 
     <div class="card">
       <h2>Conditions & Medications</h2>
+
+      <div class="row" style="margin-bottom:8px">
+        <span id="noCondsChip" class="chip">No conditions</span>
+        <span class="muted">Tip: you can still add a condition even if this is on — the form will auto-reappear.</span>
+      </div>
+
+      <div id="noCondsNote" class="muted" style="display:none; margin-bottom:8px">
+        You marked “No conditions”. We will save a single NIL placeholder. You can still add a condition below.
+      </div>
+
       <div id="conds"></div>
+
       <button id="addCond" class="btn ghost" style="margin-top:8px">+ Add condition</button>
     </div>
 
@@ -71,202 +82,328 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";     // <-- replace
-const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";                        // <-- replace
-const supabase = window.supabase.createClient(PROJECT_URL, ANON_KEY);
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const token = new URLSearchParams(location.search).get('token') || '';
-const assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
-const labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
+  // --- Supabase init ---
+  const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";
+  const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
+  const supabase = createClient(PROJECT_URL, ANON_KEY);
 
-const el = id => document.getElementById(id);
-function chip(parent, key, active) {
-  const span = document.createElement('span');
-  span.className = 'chip' + (active ? ' active':'');
-  span.textContent = labels[key];
-  span.onclick = () => {
-    span.classList.toggle('active');
-    if (key==='other') document.getElementById('assistive_other_wrap').style.display =
-      span.classList.contains('active') ? '' : 'none';
-  };
-  parent.appendChild(span);
-}
-function medRow(m={name:'',frequency:''}) {
-  const row = document.createElement('div');
-  row.className='medrow';
-  const n = document.createElement('input'); n.placeholder='Medication name'; n.value=m.name||'';
-  const f = document.createElement('input'); f.placeholder='Frequency (e.g., 1 tab AM/PM)'; f.value=m.frequency||'';
-  const rm= document.createElement('button'); rm.textContent='Remove'; rm.className='btn secondary'; rm.onclick=()=>row.remove();
-  row.append(n,f,rm);
-  return row;
-}
-function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
-  const wrap = document.createElement('div'); wrap.className='card';
-  const t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
-  const d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
-  const cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
-  const ap=document.createElement('textarea'); ap.placeholder='Appointment notes'; ap.value=c.appointments||'';
-  const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
-  const medsWrap=document.createElement('div');
-  (c.medications?.length? c.medications : [{name:'',frequency:''}]).forEach(m=>medsWrap.appendChild(medRow(m)));
-  const addM=document.createElement('button'); addM.textContent='+ Add medication'; addM.className='btn ghost'; addM.style.marginTop='6px'; addM.onclick=()=>medsWrap.appendChild(medRow());
-  const rmC=document.createElement('button'); rmC.textContent='Remove condition'; rmC.className='btn secondary'; rmC.style.marginTop='6px'; rmC.onclick=()=>wrap.remove();
-  wrap.append(t,d,cl,ap,medsLabel,medsWrap,addM,rmC);
-  wrap._get=()=>({
-    condition: t.value.trim()||null,
-    doctor: d.value.trim()||null,
-    clinic: cl.value.trim()||null,
-    appointments: ap.value.trim()||null,
-    medications: [...medsWrap.children].map(r=>{
-      const [n,f]=r.querySelectorAll('input'); const name=n.value.trim(); const frequency=f.value.trim();
-      return name? {name, frequency: frequency||null}: null;
-    }).filter(Boolean)
-  });
-  return wrap;
-}
-async function sha256Hex(s) {
-  const b = new TextEncoder().encode(s);
-  const h = await crypto.subtle.digest('SHA-256', b);
-  return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
-}
+  // --- Helpers & constants ---
+  const token = new URLSearchParams(location.search).get('token') || '';
+  const assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
+  const labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
 
-async function rpcGet(pinHash) {
-  const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
-  return { data, error };
-}
-async function rpcSetPin(pinHash) {
-  const { data, error } = await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
-  return { data, error };
-}
-async function rpcSave(pinHash, payload) {
-  const { data, error } = await supabase.rpc('ec_save_portal', {
-    p_token: token,
-    p_pin_hash: pinHash,
-    p_emergency: payload.emergency,
-    p_extras: payload.extras,
-    p_conditions: payload.conditions
-  });
-  return { data, error };
-}
+  const el = id => document.getElementById(id);
+  const NIL_MED = { name:'NIL', frequency:'NIL' };
+  const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
 
-function gatherAssistive() {
-  const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=> {
-    const label = ch.textContent;
-    const key = Object.entries(labels).find(([,v])=>v===label)?.[0] || label;
-    return key;
-  });
-  if (picks.includes('other')) {
-    const other = el('assistive_other').value.trim();
-    if (other) picks.push('other:'+other);
-    return picks.filter(p=>p!=='other');
-  }
-  return picks;
-}
+  let noConditions = false; // global toggle
 
-function render(resp) {
-  el('status').textContent='';
-  el('main').style.display='';
-
-  const prof = resp.profile || {};
-
-// derive an object the UI expects, from flat columns
-  const em = {
-    name:     prof.emergency_name ?? prof.name ?? '',
-    relation: prof.emergency_relation ?? prof.relation ?? '',
-    phone:    prof.emergency_phone ?? prof.phone ?? '',
-    email:    prof.emergency_email ?? prof.email ?? '',
-  };
-
-  el('ec_name').value     = em.name;
-  el('ec_relation').value = em.relation;
-  el('ec_phone').value    = em.phone;
-  el('ec_email').value    = em.email;
-
-
-  const ex = prof; // extras live on profiles
-  el('drug_allergies').value = ex.drug_allergies || '';
-  el('public_note').value = ex.public_note || '';
-  const raw = Array.isArray(ex.assistive_needs) ? ex.assistive_needs : [];
-  const showOther = raw.some(v=>String(v).startsWith('other:'));
-  const assistDiv = el('assistive'); assistDiv.innerHTML='';
-  assistiveKeys.forEach(k=>{
-    const active = k==='other' ? showOther : raw.includes(k);
-    chip(assistDiv, k, active);
-  });
-  el('assistive_other_wrap').style.display = showOther ? '' : 'none';
-  el('assistive_other').value = showOther ? String(raw.find(v=>String(v).startsWith('other:'))).replace(/^other:/,'') : '';
-
-  const list = el('conds'); list.innerHTML='';
-  (resp.conditions?.length? resp.conditions : [{ medications:[{name:'',frequency:''}] }])
-    .forEach(c=> list.appendChild(condBlock(c)));
-  el('addCond').onclick = ()=> list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
-}
-
-(async function boot(){
-  if (!token) { el('status').textContent='Missing token'; return; }
-
-  // try using cached pin
-  let pin = localStorage.getItem('ec_pin_'+token) || '';
-  let pinHash = pin ? await sha256Hex(pin) : '';
-
-  let { data, error } = await rpcGet(pinHash);
-  if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-    // show PIN UI
-    el('status').textContent='This link is protected by a PIN.';
-    el('pinBlock').style.display='';
-    el('pinUseBtn').onclick = async () => {
-      const p = el('pinInput').value.trim();
-      if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
-      const h = await sha256Hex(p);
-      const r = await rpcGet(h);
-      if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
-      pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-      el('pinBlock').style.display='none'; render(r.data);
+  function chip(parent, key, active) {
+    const span = document.createElement('span');
+    span.className = 'chip' + (active ? ' active':'');
+    span.textContent = labels[key];
+    span.onclick = () => {
+      span.classList.toggle('active');
+      if (key==='other') document.getElementById('assistive_other_wrap').style.display =
+        span.classList.contains('active') ? '' : 'none';
     };
-    el('pinSetBtn').onclick = async () => {
-      const p = el('pinInput').value.trim();
-      if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
-      const h = await sha256Hex(p);
-      const r = await rpcSetPin(h);
-      if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to set PIN'; return; }
-      pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-      const g = await rpcGet(h); render(g.data);
-      el('pinBlock').style.display='none';
-    };
-    return;
+    parent.appendChild(span);
   }
 
-  if (error) { el('status').textContent = error.message || 'Failed to load'; return; }
-  el('status').textContent=''; render(data);
+  function medRow(m={name:'',frequency:''}) {
+    const row = document.createElement('div');
+    row.className='medrow';
+    const n = document.createElement('input'); n.placeholder='Medication name'; n.value=m.name||'';
+    const f = document.createElement('input'); f.placeholder='Frequency (e.g., 1 tab AM/PM)'; f.value=m.frequency||'';
+    const rm= document.createElement('button'); rm.textContent='Remove'; rm.className='btn secondary'; rm.onclick=()=>row.remove();
+    row.append(n,f,rm);
+    return row;
+  }
 
-  // save handler
-  el('saveBtn').onclick = async () => {
-    el('saveMsg').textContent='Saving…';
-    const list = [...document.querySelectorAll('#conds > .card')];
-    const conditions = list.map(n=>n._get()).filter(c =>
-      c.condition || (c.medications && c.medications.length) || c.doctor || c.clinic || c.appointments
-    );
-    const payload = {
-      emergency: {
-        name: el('ec_name').value || null,
-        relation: el('ec_relation').value || null,
-        phone: el('ec_phone').value || null,
-        email: el('ec_email').value || null,
-      },
-      extras: {
-        assistive_needs: gatherAssistive(),
-        drug_allergies: el('drug_allergies').value || null,
-        public_note: el('public_note').value || null,
-      },
-      conditions
+  // Per-condition block (includes per-condition "No medications" toggle)
+  function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
+    const wrap = document.createElement('div'); wrap.className='card';
+
+    // header inputs
+    const t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
+    const d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
+    const cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
+    const ap=document.createElement('textarea'); ap.placeholder='Appointment notes'; ap.value=c.appointments||'';
+
+    // per-condition "No medications" chip
+    const togglesRow = document.createElement('div'); togglesRow.className='row';
+    const noMedsChip = document.createElement('span'); noMedsChip.className='chip'; noMedsChip.textContent='No medications for this condition';
+    togglesRow.appendChild(noMedsChip);
+
+    // meds UI
+    const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
+    const medsWrap=document.createElement('div');
+
+    // infer initial noMeds if only NIL med present
+    const initialNoMeds = Array.isArray(c.medications)
+      && c.medications.length===1
+      && String(c.medications[0]?.name).toUpperCase()==='NIL';
+
+    if (c.medications?.length) {
+      (c.medications).forEach(m=> {
+        if (!initialNoMeds) medsWrap.appendChild(medRow(m));
+      });
+    } else {
+      medsWrap.appendChild(medRow({name:'',frequency:''}));
+    }
+
+    // toggle handler
+    function setNoMeds(on) {
+      if (on) {
+        noMedsChip.classList.add('active');
+        medsLabel.style.display='none';
+        medsWrap.style.display='none';
+      } else {
+        noMedsChip.classList.remove('active');
+        medsLabel.style.display='';
+        medsWrap.style.display='';
+        if (medsWrap.children.length===0) medsWrap.appendChild(medRow({name:'',frequency:''}));
+      }
+    }
+    setNoMeds(initialNoMeds);
+    noMedsChip.onclick = ()=> setNoMeds(!noMedsChip.classList.contains('active'));
+
+    // remove condition button
+    const rmC=document.createElement('button'); rmC.textContent='Remove condition'; rmC.className='btn secondary'; rmC.style.marginTop='6px'; rmC.onclick=()=>wrap.remove();
+
+    // compose
+    wrap.append(t,d,cl,ap,togglesRow,medsLabel,medsWrap,rmC);
+
+    // collector
+    wrap._get=()=>({
+      condition: t.value.trim()||null,
+      doctor: d.value.trim()||null,
+      clinic: cl.value.trim()||null,
+      appointments: ap.value.trim()||null,
+      medications: noMedsChip.classList.contains('active')
+        ? [{...NIL_MED}]
+        : [...medsWrap.children].map(r=>{
+            const [n,f]=r.querySelectorAll('input');
+            const name=(n.value||'').trim();
+            const frequency=(f.value||'').trim();
+            return name ? { name, frequency: frequency||null } : null;
+          }).filter(Boolean)
+    });
+
+    return wrap;
+  }
+
+  async function sha256Hex(s) {
+    const b = new TextEncoder().encode(s);
+    const h = await crypto.subtle.digest('SHA-256', b);
+    return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  }
+
+  // --- RPC wrappers ---
+  async function rpcGet(pinHash) {
+    const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
+    return { data, error };
+  }
+  async function rpcSetPin(pinHash) {
+    const { data, error } = await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
+    return { data, error };
+  }
+  async function rpcSave(pinHash, payload) {
+    const { data, error } = await supabase.rpc('ec_save_portal', {
+      p_token: token,
+      p_pin_hash: pinHash,
+      p_emergency: payload.emergency,
+      p_extras: payload.extras,
+      p_conditions: payload.conditions
+    });
+    return { data, error };
+  }
+
+  function gatherAssistive() {
+    const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=> {
+      const label = ch.textContent;
+      const key = Object.entries(labels).find(([,v])=>v===label)?.[0] || label;
+      return key;
+    });
+    if (picks.includes('other')) {
+      const other = el('assistive_other').value.trim();
+      if (other) picks.push('other:'+other);
+      return picks.filter(p=>p!=='other');
+    }
+    return picks;
+  }
+
+  // --- Normalize RPC payload shape & read flat emergency_* fields ---
+  function normalizeData(d) {
+    const root = Array.isArray(d) ? (d[0] || {}) : (d || {});
+    const profile =
+      root.profile ??
+      root.profiles ??
+      root.elderly_profiles ??
+      root.row ??
+      root;
+    return { root, profile };
+  }
+  function extractEmergencyFlat(profile = {}) {
+    return {
+      name:     profile.emergency_name ?? '',
+      relation: profile.emergency_relation ?? '',
+      phone:    profile.emergency_phone ?? '',
+      email:    profile.emergency_email ?? ''
     };
-    const h = await sha256Hex(pin);
-    const { error: e } = await rpcSave(h, payload);
-    el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
-  };
-})();
+  }
+
+  function setNoConditionsUI(on) {
+    noConditions = !!on;
+    const note = el('noCondsNote');
+    const list = el('conds');
+    if (on) {
+      note.style.display = '';
+      list.style.display = 'none';
+    } else {
+      note.style.display = 'none';
+      list.style.display = '';
+    }
+    el('noCondsChip').classList.toggle('active', on);
+  }
+
+  function render(resp) {
+    el('status').textContent='';
+    el('main').style.display='';
+
+    const { root, profile } = normalizeData(resp);
+
+    // Emergency contact
+    const em = extractEmergencyFlat(profile);
+    el('ec_name').value     = em.name || '';
+    el('ec_relation').value = em.relation || '';
+    el('ec_phone').value    = em.phone || '';
+    el('ec_email').value    = em.email || '';
+
+    // Extras
+    el('drug_allergies').value = profile.drug_allergies || '';
+    el('public_note').value    = profile.public_note || '';
+    const raw = Array.isArray(profile.assistive_needs) ? profile.assistive_needs : [];
+    const showOther = raw.some(v=>String(v).startsWith('other:'));
+    const assistDiv = el('assistive'); assistDiv.innerHTML='';
+    assistiveKeys.forEach(k=>{
+      const active = k==='other' ? showOther : raw.includes(k);
+      chip(assistDiv, k, active);
+    });
+    el('assistive_other_wrap').style.display = showOther ? '' : 'none';
+    el('assistive_other').value = showOther
+      ? String(raw.find(v=>String(v).startsWith('other:'))).replace(/^other:/,'')
+      : '';
+
+    // Conditions
+    const list = el('conds'); list.innerHTML='';
+    const incoming = (Array.isArray(root.conditions) ? root.conditions
+                    : (resp?.conditions?.length ? resp.conditions : null));
+
+    // If API returned exactly one NIL condition, default noConditions UI on; otherwise off.
+    const isSingleNil =
+      Array.isArray(incoming) && incoming.length===1 &&
+      String(incoming[0]?.condition).toUpperCase()==='NIL';
+
+    setNoConditionsUI(isSingleNil);
+
+    const initialConds = isSingleNil
+      ? [] // hide list by default
+      : (incoming && incoming.length ? incoming : [{ medications:[{name:'',frequency:''}] }]);
+
+    initialConds.forEach(c=> list.appendChild(condBlock(c)));
+
+    // Add condition button
+    el('addCond').onclick = ()=> {
+      if (noConditions) setNoConditionsUI(false); // auto-unhide if user adds
+      list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
+    };
+  }
+
+  // --- Boot ---
+  (async function boot(){
+    const noCondsChip = el('noCondsChip');
+    noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
+
+    if (!token) { el('status').textContent='Missing token'; return; }
+
+    // try cached pin
+    let pin = localStorage.getItem('ec_pin_'+token) || '';
+    let pinHash = pin ? await sha256Hex(pin) : '';
+
+    let { data, error } = await rpcGet(pinHash);
+    if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
+      // show PIN UI
+      el('status').textContent='This link is protected by a PIN.';
+      el('pinBlock').style.display='';
+      el('pinUseBtn').onclick = async () => {
+        const p = el('pinInput').value.trim();
+        if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
+        const h = await sha256Hex(p);
+        const r = await rpcGet(h);
+        if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
+        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
+        el('pinBlock').style.display='none'; render(r.data);
+      };
+      el('pinSetBtn').onclick = async () => {
+        const p = el('pinInput').value.trim();
+        if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
+        const h = await sha256Hex(p);
+        const r = await rpcSetPin(h);
+        if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to set PIN'; return; }
+        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
+        const g = await rpcGet(h); render(g.data);
+        el('pinBlock').style.display='none';
+      };
+      return;
+    }
+
+    if (error) { el('status').textContent = error.message || 'Failed to load'; return; }
+    el('status').textContent=''; render(data);
+
+    // save handler
+    el('saveBtn').onclick = async () => {
+      el('saveMsg').textContent='Saving…';
+
+      const list = [...document.querySelectorAll('#conds > .card')];
+
+      let conditions;
+      if (noConditions || list.length===0) {
+        // save a single NIL condition with NIL med
+        conditions = [ { ...NIL_COND } ];
+      } else {
+        conditions = list.map(n=>n._get()).filter(c =>
+          c.condition || (c.medications && c.medications.length) || c.doctor || c.clinic || c.appointments
+        );
+        // If user left everything blank but didn't toggle "No conditions", still protect by sending NIL:
+        if (!conditions.length) conditions = [ { ...NIL_COND } ];
+      }
+
+      const payload = {
+        emergency: {
+          name: el('ec_name').value || null,
+          relation: el('ec_relation').value || null,
+          phone: el('ec_phone').value || null,
+          email: el('ec_email').value || null,
+        },
+        extras: {
+          assistive_needs: gatherAssistive(),
+          drug_allergies: el('drug_allergies').value || null,
+          public_note: el('public_note').value || null,
+        },
+        conditions
+      };
+
+      // PIN hash from local cache
+      const pin = localStorage.getItem('ec_pin_'+token) || '';
+      const h = await sha256Hex(pin || '');
+      const { error: e } = await rpcSave(h, payload);
+      el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+    };
+  })();
 </script>
 </body>
 </html>

@@ -24,6 +24,7 @@ type ConditionCard = {
   clinic: string;
   appointments: string;
   meds: Med[];
+  noMeds: boolean; // NEW: per-condition no-meds toggle
 };
 
 const PORTAL_BASE_URL =
@@ -37,7 +38,6 @@ const ASSISTIVE_OPTIONS = [
   { key: "other", labelKey: "elderlyConditions.assistive.other" },
 ];
 
-// Message the elderly can send to caregiver
 const CAREGIVER_MESSAGE = (url: string) =>
   `Hi! This is my Emergency Contact Portal link:\n\n${url}\n\n` +
   `Please keep it safe. On first open, set a 4+ digit PIN. ` +
@@ -55,6 +55,7 @@ export default function ElderlyConditions() {
       clinic: "",
       appointments: "",
       meds: [{ name: "", frequency: "" }],
+      noMeds: false, // NEW
     },
   ]);
   const [assistive, setAssistive] = useState<string[]>([]);
@@ -62,22 +63,34 @@ export default function ElderlyConditions() {
   const [drugAllergies, setDrugAllergies] = useState("");
   const [publicNote, setPublicNote] = useState("");
 
+  // Global "No conditions" remains
+  const [noConditions, setNoConditions] = useState(false);
+
+  // Validation: conditions + per-condition meds compulsory unless their toggles are on
   const canSubmit = useMemo(() => {
-    const anyCondFilled = conditions.some(
-      (c) =>
-        c.condition.trim() ||
-        c.doctor.trim() ||
-        c.clinic.trim() ||
-        c.appointments.trim() ||
-        c.meds.some((m) => m.name.trim())
-    );
+    const hasAnyCondition =
+      noConditions || conditions.some((c) => c.condition.trim());
+
+    // For each condition: either it has noMeds OR at least one med name
+    const allConditionsPassMedRule =
+      noConditions ||
+      conditions.every((c) => c.noMeds || c.meds.some((m) => m.name.trim()));
+
     const anyExtras =
       assistive.length > 0 ||
       !!assistiveOther.trim() ||
       !!drugAllergies.trim() ||
       !!publicNote.trim();
-    return anyCondFilled || anyExtras;
-  }, [conditions, assistive, assistiveOther, drugAllergies, publicNote]);
+
+    return (hasAnyCondition && allConditionsPassMedRule) || anyExtras;
+  }, [
+    conditions,
+    noConditions,
+    assistive,
+    assistiveOther,
+    drugAllergies,
+    publicNote,
+  ]);
 
   const setCond = (idx: number, patch: Partial<ConditionCard>) =>
     setConditions((prev) => {
@@ -95,6 +108,7 @@ export default function ElderlyConditions() {
         clinic: "",
         appointments: "",
         meds: [{ name: "", frequency: "" }],
+        noMeds: false,
       },
     ]);
 
@@ -143,8 +157,23 @@ export default function ElderlyConditions() {
       );
     }
 
-    const hasInvalidMed = conditions.some((c) =>
-      c.meds.some((m) => !m.name.trim() && m.frequency.trim())
+    // Enforce conditions unless "no conditions"
+    if (!noConditions) {
+      const hasCondition = conditions.some((c) => c.condition.trim());
+      if (!hasCondition) {
+        return Alert.alert(
+          t(
+            "elderlyConditions.errors.missingConditionName",
+            "Please enter at least one condition name (or tick 'No conditions')."
+          )
+        );
+      }
+    }
+
+    // Invalid med: frequency typed but empty name, only check on cards without noMeds
+    const hasInvalidMed = conditions.some(
+      (c) =>
+        !c.noMeds && c.meds.some((m) => !m.name.trim() && m.frequency.trim())
     );
     if (hasInvalidMed) {
       return Alert.alert(
@@ -155,36 +184,56 @@ export default function ElderlyConditions() {
       );
     }
 
-    if (!canSubmit) {
-      return Alert.alert(
-        t(
-          "elderlyConditions.errors.missingConditionName",
-          "Please enter at least one condition name."
-        )
-      );
-    }
+    // Build payload
+    let cleanConds: Array<{
+      condition: string;
+      doctor?: string;
+      clinic?: string;
+      appointments?: string;
+      medications: { name: string; frequency?: string }[];
+    }> = [];
 
-    const cleanConds = conditions
-      .map((c) => ({
-        condition: c.condition.trim(),
-        doctor: c.doctor.trim() || undefined,
-        clinic: c.clinic.trim() || undefined,
-        appointments: c.appointments.trim() || undefined,
-        medications: c.meds
-          .map((m) => ({
-            name: m.name.trim(),
-            frequency: m.frequency.trim() || undefined,
-          }))
-          .filter((m) => m.name),
-      }))
-      .filter(
-        (c) =>
-          c.condition ||
-          (c.medications && c.medications.length) ||
-          c.doctor ||
-          c.clinic ||
-          c.appointments
-      );
+    if (noConditions) {
+      // If there are no conditions at all, insert one NIL condition.
+      // We also attach a NIL medication so the meds table has a placeholder row.
+      cleanConds = [
+        {
+          condition: "NIL",
+          doctor: "NIL",
+          clinic: "NIL",
+          appointments: "NIL",
+          medications: [{ name: "NIL", frequency: "NIL" }],
+        },
+      ];
+    } else {
+      cleanConds = conditions
+        .map((c) => {
+          const meds = c.noMeds
+            ? [{ name: "NIL", frequency: "NIL" }] // per-condition NIL meds
+            : c.meds
+                .map((m) => ({
+                  name: m.name.trim(),
+                  frequency: m.frequency.trim() || undefined,
+                }))
+                .filter((m) => m.name);
+
+          return {
+            condition: c.condition.trim(),
+            doctor: c.doctor.trim() || undefined,
+            clinic: c.clinic.trim() || undefined,
+            appointments: c.appointments.trim() || undefined,
+            medications: meds,
+          };
+        })
+        .filter(
+          (c) =>
+            c.condition ||
+            (c.medications && c.medications.length) ||
+            c.doctor ||
+            c.clinic ||
+            c.appointments
+        );
+    }
 
     const extras = {
       assistive_needs: [
@@ -207,13 +256,10 @@ export default function ElderlyConditions() {
       );
     }
 
-    // Mark onboarding complete
     await markOnboarding(true);
 
-    // Ask backend to issue/reuse a link only if basics + conditions exist
     try {
       const userId = session?.userId;
-
       if (!userId) {
         console.warn("No user in session");
       } else {
@@ -221,7 +267,6 @@ export default function ElderlyConditions() {
           "ec_issue_link_if_ready_for",
           { p_user: userId }
         );
-
         if (error) {
           console.warn("ec_issue_link_if_ready_for error:", error.message);
         } else if (token) {
@@ -240,6 +285,27 @@ export default function ElderlyConditions() {
     router.replace("/tabs/HomePage");
   };
 
+  // Simple pill checkbox
+  const CheckPill = ({
+    checked,
+    label,
+    onPress,
+  }: {
+    checked: boolean;
+    label: string;
+    onPress: () => void;
+  }) => (
+    <Pressable
+      onPress={onPress}
+      style={[s.checkPill, checked && s.checkPillOn]}
+    >
+      <Text style={[s.checkPillText, checked && s.checkPillTextOn]}>
+        {checked ? "✓ " : ""}
+        {label}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <KeyboardAwareScrollView
@@ -257,111 +323,169 @@ export default function ElderlyConditions() {
             {t("elderlyConditions.title", "Health Conditions & Medications")}
           </Text>
 
-          {conditions.map((c, idx) => (
-            <View key={idx} style={s.cardInner}>
-              <View style={s.cardHeader}>
-                <Text style={s.cardTitle}>
-                  {t("elderlyConditions.conditionTitle", { index: idx + 1 })}
-                </Text>
-                <Pressable
-                  onPress={() => removeCondition(idx)}
-                  disabled={conditions.length === 1}
-                  style={[
-                    s.removeBtn,
-                    conditions.length === 1 && { opacity: 0.4 },
-                  ]}
-                >
-                  <Text style={s.removeBtnText}>
-                    {t("elderlyConditions.remove", "Remove")}
-                  </Text>
-                </Pressable>
-              </View>
+          {/* Global toggle: No conditions */}
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 8,
+              flexWrap: "wrap",
+              marginBottom: 8,
+            }}
+          >
+            <CheckPill
+              checked={noConditions}
+              label={t("elderlyConditions.noConditions", "No conditions")}
+              onPress={() => setNoConditions((v) => !v)}
+            />
+          </View>
 
-              <TextInput
-                placeholder={t(
-                  "elderlyConditions.conditionPH",
-                  "Condition (e.g., Diabetes)"
-                )}
-                placeholderTextColor="#9CA3AF"
-                value={c.condition}
-                onChangeText={(v) => setCond(idx, { condition: v })}
-                style={s.input}
-              />
-
-              <TextInput
-                placeholder={t("elderlyConditions.doctorPH", "Doctor")}
-                placeholderTextColor="#9CA3AF"
-                value={c.doctor}
-                onChangeText={(v) => setCond(idx, { doctor: v })}
-                style={s.input}
-              />
-
-              <TextInput
-                placeholder={t("elderlyConditions.clinicPH", "Clinic/Hospital")}
-                placeholderTextColor="#9CA3AF"
-                value={c.clinic}
-                onChangeText={(v) => setCond(idx, { clinic: v })}
-                style={s.input}
-              />
-
-              <TextInput
-                placeholder={t(
-                  "elderlyConditions.appointmentsPH",
-                  "Appointment notes"
-                )}
-                placeholderTextColor="#9CA3AF"
-                value={c.appointments}
-                onChangeText={(v) => setCond(idx, { appointments: v })}
-                style={[s.input, s.multiline]}
-                multiline
-              />
-
-              <Text style={s.subLabel}>
-                {t("elderlyConditions.medsLabel", "Medications")}
-              </Text>
-              {c.meds.map((m, mIdx) => (
-                <View key={mIdx} style={s.medRow}>
-                  <TextInput
-                    placeholder={t("elderlyConditions.medNamePH", "Name")}
-                    placeholderTextColor="#9CA3AF"
-                    value={m.name}
-                    onChangeText={(v) => setMed(idx, mIdx, { name: v })}
-                    style={[s.input, { flex: 1, marginBottom: 0 }]}
-                  />
-                  <View style={{ width: 8 }} />
-                  <TextInput
-                    placeholder={t("elderlyConditions.medFreqPH", "Frequency")}
-                    placeholderTextColor="#9CA3AF"
-                    value={m.frequency}
-                    onChangeText={(v) => setMed(idx, mIdx, { frequency: v })}
-                    style={[s.input, { flex: 1, marginBottom: 0 }]}
-                  />
-                  <Pressable
-                    onPress={() => removeMed(idx, mIdx)}
-                    style={[s.smallBtn, { marginLeft: 8 }]}
-                  >
-                    <Text style={s.smallBtnText}>
-                      {t("elderlyConditions.removeMed", "Remove")}
+          {/* Conditions section (hidden when 'no conditions') */}
+          {!noConditions && (
+            <>
+              {conditions.map((c, idx) => (
+                <View key={idx} style={s.cardInner}>
+                  <View style={s.cardHeader}>
+                    <Text style={s.cardTitle}>
+                      {t("elderlyConditions.conditionTitle", {
+                        index: idx + 1,
+                      })}
                     </Text>
-                  </Pressable>
+                    <Pressable
+                      onPress={() => removeCondition(idx)}
+                      disabled={conditions.length === 1}
+                      style={[
+                        s.removeBtn,
+                        conditions.length === 1 && { opacity: 0.4 },
+                      ]}
+                    >
+                      <Text style={s.removeBtnText}>
+                        {t("elderlyConditions.remove", "Remove")}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <TextInput
+                    placeholder={t(
+                      "elderlyConditions.conditionPH",
+                      "Condition (e.g., Diabetes)"
+                    )}
+                    placeholderTextColor="#9CA3AF"
+                    value={c.condition}
+                    onChangeText={(v) => setCond(idx, { condition: v })}
+                    style={s.input}
+                  />
+
+                  <TextInput
+                    placeholder={t("elderlyConditions.doctorPH", "Doctor")}
+                    placeholderTextColor="#9CA3AF"
+                    value={c.doctor}
+                    onChangeText={(v) => setCond(idx, { doctor: v })}
+                    style={s.input}
+                  />
+
+                  <TextInput
+                    placeholder={t(
+                      "elderlyConditions.clinicPH",
+                      "Clinic/Hospital"
+                    )}
+                    placeholderTextColor="#9CA3AF"
+                    value={c.clinic}
+                    onChangeText={(v) => setCond(idx, { clinic: v })}
+                    style={s.input}
+                  />
+
+                  <TextInput
+                    placeholder={t(
+                      "elderlyConditions.appointmentsPH",
+                      "Appointment notes"
+                    )}
+                    placeholderTextColor="#9CA3AF"
+                    value={c.appointments}
+                    onChangeText={(v) => setCond(idx, { appointments: v })}
+                    style={[s.input, s.multiline]}
+                    multiline
+                  />
+
+                  {/* Per-condition toggle: No medications for this condition */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 8,
+                      flexWrap: "wrap",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <CheckPill
+                      checked={c.noMeds}
+                      label={t(
+                        "elderlyConditions.noMedicationsForThis",
+                        "No medications for this condition"
+                      )}
+                      onPress={() => setCond(idx, { noMeds: !c.noMeds })}
+                    />
+                  </View>
+
+                  {/* Medication section hidden when per-condition 'noMeds' is true */}
+                  {!c.noMeds && (
+                    <>
+                      <Text style={s.subLabel}>
+                        {t("elderlyConditions.medsLabel", "Medications")}
+                      </Text>
+                      {c.meds.map((m, mIdx) => (
+                        <View key={mIdx} style={s.medRow}>
+                          <TextInput
+                            placeholder={t(
+                              "elderlyConditions.medNamePH",
+                              "Name"
+                            )}
+                            placeholderTextColor="#9CA3AF"
+                            value={m.name}
+                            onChangeText={(v) => setMed(idx, mIdx, { name: v })}
+                            style={[s.input, { flex: 1, marginBottom: 0 }]}
+                          />
+                          <View style={{ width: 8 }} />
+                          <TextInput
+                            placeholder={t(
+                              "elderlyConditions.medFreqPH",
+                              "Frequency"
+                            )}
+                            placeholderTextColor="#9CA3AF"
+                            value={m.frequency}
+                            onChangeText={(v) =>
+                              setMed(idx, mIdx, { frequency: v })
+                            }
+                            style={[s.input, { flex: 1, marginBottom: 0 }]}
+                          />
+                          <Pressable
+                            onPress={() => removeMed(idx, mIdx)}
+                            style={[s.smallBtn, { marginLeft: 8 }]}
+                          >
+                            <Text style={s.smallBtnText}>
+                              {t("elderlyConditions.removeMed", "Remove")}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                      <Pressable
+                        onPress={() => addMed(idx)}
+                        style={[s.addBtn, { marginTop: 8 }]}
+                      >
+                        <Text style={s.addBtnText}>
+                          {t("elderlyConditions.addMed", "Add medication")}
+                        </Text>
+                      </Pressable>
+                    </>
+                  )}
                 </View>
               ))}
-              <Pressable
-                onPress={() => addMed(idx)}
-                style={[s.addBtn, { marginTop: 8 }]}
-              >
+
+              <Pressable onPress={addCondition} style={s.addBtn}>
                 <Text style={s.addBtnText}>
-                  {t("elderlyConditions.addMed", "Add medication")}
+                  {t("elderlyConditions.addCondition", "Add condition")}
                 </Text>
               </Pressable>
-            </View>
-          ))}
-
-          <Pressable onPress={addCondition} style={s.addBtn}>
-            <Text style={s.addBtnText}>
-              {t("elderlyConditions.addCondition", "Add condition")}
-            </Text>
-          </Pressable>
+            </>
+          )}
 
           <Text style={[s.heading, { marginTop: 8 }]}>
             {t("elderlyConditions.assistive.label", "Assistive needs")}
@@ -548,4 +672,25 @@ const s = StyleSheet.create({
     alignSelf: "center",
   },
   smallBtnText: { color: "#EF4444", fontWeight: "700", fontSize: 12 },
+
+  // checkbox pill styles
+  checkPill: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  checkPillOn: {
+    backgroundColor: "#111827",
+    borderColor: "#111827",
+  },
+  checkPillText: {
+    color: "#111827",
+    fontWeight: "700",
+  },
+  checkPillTextOn: {
+    color: "#FFFFFF",
+  },
 });

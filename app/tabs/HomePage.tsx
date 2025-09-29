@@ -11,17 +11,23 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useAuth } from "../../src/auth/AuthProvider";
 import CheckinCard from "../../src/components/CheckinCard";
 import TopBar, { LangCode } from "../../src/components/TopBar";
+// ✅ Use the account-scoped hook (make sure the filename matches)
 import { useCheckins } from "../../src/hooks/useCheckIns";
+import { supabase } from "../../src/lib/supabase";
 
 export default function ElderlyHome() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { logout } = useAuth();
+  const { session, logout } = useAuth();
 
-  const { coins, weekChecks, todayChecked, checkInToday } = useCheckins();
+  // Pass userId so check-ins are per-account (and card turns green correctly)
+  const { coins, weekChecks, todayChecked, checkInToday } = useCheckins(
+    session?.userId
+  );
 
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
@@ -31,7 +37,23 @@ export default function ElderlyHome() {
   const handleCheckin = async () => {
     const res = await checkInToday();
     if (!res.ok) {
+      // Already checked today (or no-user)
       Alert.alert(t("home.checkedIn"), t("home.checkedIn"));
+      return;
+    }
+
+    // OPTIONAL: also mirror to Supabase for server-side rules/alerts
+    try {
+      if (session?.userId) {
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        await supabase.rpc("upsert_checkin_and_increment", {
+          p_user: session.userId,
+          p_day: today,
+        });
+      }
+    } catch (e) {
+      // swallow; local UI already updated
+      console.warn("check-in cloud sync failed:", (e as any)?.message || e);
     }
   };
 
@@ -64,32 +86,45 @@ export default function ElderlyHome() {
           onPressRewards={() => router.push("/tabs/Rewards")}
         />
 
-        {/* Feature buttons in 2 rows */}
+        {/* Row 1: Navigation + CC Activities */}
         <View style={s.row}>
           <Pressable
             style={s.rect}
             onPress={() => router.push("/tabs/Navigation")}
           >
-            <Ionicons name="business-outline" size={28} color="#222" />
-            <Text style={s.rectText}>{t("home.nearby")}</Text>
+            <Ionicons name="navigate-outline" size={28} color="#222" />
+            <Text style={s.rectText}>{t("home.navigation", "Navigation")}</Text>
           </Pressable>
+
           <Pressable
             style={s.rect}
             onPress={() => router.push("/tabs/Community")}
           >
-            <Ionicons name="people-circle-outline" size={28} color="#222" />
-            <Text style={s.rectText}>{t("home.activities")}</Text>
+            <Ionicons name="people-outline" size={28} color="#222" />
+            <Text style={s.rectText}>
+              {t("home.ccActivities", "CC Activities")}
+            </Text>
           </Pressable>
         </View>
 
+        {/* Row 2: Profile + Walking Routes */}
         <View style={s.row}>
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Health")}>
-            <Ionicons name="calendar-outline" size={28} color="#222" />
-            <Text style={s.rectText}>{t("home.appt")}</Text>
+          <Pressable
+            style={s.rect}
+            onPress={() => router.push("/tabs/Profile")}
+          >
+            <Ionicons name="person-circle-outline" size={28} color="#222" />
+            <Text style={s.rectText}>{t("home.profile", "Profile")}</Text>
           </Pressable>
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Health")}>
-            <Ionicons name="medkit-outline" size={28} color="#222" />
-            <Text style={s.rectText}>{t("home.meds")}</Text>
+
+          <Pressable
+            style={s.rect}
+            onPress={() => router.push("/tabs/Walking")}
+          >
+            <Ionicons name="walk-outline" size={28} color="#222" />
+            <Text style={s.rectText}>
+              {t("home.walkingRoutes", "Walking Routes")}
+            </Text>
           </Pressable>
         </View>
 

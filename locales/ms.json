@@ -26,7 +26,6 @@
       "login": "Log masuk"
     }
   },
-
   "alerts": {
     "codeSentTitle": "Kod dihantar",
     "codeSentBody": "Buat masa ini gunakan 123456 (olokan).",
@@ -43,7 +42,6 @@
     "noAccountTitle": "Akaun tidak ditemui",
     "noAccountBody": "Anda akan dialihkan ke halaman pendaftaran."
   },
-
   "elderlyOnboarding": {
     "title": "Sila isi maklumat berikut",
     "namePH": "Nama penuh",
@@ -62,7 +60,6 @@
     "ecPhonePH": "Telefon kenalan kecemasan",
     "ecEmailPH": "Emel kenalan kecemasan (pilihan)"
   },
-
   "elderlyConditions": {
     "title": "Keadaan Kesihatan",
     "conditionTitle": "Keadaan {{index}}",
@@ -90,20 +87,32 @@
       "otherPH": "Sila nyatakan (cth: palang sokongan di rumah)"
     },
     "drugAllergiesPH": "Sebarang alahan ubat atau reaksi buruk yang diketahui",
-    "publicNotePH": "Nota kepada orang awam (cth: hubungi nombor ini jika ditemui dalam keadaan keliru)"
+    "publicNotePH": "Nota kepada orang awam (cth: hubungi nombor ini jika ditemui dalam keadaan keliru)",
+    "noConditions": "Tiada keadaan",
+    "noMedicationsForThis": "Tiada ubat untuk keadaan ini",
+    "errors": {
+      "invalidMed": "Nama ubat dan kekerapan tidak boleh kosong.",
+      "missingConditionName": "Sila masukkan sekurang-kurangnya satu nama keadaan (atau tandakan 'Tiada keadaan').",
+      "saveFailed": "Tidak dapat menyimpan. Sila cuba lagi."
+    }
   },
-
   "home": {
     "imActive": "Saya Aktif",
     "tapToCheckIn": "Ketuk untuk daftar hadir",
     "checkedIn": "Sudah daftar hadir hari ini",
-    "nearby": "Kemudahan Berdekatan",
-    "activities": "Aktiviti Komuniti",
-    "appt": "Peringatan Temu Janji",
-    "meds": "Peringatan Ubat",
-    "sos": "SOS"
-  },
 
+    "navigation": "Navigasi",
+    "ccActivities": "Aktiviti CC",
+    "profile": "Profil",
+    "walkingRoutes": "Laluan Berjalan",
+
+    "sos": "SOS",
+
+    "nearby": "Navigasi",
+    "activities": "Aktiviti CC",
+    "appt": "Profil",
+    "meds": "Laluan Berjalan"
+  },
   "profile": {
     "basicInfo": "Maklumat Asas",
     "editBasic": "Edit butiran asas",
@@ -134,17 +143,16 @@
     "ccActivities": "Tunjukkan aktiviti komuniti berdekatan",
     "viewActivities": "Lihat aktiviti"
   },
-
   "rewards": {
     "button": "Ganjaran",
     "coin": "syiling",
     "coins": "syiling"
   },
-
   "common": {
     "on": "Hidup",
     "off": "Mati",
-    "ok": "OK"
+    "ok": "OK",
+    "notLoggedIn": "Belum log masuk",
+    "pleaseLoginAgain": "Sila log masuk semula."
   }
 }
-

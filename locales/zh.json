@@ -26,7 +26,6 @@
       "login": "登录"
     }
   },
-
   "alerts": {
     "codeSentTitle": "验证码已发送",
     "codeSentBody": "目前请使用 123456（模拟）。",
@@ -43,7 +42,6 @@
     "noAccountTitle": "未找到账户",
     "noAccountBody": "将为您跳转到注册页面。"
   },
-
   "elderlyOnboarding": {
     "title": "请填写以下信息",
     "namePH": "姓名",
@@ -62,7 +60,6 @@
     "ecPhonePH": "紧急联系人电话",
     "ecEmailPH": "紧急联系人邮箱（可选）"
   },
-
   "elderlyConditions": {
     "title": "健康状况",
     "conditionTitle": "病况 {{index}}",
@@ -90,18 +87,32 @@
       "otherPH": "请说明（例如：家中安装扶手）"
     },
     "drugAllergiesPH": "任何已知药物过敏或不良反应",
-    "publicNotePH": "给公众的备注（例如：若迷路请拨打此号码）"
+    "publicNotePH": "给公众的备注（例如：若迷路请拨打此号码）",
+    "noConditions": "无病况",
+    "noMedicationsForThis": "此病况无用药",
+    "errors": {
+      "invalidMed": "药物名称和频率不能为空。",
+      "missingConditionName": "请至少填写一个病症名称（或勾选“无病况”）。",
+      "saveFailed": "保存失败，请重试。"
+    }
   },
 
   "home": {
     "imActive": "我很活跃",
     "tapToCheckIn": "点此签到",
     "checkedIn": "今日已签到",
-    "nearby": "附近设施",
-    "activities": "社区活动",
-    "appt": "就诊提醒",
-    "meds": "用药提醒",
-    "sos": "SOS"
+
+    "navigation": "导航",
+    "ccActivities": "CC 活动",
+    "profile": "个人资料",
+    "walkingRoutes": "步行路线",
+
+    "sos": "SOS",
+
+    "nearby": "导航",
+    "activities": "CC 活动",
+    "appt": "个人资料",
+    "meds": "步行路线"
   },
 
   "profile": {
@@ -134,17 +145,16 @@
     "ccActivities": "显示附近社区活动",
     "viewActivities": "查看活动"
   },
-
   "rewards": {
     "button": "奖励",
     "coin": "金币",
     "coins": "金币"
   },
-
   "common": {
     "on": "开",
     "off": "关",
-    "ok": "好的"
+    "ok": "好的",
+    "notLoggedIn": "未登录",
+    "pleaseLoginAgain": "请重新登录。"
   }
 }
-

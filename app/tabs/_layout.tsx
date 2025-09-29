@@ -10,18 +10,19 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Navigation"
         options={{
-          title: "Navi",
+          title: "Navigation",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="navigate-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="Health"
+        name="Walking"
         options={{
-          title: "Health",
+          title: "Walking Routes",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart-outline" color={color} size={size} />
+            <Ionicons name="walk-outline" color={color} size={size} />
+            // If your Ionicons build lacks "walk-outline", use "footsteps-outline"
           ),
         }}
       />
@@ -37,7 +38,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Community"
         options={{
-          title: "Community",
+          title: "CC Activities",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" color={color} size={size} />
           ),
@@ -48,7 +49,7 @@ export default function ElderlyTabs() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" color={color} size={size} />
+            <Ionicons name="person-circle-outline" color={color} size={size} />
           ),
         }}
       />

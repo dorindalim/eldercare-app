@@ -90,19 +90,35 @@
       "otherPH": "Please specify (e.g., grab bar at home)"
     },
     "drugAllergiesPH": "Any known drug allergies?",
-    "publicNotePH": "Note to public (e.g., please call this number if found disoriented)"
+    "publicNotePH": "Note to public (e.g., please call this number if found disoriented)",
+
+    "noConditions": "No conditions",
+    "noMedicationsForThis": "No medications for this condition",
+
+    "errors": {
+      "invalidMed": "Medication name and frequency cannot be empty.",
+      "missingConditionName": "Please enter at least one condition name (or tick 'No conditions').",
+      "saveFailed": "Could not save. Please try again."
+    }
   },
 
-  "home": {
-    "imActive": "I’m Active",
-    "tapToCheckIn": "Tap to check in",
-    "checkedIn": "Checked in today",
-    "nearby": "Nearby Facilities",
-    "activities": "Community Activities",
-    "appt": "Appointment Reminders",
-    "meds": "Medication Reminders",
-    "sos": "SOS"
-  },
+"home": {
+  "imActive": "I’m Active",
+  "tapToCheckIn": "Tap to check in",
+  "checkedIn": "Checked in today",
+
+  "navigation": "Navigation",
+  "ccActivities": "CC Activities",
+  "profile": "Profile",
+  "walkingRoutes": "Walking Routes",
+
+  "sos": "SOS",
+
+  "nearby": "Navigation",
+  "activities": "CC Activities",
+  "appt": "Profile",
+  "meds": "Walking Routes"
+},
 
   "profile": {
     "basicInfo": "Basic Information",
@@ -146,6 +162,8 @@
     "off": "Off",
     "ok": "OK",
     "save": "Save",
-    "cancel": "Cancel"
-  }
+    "cancel": "Cancel",
+    "notLoggedIn": "Not logged in",
+    "pleaseLoginAgain": "Please log in again."
+    }
 }
