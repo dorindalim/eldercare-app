@@ -127,22 +127,18 @@
   function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
     const wrap = document.createElement('div'); wrap.className='card';
 
-    // header inputs
     const t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
     const d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
     const cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
     const ap=document.createElement('textarea'); ap.placeholder='Appointment notes'; ap.value=c.appointments||'';
 
-    // per-condition "No medications" chip
     const togglesRow = document.createElement('div'); togglesRow.className='row';
     const noMedsChip = document.createElement('span'); noMedsChip.className='chip'; noMedsChip.textContent='No medications for this condition';
     togglesRow.appendChild(noMedsChip);
 
-    // meds UI
     const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
     const medsWrap=document.createElement('div');
 
-    // infer initial noMeds if only NIL med present
     const initialNoMeds = Array.isArray(c.medications)
       && c.medications.length===1
       && String(c.medications[0]?.name).toUpperCase()==='NIL';
@@ -155,7 +151,6 @@
       medsWrap.appendChild(medRow({name:'',frequency:''}));
     }
 
-    // toggle handler
     function setNoMeds(on) {
       if (on) {
         noMedsChip.classList.add('active');
@@ -171,13 +166,10 @@
     setNoMeds(initialNoMeds);
     noMedsChip.onclick = ()=> setNoMeds(!noMedsChip.classList.contains('active'));
 
-    // remove condition button
     const rmC=document.createElement('button'); rmC.textContent='Remove condition'; rmC.className='btn secondary'; rmC.style.marginTop='6px'; rmC.onclick=()=>wrap.remove();
 
-    // compose
     wrap.append(t,d,cl,ap,togglesRow,medsLabel,medsWrap,rmC);
 
-    // collector
     wrap._get=()=>({
       condition: t.value.trim()||null,
       doctor: d.value.trim()||null,
@@ -236,24 +228,26 @@
     return picks;
   }
 
-  // --- Normalize RPC payload shape & read flat emergency_* fields ---
-  function normalizeData(d) {
-    const root = Array.isArray(d) ? (d[0] || {}) : (d || {});
-    const profile =
-      root.profile ??
-      root.profiles ??
-      root.elderly_profiles ??
-      root.row ??
-      root;
-    return { root, profile };
-  }
-  function extractEmergencyFlat(profile = {}) {
-    return {
-      name:     profile.emergency_name ?? '',
-      relation: profile.emergency_relation ?? '',
-      phone:    profile.emergency_phone ?? '',
-      email:    profile.emergency_email ?? ''
-    };
+  // ---- Robustly find the profile row that actually holds emergency_* fields
+  function findObjWithEmergencyKeys(obj) {
+    const keys = ['emergency_name','emergency_relation','emergency_phone','emergency_email'];
+    let found = null;
+
+    function walk(o, depth=0) {
+      if (!o || typeof o !== 'object' || depth > 5 || found) return;
+      // if this object has any emergency_* key, treat it as the profile row
+      if (keys.some(k => Object.prototype.hasOwnProperty.call(o, k))) {
+        found = o;
+        return;
+      }
+      if (Array.isArray(o)) {
+        for (const item of o) walk(item, depth + 1);
+      } else {
+        for (const v of Object.values(o)) walk(v, depth + 1);
+      }
+    }
+    walk(obj);
+    return found || {};
   }
 
   function setNoConditionsUI(on) {
@@ -274,16 +268,16 @@
     el('status').textContent='';
     el('main').style.display='';
 
-    const { root, profile } = normalizeData(resp);
+    // 1) Find the row that actually contains emergency_* (no assumptions about key names)
+    const profile = findObjWithEmergencyKeys(resp);
 
-    // Emergency contact
-    const em = extractEmergencyFlat(profile);
-    el('ec_name').value     = em.name || '';
-    el('ec_relation').value = em.relation || '';
-    el('ec_phone').value    = em.phone || '';
-    el('ec_email').value    = em.email || '';
+    // 2) EC fields (no fallback to person's name)
+    el('ec_name').value     = profile.emergency_name     || '';
+    el('ec_relation').value = profile.emergency_relation || '';
+    el('ec_phone').value    = profile.emergency_phone    || '';
+    el('ec_email').value    = profile.emergency_email    || '';
 
-    // Extras
+    // 3) Extras (taken from the same row if present)
     el('drug_allergies').value = profile.drug_allergies || '';
     el('public_note').value    = profile.public_note || '';
     const raw = Array.isArray(profile.assistive_needs) ? profile.assistive_needs : [];
@@ -298,12 +292,14 @@
       ? String(raw.find(v=>String(v).startsWith('other:'))).replace(/^other:/,'')
       : '';
 
-    // Conditions
+    // 4) Conditions (accept various shapes; fall back to empty/NIL UI rules)
     const list = el('conds'); list.innerHTML='';
-    const incoming = (Array.isArray(root.conditions) ? root.conditions
-                    : (resp?.conditions?.length ? resp.conditions : null));
+    const root = Array.isArray(resp) ? (resp[0] || {}) : (resp || {});
+    const incoming =
+      (Array.isArray(root.conditions) && root.conditions) ||
+      (Array.isArray(resp?.conditions) && resp.conditions) ||
+      null;
 
-    // If API returned exactly one NIL condition, default noConditions UI on; otherwise off.
     const isSingleNil =
       Array.isArray(incoming) && incoming.length===1 &&
       String(incoming[0]?.condition).toUpperCase()==='NIL';
@@ -311,14 +307,13 @@
     setNoConditionsUI(isSingleNil);
 
     const initialConds = isSingleNil
-      ? [] // hide list by default
+      ? []
       : (incoming && incoming.length ? incoming : [{ medications:[{name:'',frequency:''}] }]);
 
     initialConds.forEach(c=> list.appendChild(condBlock(c)));
 
-    // Add condition button
     el('addCond').onclick = ()=> {
-      if (noConditions) setNoConditionsUI(false); // auto-unhide if user adds
+      if (noConditions) setNoConditionsUI(false);
       list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
     };
   }
@@ -336,7 +331,6 @@
 
     let { data, error } = await rpcGet(pinHash);
     if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-      // show PIN UI
       el('status').textContent='This link is protected by a PIN.';
       el('pinBlock').style.display='';
       el('pinUseBtn').onclick = async () => {
@@ -372,13 +366,11 @@
 
       let conditions;
       if (noConditions || list.length===0) {
-        // save a single NIL condition with NIL med
         conditions = [ { ...NIL_COND } ];
       } else {
         conditions = list.map(n=>n._get()).filter(c =>
           c.condition || (c.medications && c.medications.length) || c.doctor || c.clinic || c.appointments
         );
-        // If user left everything blank but didn't toggle "No conditions", still protect by sending NIL:
         if (!conditions.length) conditions = [ { ...NIL_COND } ];
       }
 
@@ -397,7 +389,6 @@
         conditions
       };
 
-      // PIN hash from local cache
       const pin = localStorage.getItem('ec_pin_'+token) || '';
       const h = await sha256Hex(pin || '');
       const { error: e } = await rpcSave(h, payload);
