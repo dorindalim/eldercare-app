@@ -85,73 +85,85 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+  // Show JS errors in the UI so it's easier to spot issues
+  window.addEventListener("error", function (e) {
+    var s = document.getElementById("status");
+    if (s) s.textContent = "Error: " + (e && e.message ? e.message : String(e));
+  });
+
   // --- Supabase init ---
-  const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";
-  const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
-  const supabase = createClient(PROJECT_URL, ANON_KEY);
+  var PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";
+  var ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
+  var supabase = createClient(PROJECT_URL, ANON_KEY);
 
   // --- Helpers & constants ---
-  const token = new URLSearchParams(location.search).get('token') || '';
-  const assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
-  const labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
+  var params = new URLSearchParams(location.search);
+  var token = params.get('token') || '';
+  var assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
+  var labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
 
-  const el = id => document.getElementById(id);
-  const NIL_MED = { name:'NIL', frequency:'NIL' };
-  const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
+  function el(id){ return document.getElementById(id); }
+  var NIL_MED = { name:'NIL', frequency:'NIL' };
+  var NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{name:'NIL',frequency:'NIL'}] };
 
-  let noConditions = false; // global toggle
+  var noConditions = false; // global toggle
 
   function chip(parent, key, active) {
-    const span = document.createElement('span');
+    var span = document.createElement('span');
     span.className = 'chip' + (active ? ' active':'');
     span.textContent = labels[key];
-    span.onclick = () => {
+    span.onclick = function(){
       span.classList.toggle('active');
-      if (key==='other') document.getElementById('assistive_other_wrap').style.display =
-        span.classList.contains('active') ? '' : 'none';
+      if (key==='other') {
+        var ow = document.getElementById('assistive_other_wrap');
+        if (ow) ow.style.display = span.classList.contains('active') ? '' : 'none';
+      }
     };
     parent.appendChild(span);
   }
 
-  function medRow(m={name:'',frequency:''}) {
-    const row = document.createElement('div');
+  function medRow(m){
+    if (!m) m = {name:'',frequency:''};
+    var row = document.createElement('div');
     row.className='medrow';
-    const n = document.createElement('input'); n.placeholder='Medication name'; n.value=m.name||'';
-    const f = document.createElement('input'); f.placeholder='Frequency (e.g., 1 tab AM/PM)'; f.value=m.frequency||'';
-    const rm= document.createElement('button'); rm.textContent='Remove'; rm.className='btn secondary'; rm.onclick=()=>row.remove();
-    row.append(n,f,rm);
+    var n = document.createElement('input'); n.placeholder='Medication name'; n.value=m.name||'';
+    var f = document.createElement('input'); f.placeholder='Frequency (e.g., 1 tab AM/PM)'; f.value=m.frequency||'';
+    var rm= document.createElement('button'); rm.textContent='Remove'; rm.className='btn secondary'; rm.onclick=function(){ row.remove(); };
+    row.appendChild(n); row.appendChild(f); row.appendChild(rm);
     return row;
   }
 
   // Per-condition block (includes per-condition "No medications" toggle)
-  function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
-    const wrap = document.createElement('div'); wrap.className='card';
+  function condBlock(c){
+    if (!c) c = {condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]};
 
-    const t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
-    const d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
-    const cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
-    const ap=document.createElement('textarea'); ap.placeholder='Appointment notes'; ap.value=c.appointments||'';
+    var wrap = document.createElement('div'); wrap.className='card';
 
-    const togglesRow = document.createElement('div'); togglesRow.className='row';
-    const noMedsChip = document.createElement('span'); noMedsChip.className='chip'; noMedsChip.textContent='No medications for this condition';
+    var t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
+    var d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
+    var cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
+    var ap=document.createElement('textarea'); ap.placeholder='Appointment notes'; ap.value=c.appointments||'';
+
+    var togglesRow = document.createElement('div'); togglesRow.className='row';
+    var noMedsChip = document.createElement('span'); noMedsChip.className='chip'; noMedsChip.textContent='No medications for this condition';
     togglesRow.appendChild(noMedsChip);
 
-    const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
-    const medsWrap=document.createElement('div');
+    var medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
+    var medsWrap=document.createElement('div');
 
-    const initialNoMeds = Array.isArray(c.medications)
-      && c.medications.length===1
-      && String(c.medications[0]?.name).toUpperCase()==='NIL';
+    var initialNoMeds = (c.medications && c.medications.length===1 &&
+                         String((c.medications[0]||{}).name).toUpperCase()==='NIL');
 
-    if (c.medications?.length) {
-      (c.medications).forEach(m=> {
+    if (c.medications && c.medications.length) {
+      for (var i=0;i<c.medications.length;i++){
+        var m = c.medications[i];
         if (!initialNoMeds) medsWrap.appendChild(medRow(m));
-      });
+      }
     } else {
       medsWrap.appendChild(medRow({name:'',frequency:''}));
     }
 
-    function setNoMeds(on) {
+    function setNoMeds(on){
       if (on) {
         noMedsChip.classList.add('active');
         medsLabel.style.display='none';
@@ -164,217 +176,260 @@
       }
     }
     setNoMeds(initialNoMeds);
-    noMedsChip.onclick = ()=> setNoMeds(!noMedsChip.classList.contains('active'));
+    noMedsChip.onclick = function(){ setNoMeds(!noMedsChip.classList.contains('active')); };
 
-    const rmC=document.createElement('button'); rmC.textContent='Remove condition'; rmC.className='btn secondary'; rmC.style.marginTop='6px'; rmC.onclick=()=>wrap.remove();
+    var rmC=document.createElement('button'); rmC.textContent='Remove condition';
+    rmC.className='btn secondary'; rmC.style.marginTop='6px'; rmC.onclick=function(){ wrap.remove(); };
 
-    wrap.append(t,d,cl,ap,togglesRow,medsLabel,medsWrap,rmC);
+    wrap.appendChild(t); wrap.appendChild(d); wrap.appendChild(cl); wrap.appendChild(ap);
+    wrap.appendChild(togglesRow); wrap.appendChild(medsLabel); wrap.appendChild(medsWrap); wrap.appendChild(rmC);
 
-    wrap._get=()=>({
-      condition: t.value.trim()||null,
-      doctor: d.value.trim()||null,
-      clinic: cl.value.trim()||null,
-      appointments: ap.value.trim()||null,
-      medications: noMedsChip.classList.contains('active')
-        ? [{...NIL_MED}]
-        : [...medsWrap.children].map(r=>{
-            const [n,f]=r.querySelectorAll('input');
-            const name=(n.value||'').trim();
-            const frequency=(f.value||'').trim();
-            return name ? { name, frequency: frequency||null } : null;
-          }).filter(Boolean)
-    });
+    wrap._get=function(){
+      var meds = [];
+      if (noMedsChip.classList.contains('active')) {
+        meds = [{ name:'NIL', frequency:'NIL' }];
+      } else {
+        var rows = medsWrap.children;
+        for (var j=0;j<rows.length;j++){
+          var inputs = rows[j].getElementsByTagName('input');
+          var n = (inputs[0] && inputs[0].value ? inputs[0].value.trim() : '');
+          var f = (inputs[1] && inputs[1].value ? inputs[1].value.trim() : '');
+          if (n) meds.push({ name: n, frequency: f || null });
+        }
+      }
+      return {
+        condition: t.value.trim()||null,
+        doctor: d.value.trim()||null,
+        clinic: cl.value.trim()||null,
+        appointments: ap.value.trim()||null,
+        medications: meds
+      };
+    };
 
     return wrap;
   }
 
-  async function sha256Hex(s) {
-    const b = new TextEncoder().encode(s);
-    const h = await crypto.subtle.digest('SHA-256', b);
-    return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  function sha256Hex(s){
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
+      .then(function(h){ return Array.from(new Uint8Array(h)).map(function(x){return x.toString(16).padStart(2,'0');}).join(''); });
   }
 
   // --- RPC wrappers ---
-  async function rpcGet(pinHash) {
-    const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
-    return { data, error };
-  }
-  async function rpcSetPin(pinHash) {
-    const { data, error } = await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
-    return { data, error };
-  }
-  async function rpcSave(pinHash, payload) {
-    const { data, error } = await supabase.rpc('ec_save_portal', {
+  function rpcGet(pinHash){ return supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash }); }
+  function rpcSetPin(pinHash){ return supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash }); }
+  function rpcSave(pinHash, payload){
+    return supabase.rpc('ec_save_portal', {
       p_token: token,
       p_pin_hash: pinHash,
       p_emergency: payload.emergency,
       p_extras: payload.extras,
       p_conditions: payload.conditions
     });
-    return { data, error };
   }
 
-  function gatherAssistive() {
-    const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=> {
-      const label = ch.textContent;
-      const key = Object.entries(labels).find(([,v])=>v===label)?.[0] || label;
-      return key;
-    });
-    if (picks.includes('other')) {
-      const other = el('assistive_other').value.trim();
-      if (other) picks.push('other:'+other);
-      return picks.filter(p=>p!=='other');
-    }
-    return picks;
-  }
+  // ---- Robust finders (no optional chaining)
+  function findObjWithEmergencyKeys(obj){
+    var keys = ['emergency_name','emergency_relation','emergency_phone','emergency_email'];
+    var found = null;
+    function walk(o, depth){
+      if (found) return;
+      if (depth > 6) return;
+      if (!o || typeof o !== 'object') return;
 
-  // ---- Robustly find the profile row that actually holds emergency_* fields
-  function findObjWithEmergencyKeys(obj) {
-    const keys = ['emergency_name','emergency_relation','emergency_phone','emergency_email'];
-    let found = null;
-
-    function walk(o, depth=0) {
-      if (!o || typeof o !== 'object' || depth > 5 || found) return;
-      // if this object has any emergency_* key, treat it as the profile row
-      if (keys.some(k => Object.prototype.hasOwnProperty.call(o, k))) {
-        found = o;
-        return;
+      var hasAny = false;
+      for (var i=0;i<keys.length;i++){
+        if (Object.prototype.hasOwnProperty.call(o, keys[i])) { hasAny = true; break; }
       }
+      if (hasAny) { found = o; return; }
+
       if (Array.isArray(o)) {
-        for (const item of o) walk(item, depth + 1);
+        for (var a=0;a<o.length;a++) walk(o[a], depth+1);
       } else {
-        for (const v of Object.values(o)) walk(v, depth + 1);
+        var vals = Object.keys(o);
+        for (var k=0;k<vals.length;k++) walk(o[vals[k]], depth+1);
       }
     }
-    walk(obj);
+    walk(obj, 0);
     return found || {};
   }
 
-  function setNoConditionsUI(on) {
-    noConditions = !!on;
-    const note = el('noCondsNote');
-    const list = el('conds');
-    if (on) {
-      note.style.display = '';
-      list.style.display = 'none';
-    } else {
-      note.style.display = 'none';
-      list.style.display = '';
+  function findConditionsArray(obj){
+    var out = null;
+    function walk(o, depth){
+      if (out) return;
+      if (depth > 6) return;
+      if (!o || typeof o !== 'object') return;
+
+      if (Array.isArray(o) && o.length && typeof o[0] === 'object' && o[0] !== null && Object.prototype.hasOwnProperty.call(o[0], 'condition')) {
+        out = o; return;
+      }
+
+      if (Array.isArray(o)) {
+        for (var a=0;a<o.length;a++) walk(o[a], depth+1);
+      } else {
+        var vals = Object.keys(o);
+        for (var k=0;k<vals.length;k++) walk(o[vals[k]], depth+1);
+      }
     }
-    el('noCondsChip').classList.toggle('active', on);
+    walk(obj, 0);
+    return out;
   }
 
-  function render(resp) {
-    el('status').textContent='';
-    el('main').style.display='';
+  function setNoConditionsUI(on){
+    noConditions = !!on;
+    var note = el('noCondsNote');
+    var list = el('conds');
+    if (note) note.style.display = on ? '' : 'none';
+    if (list) list.style.display = on ? 'none' : '';
+    var chip = el('noCondsChip');
+    if (chip) chip.classList.toggle('active', on);
+  }
 
-    // 1) Find the row that actually contains emergency_* (no assumptions about key names)
-    const profile = findObjWithEmergencyKeys(resp);
+  function render(resp){
+    console.log('RPC payload:', resp);
+    var status = el('status');
+    if (status) status.textContent = '';
+    var main = el('main');
+    if (main) main.style.display = '';
 
-    // 2) EC fields (no fallback to person's name)
-    el('ec_name').value     = profile.emergency_name     || '';
-    el('ec_relation').value = profile.emergency_relation || '';
-    el('ec_phone').value    = profile.emergency_phone    || '';
-    el('ec_email').value    = profile.emergency_email    || '';
+    // 1) Profile row with emergency_* fields
+    var profile = findObjWithEmergencyKeys(resp);
 
-    // 3) Extras (taken from the same row if present)
-    el('drug_allergies').value = profile.drug_allergies || '';
-    el('public_note').value    = profile.public_note || '';
-    const raw = Array.isArray(profile.assistive_needs) ? profile.assistive_needs : [];
-    const showOther = raw.some(v=>String(v).startsWith('other:'));
-    const assistDiv = el('assistive'); assistDiv.innerHTML='';
-    assistiveKeys.forEach(k=>{
-      const active = k==='other' ? showOther : raw.includes(k);
+    el('ec_name').value     = profile.emergency_name     ? String(profile.emergency_name) : '';
+    el('ec_relation').value = profile.emergency_relation ? String(profile.emergency_relation) : '';
+    el('ec_phone').value    = profile.emergency_phone    ? String(profile.emergency_phone) : '';
+    el('ec_email').value    = profile.emergency_email    ? String(profile.emergency_email) : '';
+
+    // 2) Extras
+    el('drug_allergies').value = profile.drug_allergies ? String(profile.drug_allergies) : '';
+    el('public_note').value    = profile.public_note ? String(profile.public_note) : '';
+    var raw = (profile.assistive_needs && Array.isArray(profile.assistive_needs)) ? profile.assistive_needs : [];
+    var showOther = false;
+    for (var i=0;i<raw.length;i++){ if (String(raw[i]).indexOf('other:')===0) { showOther = true; break; } }
+    var assistDiv = el('assistive'); if (assistDiv) assistDiv.innerHTML='';
+    for (var j=0;j<assistiveKeys.length;j++){
+      var k = assistiveKeys[j];
+      var active = (k==='other') ? showOther : (raw.indexOf(k) >= 0);
       chip(assistDiv, k, active);
-    });
-    el('assistive_other_wrap').style.display = showOther ? '' : 'none';
-    el('assistive_other').value = showOther
-      ? String(raw.find(v=>String(v).startsWith('other:'))).replace(/^other:/,'')
-      : '';
+    }
+    var otherWrap = el('assistive_other_wrap');
+    if (otherWrap) otherWrap.style.display = showOther ? '' : 'none';
+    var otherInput = el('assistive_other');
+    if (otherInput) {
+      var otherVal = '';
+      for (var r=0;r<raw.length;r++){
+        if (String(raw[r]).indexOf('other:')===0) { otherVal = String(raw[r]).replace(/^other:/,''); break; }
+      }
+      otherInput.value = otherVal;
+    }
 
-    // 4) Conditions (accept various shapes; fall back to empty/NIL UI rules)
-    const list = el('conds'); list.innerHTML='';
-    const root = Array.isArray(resp) ? (resp[0] || {}) : (resp || {});
-    const incoming =
-      (Array.isArray(root.conditions) && root.conditions) ||
-      (Array.isArray(resp?.conditions) && resp.conditions) ||
-      null;
+    // 3) Conditions
+    var list = el('conds'); if (list) list.innerHTML='';
+    var incoming = findConditionsArray(resp);
 
-    const isSingleNil =
-      Array.isArray(incoming) && incoming.length===1 &&
-      String(incoming[0]?.condition).toUpperCase()==='NIL';
+    var isSingleNil = false;
+    if (incoming && incoming.length===1) {
+      var c0 = incoming[0] || {};
+      if (String(c0.condition || '').toUpperCase() === 'NIL') isSingleNil = true;
+    }
 
     setNoConditionsUI(isSingleNil);
 
-    const initialConds = isSingleNil
-      ? []
-      : (incoming && incoming.length ? incoming : [{ medications:[{name:'',frequency:''}] }]);
+    var initialConds = [];
+    if (!isSingleNil) {
+      if (incoming && incoming.length) initialConds = incoming;
+      else initialConds = [{ medications:[{name:'',frequency:''}] }];
+    }
 
-    initialConds.forEach(c=> list.appendChild(condBlock(c)));
+    for (var m=0;m<initialConds.length;m++){
+      list.appendChild(condBlock(initialConds[m]));
+    }
 
-    el('addCond').onclick = ()=> {
+    el('addCond').onclick = function(){
       if (noConditions) setNoConditionsUI(false);
       list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
     };
   }
 
   // --- Boot ---
-  (async function boot(){
-    const noCondsChip = el('noCondsChip');
-    noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
+  (function boot(){
+    var noCondsChip = el('noCondsChip');
+    if (noCondsChip) noCondsChip.onclick = function(){ setNoConditionsUI(!noConditions); };
 
-    if (!token) { el('status').textContent='Missing token'; return; }
+    if (!token) { var st = el('status'); if (st) st.textContent='Missing token in URL'; return; }
 
     // try cached pin
-    let pin = localStorage.getItem('ec_pin_'+token) || '';
-    let pinHash = pin ? await sha256Hex(pin) : '';
-
-    let { data, error } = await rpcGet(pinHash);
-    if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-      el('status').textContent='This link is protected by a PIN.';
-      el('pinBlock').style.display='';
-      el('pinUseBtn').onclick = async () => {
-        const p = el('pinInput').value.trim();
-        if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
-        const h = await sha256Hex(p);
-        const r = await rpcGet(h);
-        if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        el('pinBlock').style.display='none'; render(r.data);
-      };
-      el('pinSetBtn').onclick = async () => {
-        const p = el('pinInput').value.trim();
-        if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
-        const h = await sha256Hex(p);
-        const r = await rpcSetPin(h);
-        if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to set PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        const g = await rpcGet(h); render(g.data);
-        el('pinBlock').style.display='none';
-      };
-      return;
-    }
-
-    if (error) { el('status').textContent = error.message || 'Failed to load'; return; }
-    el('status').textContent=''; render(data);
+    var pin = localStorage.getItem('ec_pin_'+token) || '';
+    sha256Hex(pin).then(function(pinHash){
+      return rpcGet(pinHash);
+    }).then(function(res){
+      var data = res && res.data;
+      var error = res && res.error;
+      if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
+        var status = el('status'); if (status) status.textContent='This link is protected by a PIN.';
+        var pinBlock = el('pinBlock'); if (pinBlock) pinBlock.style.display='';
+        el('pinUseBtn').onclick = function(){
+          var p = el('pinInput').value.trim();
+          var msg = el('pinMsg');
+          if (p.length < 4) { if (msg) msg.textContent='PIN must be 4+ digits'; return; }
+          sha256Hex(p).then(function(h){
+            return rpcGet(h).then(function(r){
+              if (r.error) { if (msg) msg.textContent = r.error.message || 'Wrong PIN'; return; }
+              localStorage.setItem('ec_pin_'+token, p);
+              el('pinBlock').style.display='none';
+              render(r.data);
+            });
+          });
+        };
+        el('pinSetBtn').onclick = function(){
+          var p = el('pinInput').value.trim();
+          var msg = el('pinMsg');
+          if (p.length < 4) { if (msg) msg.textContent='PIN must be 4+ digits'; return; }
+          sha256Hex(p).then(function(h){
+            return rpcSetPin(h).then(function(r){
+              if (r.error) { if (msg) msg.textContent = r.error.message || 'Failed to set PIN'; return; }
+              localStorage.setItem('ec_pin_'+token, p);
+              return rpcGet(h).then(function(g){
+                el('pinBlock').style.display='none';
+                render(g.data);
+              });
+            });
+          });
+        };
+        return;
+      }
+      if (error) { var st2 = el('status'); if (st2) st2.textContent = (error.message || 'Failed to load'); return; }
+      var st3 = el('status'); if (st3) st3.textContent='';
+      render(data);
+    }).catch(function(err){
+      var st = el('status'); if (st) st.textContent = 'Load failed: ' + (err && err.message ? err.message : String(err));
+      console.error('Boot error:', err);
+    });
 
     // save handler
-    el('saveBtn').onclick = async () => {
+    el('saveBtn').onclick = function(){
       el('saveMsg').textContent='Saving…';
 
-      const list = [...document.querySelectorAll('#conds > .card')];
+      var list = document.querySelectorAll('#conds > .card');
 
-      let conditions;
+      var conditions;
       if (noConditions || list.length===0) {
-        conditions = [ { ...NIL_COND } ];
+        conditions = [ { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{name:'NIL',frequency:'NIL'}] } ];
       } else {
-        conditions = list.map(n=>n._get()).filter(c =>
-          c.condition || (c.medications && c.medications.length) || c.doctor || c.clinic || c.appointments
-        );
-        if (!conditions.length) conditions = [ { ...NIL_COND } ];
+        conditions = [];
+        for (var i=0;i<list.length;i++){
+          var node = list[i];
+          if (node && typeof node._get === 'function') {
+            var c = node._get();
+            if (c && (c.condition || (c.medications && c.medications.length) || c.doctor || c.clinic || c.appointments)) {
+              conditions.push(c);
+            }
+          }
+        }
+        if (!conditions.length) conditions = [ { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{name:'NIL',frequency:'NIL'}] } ];
       }
 
-      const payload = {
+      var payload = {
         emergency: {
           name: el('ec_name').value || null,
           relation: el('ec_relation').value || null,
@@ -382,17 +437,45 @@
           email: el('ec_email').value || null,
         },
         extras: {
-          assistive_needs: gatherAssistive(),
+          assistive_needs: (function(){
+            var picks = [];
+            var chips = document.querySelectorAll('#assistive .chip');
+            for (var k=0;k<chips.length;k++){
+              var ch = chips[k];
+              if (ch.classList.contains('active')) {
+                var label = ch.textContent;
+                var key = null;
+                var entries = Object.keys(labels);
+                for (var e=0;e<entries.length;e++){
+                  if (labels[entries[e]] === label) { key = entries[e]; break; }
+                }
+                picks.push(key || label);
+              }
+            }
+            // append "other:..." value if present
+            if (picks.indexOf('other') >= 0) {
+              var other = el('assistive_other').value.trim();
+              if (other) picks.push('other:'+other);
+              // remove raw 'other' marker
+              picks = picks.filter(function(p){ return p !== 'other'; });
+            }
+            return picks;
+          })(),
           drug_allergies: el('drug_allergies').value || null,
           public_note: el('public_note').value || null,
         },
-        conditions
+        conditions: conditions
       };
 
-      const pin = localStorage.getItem('ec_pin_'+token) || '';
-      const h = await sha256Hex(pin || '');
-      const { error: e } = await rpcSave(h, payload);
-      el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+      var pin = localStorage.getItem('ec_pin_'+token) || '';
+      sha256Hex(pin || '').then(function(h){
+        return rpcSave(h, payload);
+      }).then(function(res){
+        var e = res && res.error;
+        el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+      }).catch(function(err){
+        el('saveMsg').textContent = 'Failed: ' + (err && err.message ? err.message : String(err));
+      });
     };
   })();
 </script>
