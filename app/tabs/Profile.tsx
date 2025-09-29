@@ -7,7 +7,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
+  AppState,
   Pressable,
+  RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
@@ -42,10 +44,9 @@ const PORTAL_BASE_URL =
   "https://dorindalim.github.io/eldercare-app/ECPortal.html";
 const CAREGIVER_MESSAGE = (url: string) =>
   `Hi! This is my Emergency Contact Portal link:\n\n${url}\n\n` +
-  `Please keep it safe. On first open, set a 4+ digit PIN. ` +
-  `Use the same PIN next time to unlock. Thank you!`;
+  `Please keep it safe. On first open, set a 4+ digit PIN. Use the same PIN next time to unlock. Thank you!`;
 
-// helper: normalize NIL
+// helper: normalize "NIL"
 const isNil = (v?: string | null) =>
   typeof v === "string" && v.trim().toUpperCase() === "NIL";
 
@@ -54,7 +55,7 @@ export default function ElderlyProfile() {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
 
-  // ✅ account-scoped check-in data (streak comes from the hook)
+  // 🟢 account-scoped check-ins (includes computed `streak`)
   const { coins, todayChecked, weekChecks, streak } = useCheckins(
     session?.userId
   );
@@ -69,6 +70,7 @@ export default function ElderlyProfile() {
   const [drugAllergies, setDrugAllergies] = useState<string>("");
   const [publicNote, setPublicNote] = useState<string>("");
   const [conditions, setConditions] = useState<ConditionItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // language via TopBar
   const setLang = async (code: LangCode) => {
@@ -103,6 +105,11 @@ export default function ElderlyProfile() {
       );
       setDrugAllergies(prof.drug_allergies ?? "");
       setPublicNote(prof.public_note ?? "");
+    } else {
+      setEmergency(null);
+      setAssistiveNeeds([]);
+      setDrugAllergies("");
+      setPublicNote("");
     }
 
     // elderly_conditions + elderly_medications
@@ -148,12 +155,66 @@ export default function ElderlyProfile() {
     loadData();
   }, [loadData]);
 
-  // also refresh whenever screen is focused
+  // refresh on focus
   useFocusEffect(
     useCallback(() => {
       loadData();
     }, [loadData])
   );
+
+  // pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
+  // realtime: refresh when profile/conditions/meds change
+  useEffect(() => {
+    if (!session?.userId) return;
+    const handle = () => loadData();
+
+    const ch = supabase
+      .channel(`ec:${session.userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "elderly_profiles",
+          filter: `user_id=eq.${session.userId}`,
+        },
+        handle
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "elderly_conditions",
+          filter: `user_id=eq.${session.userId}`,
+        },
+        handle
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "elderly_medications" },
+        handle
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [session?.userId, loadData]);
+
+  // reload when app returns to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") loadData();
+    });
+    return () => sub.remove();
+  }, [loadData]);
 
   // global text sizing
   const textScalePx = useMemo(() => {
@@ -187,7 +248,7 @@ export default function ElderlyProfile() {
     return assistiveNeeds.map(prettifyAssistive).join(", ");
   }, [assistiveNeeds, i18n.language]);
 
-  // --- Share EC Portal link ---
+  // Share EC Portal link
   const onShareEcPortal = useCallback(async () => {
     if (!session?.userId) {
       Alert.alert("Not logged in", "Please log in again.");
@@ -244,6 +305,9 @@ export default function ElderlyProfile() {
       <ScrollView
         contentContainerStyle={s.scroll}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Basic Information */}
         <View style={s.card}>

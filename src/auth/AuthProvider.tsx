@@ -1,3 +1,5 @@
+// src/auth/AuthProvider.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   useContext,
@@ -44,9 +46,9 @@ export type ElderlyConditionInput = {
 };
 
 export type ElderlyHealthExtras = {
-  assistive_needs?: string[]; // e.g. ["walking_cane","hearing_aid","other:grab bar"]
-  drug_allergies?: string; // free text
-  public_note?: string; // free text
+  assistive_needs?: string[];
+  drug_allergies?: string;
+  public_note?: string;
 };
 
 type SaveResult = { success: boolean; error?: string };
@@ -55,13 +57,11 @@ type AuthCtx = {
   session: Session | null;
   loading: boolean;
 
-  // auth
   startPhoneSignIn: (phone: string) => Promise<boolean>;
   confirmPhoneCode: (code: string) => Promise<boolean>;
   registerWithPhone: (phone: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
 
-  // onboarding
   markOnboarding: (done: boolean) => Promise<void>;
   saveElderlyProfile: (profile: ElderlyProfileInput) => Promise<SaveResult>;
   saveElderlyConditions: (
@@ -73,6 +73,8 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx>({} as any);
 export const useAuth = () => useContext(Ctx);
 
+const SESSION_KEY = "auth_session_v1";
+
 // mock OTP flow state
 let pendingPhone: string | null = null;
 
@@ -80,10 +82,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // hydrate stored session so Expo fast-refresh doesn't log you out
   useEffect(() => {
-    // If you later add AsyncStorage-based session persistence,
-    // hydrate here and flip loading when done.
-    setLoading(false);
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.userId && parsed?.phone) {
+            setSession(parsed);
+          }
+        }
+      } catch (e) {
+        console.warn("Load session failed:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   // 1) Login (mock OTP). Returns true if user exists; false otherwise.
@@ -123,11 +138,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
     }
 
-    setSession({
+    const next: Session = {
       userId: user.id,
       phone: user.phone,
       onboardingCompleted: user.onboarding_completed,
-    });
+    };
+
+    setSession(next);
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
 
     pendingPhone = null;
     return true;
@@ -148,10 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("registerWithPhone check error:", checkErr);
       return false;
     }
-    if (existing) {
-      console.log("User already exists");
-      return false;
-    }
+    if (existing) return false;
 
     const { data: user, error: insertErr } = await supabase
       .from("users")
@@ -164,16 +179,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
     }
 
-    setSession({
+    const next: Session = {
       userId: user.id,
       phone: user.phone,
       onboardingCompleted: user.onboarding_completed,
-    });
+    };
+
+    setSession(next);
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
 
     return true;
   };
 
-  const logout = async () => setSession(null);
+  const logout = async () => {
+    setSession(null);
+    await AsyncStorage.removeItem(SESSION_KEY);
+  };
 
   const markOnboarding = async (done: boolean) => {
     if (!session) return;
@@ -186,7 +207,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("markOnboarding error:", error);
       return;
     }
-    setSession({ ...session, onboardingCompleted: done });
+    const next = { ...session, onboardingCompleted: done };
+    setSession(next);
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
   };
 
   const saveElderlyProfile = async (
@@ -194,7 +217,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<SaveResult> => {
     if (!session) return { success: false, error: "No session" };
 
-    // Guard YOB for invalid values -> null
+    // Guard YOB
     const yobNum = Number(profile.year_of_birth);
     const year_of_birth =
       Number.isFinite(yobNum) && yobNum > 1900 && yobNum < 3000 ? yobNum : null;
@@ -239,7 +262,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    * - Always updates extras (allows clearing using nulls)
    * - Deletes existing conditions/meds for user, then inserts the new set
    * - Inserts each condition and then its medications (captures condition_id)
-   * - Works with your UI "NIL" rows (you already build those client-side)
+   * - Works with "NIL" placeholders built by your UI
    */
   const saveElderlyConditions = async (
     conds: ElderlyConditionInput[],
@@ -247,7 +270,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     if (!session) return { success: false };
 
-    // 1) ALWAYS update extras (so clearing values works)
+    // 1) ALWAYS update extras (also supports clearing)
     {
       const { error: profErr } = await supabase
         .from("elderly_profiles")
@@ -271,7 +294,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    // 2) REPLACE MODE: wipe existing rows for this user
+    // 2) REPLACE: delete existing rows first
     {
       const { data: oldConds, error: fetchErr } = await supabase
         .from("elderly_conditions")
@@ -310,7 +333,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // 4) Insert each condition + its meds
     for (const c of conds) {
-      // insert one condition, capture id
       const { data: inserted, error: condErr } = await supabase
         .from("elderly_conditions")
         .insert([
@@ -330,7 +352,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { success: false };
       }
 
-      // meds (including "NIL" rows produced by the UI)
       const meds = c.medications || [];
       const medsRows = meds
         .filter((m) => (m?.name ?? "").trim().length > 0)
