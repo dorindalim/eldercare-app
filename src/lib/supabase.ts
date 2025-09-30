@@ -1,4 +1,3 @@
-// src/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://ilwcrkwdmzfwoyjknrkl.supabase.co';
@@ -8,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ── Tables: elderly_profiles / elderly_conditions / elderly_medications ──
 export interface ElderlyProfile {
-  id: string;                 // if you have a PK id
+  id: string;                 
   user_id: string;
   user_code?: string | null;
   name: string | null;
@@ -16,7 +15,7 @@ export interface ElderlyProfile {
   gender: 'male' | 'female' | 'na' | null;
   phone: string | null;
 
-  // Emergency (present in your table)
+  // Emergency
   emergency_name: string | null;
   emergency_relation: string | null;
   emergency_phone: string | null;

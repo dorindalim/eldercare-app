@@ -143,10 +143,53 @@
     "ccActivities": "Tunjukkan aktiviti komuniti berdekatan",
     "viewActivities": "Lihat aktiviti"
   },
+
   "rewards": {
-    "button": "Ganjaran",
+    "title": "Ganjaran",
+    "balance": "Syiling Saya",
     "coin": "syiling",
-    "coins": "syiling"
+    "coins": "syiling",
+    "catalogTitle": "Barangan Boleh Tebus",
+    "viewTerms": "S&K / Cara guna",
+    "redeem": "Tebus",
+    "cost": "{{count}} syiling",
+    "confirmTitle": "Sahkan Penebusan",
+    "confirmBody": "Tebus {{name}} dengan {{cost}}?",
+    "cancel": "Batal",
+    "confirm": "Sahkan",
+    "successTitle": "Berjaya ditebus",
+    "successBody": "Kod baucar anda: {{code}}. Lihat di bahagian 'Dimiliki'.",
+    "notEnoughTitle": "Syiling tidak mencukupi",
+    "notEnoughBody": "Syiling anda tidak mencukupi untuk menebus item ini.",
+    "ownedTitle": "Baucar dimiliki",
+    "noneOwned": "Anda belum menebus sebarang baucar.",
+    "voucher": "Baucar",
+    "code": "Kod",
+    "redeemedAt": "Masa ditebus",
+    "howToUse": "Cara guna",
+    "close": "Tutup",
+    "items": {
+      "ntuc5": {
+        "title": "Baucar NTUC FairPrice $5",
+        "desc": "Sah di cawangan NTUC FairPrice yang mengambil bahagian.",
+        "terms": "• Sah di cawangan NTUC FairPrice terpilih di Singapura.\n• Tunjukkan kod semasa pembayaran; sekali guna sahaja.\n• Tidak boleh ditukar kepada wang tunai; tiada baki dipulangkan.\n• T&S pedagang terpakai."
+      },
+      "ntuc10": {
+        "title": "Baucar NTUC FairPrice $10",
+        "desc": "Sah di cawangan NTUC FairPrice yang mengambil bahagian.",
+        "terms": "• Sah di cawangan NTUC FairPrice terpilih di Singapura.\n• Tunjukkan kod semasa pembayaran; sekali guna sahaja.\n• Tidak boleh ditukar kepada wang tunai; tiada baki dipulangkan.\n• T&S pedagang terpakai."
+      },
+      "kopitiam5": {
+        "title": "Nilai Tersimpan Kopitiam $5",
+        "desc": "Untuk makanan/minuman di Kopitiam.",
+        "terms": "• Sah di cawangan Kopitiam terpilih di Singapura.\n• Tunjukkan kod kepada juruwang sebelum pembayaran.\n• Sekali guna; tiada baki dipulangkan.\n• T&S pedagang terpakai."
+      },
+      "guardian5": {
+        "title": "Baucar Guardian $5",
+        "desc": "Sah untuk barangan farmasi & penjagaan diri.",
+        "terms": "• Sah di cawangan Guardian terpilih di Singapura.\n• Item tertentu mungkin dikecualikan.\n• Sekali guna; tiada baki dipulangkan.\n• T&S pedagang terpakai."
+      }
+    }
   },
   "common": {
     "on": "Hidup",

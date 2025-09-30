@@ -1,4 +1,3 @@
-// app/Onboarding/_layout.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Slot, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";

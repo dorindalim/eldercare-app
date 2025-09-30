@@ -181,10 +181,7 @@ export default function ElderlyBasics() {
               />
               <TextInput
                 ref={ecEmailRef}
-                placeholder={
-                  t("elderlyOnboarding.ecEmailPH") ||
-                  "Emergency contact email (optional)"
-                }
+                placeholder={t("elderlyOnboarding.ecEmailPH")}
                 placeholderTextColor="#9CA3AF"
                 keyboardType="email-address"
                 autoCapitalize="none"

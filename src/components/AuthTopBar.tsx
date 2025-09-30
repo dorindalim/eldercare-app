@@ -1,7 +1,5 @@
-// src/components/AuthTopBar.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
-import React from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 export type LangCode = "en" | "zh" | "ms" | "ta";
@@ -44,7 +42,7 @@ export default function AuthTopBar({
 
   return (
     <View style={s.topBar}>
-      {/* Left: Back (hidden if not available) */}
+      {/* Left: Back */}
       <View style={{ width: 40, height: 40, justifyContent: "center" }}>
         {canGoBack && (
           <Pressable
@@ -63,7 +61,7 @@ export default function AuthTopBar({
         {!!title && <Text style={s.title}>{title}</Text>}
       </View>
 
-      {/* Right: Language + optional TTS */}
+      {/* Right: Language */}
       <View style={s.rightRow}>
         {LANGS.map((l) => {
           const active = language?.startsWith(l.code);

@@ -1,7 +1,6 @@
-// app/Elderly/EditBasic.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -118,7 +117,7 @@ export default function EditBasic() {
       );
     }
 
-    router.back(); // return to Profile (no onboarding)
+    router.back();
   };
 
   return (

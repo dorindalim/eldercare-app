@@ -24,7 +24,7 @@ type ConditionCard = {
   clinic: string;
   appointments: string;
   meds: Med[];
-  noMeds: boolean; // NEW: per-condition no-meds toggle
+  noMeds: boolean;
 };
 
 const PORTAL_BASE_URL =
@@ -55,7 +55,7 @@ export default function ElderlyConditions() {
       clinic: "",
       appointments: "",
       meds: [{ name: "", frequency: "" }],
-      noMeds: false, // NEW
+      noMeds: false,
     },
   ]);
   const [assistive, setAssistive] = useState<string[]>([]);
@@ -63,10 +63,8 @@ export default function ElderlyConditions() {
   const [drugAllergies, setDrugAllergies] = useState("");
   const [publicNote, setPublicNote] = useState("");
 
-  // Global "No conditions" remains
   const [noConditions, setNoConditions] = useState(false);
 
-  // Validation: conditions + per-condition meds compulsory unless their toggles are on
   const canSubmit = useMemo(() => {
     const hasAnyCondition =
       noConditions || conditions.some((c) => c.condition.trim());
@@ -151,40 +149,24 @@ export default function ElderlyConditions() {
 
   const onSubmit = async () => {
     if (!session) {
-      return Alert.alert(
-        t("common.notLoggedIn", "Not logged in"),
-        t("common.pleaseLoginAgain", "Please log in again.")
-      );
+      return Alert.alert(t("common.notLoggedIn"), t("common.pleaseLoginAgain"));
     }
 
-    // Enforce conditions unless "no conditions"
     if (!noConditions) {
       const hasCondition = conditions.some((c) => c.condition.trim());
       if (!hasCondition) {
-        return Alert.alert(
-          t(
-            "elderlyConditions.errors.missingConditionName",
-            "Please enter at least one condition name (or tick 'No conditions')."
-          )
-        );
+        return Alert.alert(t("elderlyConditions.errors.missingConditionName"));
       }
     }
 
-    // Invalid med: frequency typed but empty name, only check on cards without noMeds
     const hasInvalidMed = conditions.some(
       (c) =>
         !c.noMeds && c.meds.some((m) => !m.name.trim() && m.frequency.trim())
     );
     if (hasInvalidMed) {
-      return Alert.alert(
-        t(
-          "elderlyConditions.errors.invalidMed",
-          "Medication name and frequency cannot be empty."
-        )
-      );
+      return Alert.alert(t("elderlyConditions.errors.invalidMed"));
     }
 
-    // Build payload
     let cleanConds: Array<{
       condition: string;
       doctor?: string;
@@ -194,8 +176,6 @@ export default function ElderlyConditions() {
     }> = [];
 
     if (noConditions) {
-      // If there are no conditions at all, insert one NIL condition.
-      // We also attach a NIL medication so the meds table has a placeholder row.
       cleanConds = [
         {
           condition: "NIL",
@@ -209,7 +189,7 @@ export default function ElderlyConditions() {
       cleanConds = conditions
         .map((c) => {
           const meds = c.noMeds
-            ? [{ name: "NIL", frequency: "NIL" }] // per-condition NIL meds
+            ? [{ name: "NIL", frequency: "NIL" }]
             : c.meds
                 .map((m) => ({
                   name: m.name.trim(),
@@ -248,12 +228,7 @@ export default function ElderlyConditions() {
 
     const res = await saveElderlyConditions(cleanConds, extras);
     if (!res?.success) {
-      return Alert.alert(
-        t(
-          "elderlyConditions.errors.saveFailed",
-          "Could not save. Please try again."
-        )
-      );
+      return Alert.alert(t("elderlyConditions.errors.saveFailed"));
     }
 
     await markOnboarding(true);
@@ -285,7 +260,6 @@ export default function ElderlyConditions() {
     router.replace("/tabs/HomePage");
   };
 
-  // Simple pill checkbox
   const CheckPill = ({
     checked,
     label,
@@ -319,9 +293,7 @@ export default function ElderlyConditions() {
         showsVerticalScrollIndicator={false}
       >
         <View style={s.card}>
-          <Text style={s.heading}>
-            {t("elderlyConditions.title", "Health Conditions & Medications")}
-          </Text>
+          <Text style={s.heading}>{t("elderlyConditions.title")}</Text>
 
           {/* Global toggle: No conditions */}
           <View
@@ -334,7 +306,7 @@ export default function ElderlyConditions() {
           >
             <CheckPill
               checked={noConditions}
-              label={t("elderlyConditions.noConditions", "No conditions")}
+              label={t("elderlyConditions.noConditions")}
               onPress={() => setNoConditions((v) => !v)}
             />
           </View>
@@ -359,16 +331,13 @@ export default function ElderlyConditions() {
                       ]}
                     >
                       <Text style={s.removeBtnText}>
-                        {t("elderlyConditions.remove", "Remove")}
+                        {t("elderlyConditions.remove")}
                       </Text>
                     </Pressable>
                   </View>
 
                   <TextInput
-                    placeholder={t(
-                      "elderlyConditions.conditionPH",
-                      "Condition (e.g., Diabetes)"
-                    )}
+                    placeholder={t("elderlyConditions.conditionPH")}
                     placeholderTextColor="#9CA3AF"
                     value={c.condition}
                     onChangeText={(v) => setCond(idx, { condition: v })}
@@ -376,7 +345,7 @@ export default function ElderlyConditions() {
                   />
 
                   <TextInput
-                    placeholder={t("elderlyConditions.doctorPH", "Doctor")}
+                    placeholder={t("elderlyConditions.doctorPH")}
                     placeholderTextColor="#9CA3AF"
                     value={c.doctor}
                     onChangeText={(v) => setCond(idx, { doctor: v })}
@@ -384,10 +353,7 @@ export default function ElderlyConditions() {
                   />
 
                   <TextInput
-                    placeholder={t(
-                      "elderlyConditions.clinicPH",
-                      "Clinic/Hospital"
-                    )}
+                    placeholder={t("elderlyConditions.clinicPH")}
                     placeholderTextColor="#9CA3AF"
                     value={c.clinic}
                     onChangeText={(v) => setCond(idx, { clinic: v })}
@@ -395,10 +361,7 @@ export default function ElderlyConditions() {
                   />
 
                   <TextInput
-                    placeholder={t(
-                      "elderlyConditions.appointmentsPH",
-                      "Appointment notes"
-                    )}
+                    placeholder={t("elderlyConditions.appointmentsPH")}
                     placeholderTextColor="#9CA3AF"
                     value={c.appointments}
                     onChangeText={(v) => setCond(idx, { appointments: v })}
@@ -417,10 +380,7 @@ export default function ElderlyConditions() {
                   >
                     <CheckPill
                       checked={c.noMeds}
-                      label={t(
-                        "elderlyConditions.noMedicationsForThis",
-                        "No medications for this condition"
-                      )}
+                      label={t("elderlyConditions.noMedicationsForThis")}
                       onPress={() => setCond(idx, { noMeds: !c.noMeds })}
                     />
                   </View>
@@ -429,15 +389,12 @@ export default function ElderlyConditions() {
                   {!c.noMeds && (
                     <>
                       <Text style={s.subLabel}>
-                        {t("elderlyConditions.medsLabel", "Medications")}
+                        {t("elderlyConditions.medsLabel")}
                       </Text>
                       {c.meds.map((m, mIdx) => (
                         <View key={mIdx} style={s.medRow}>
                           <TextInput
-                            placeholder={t(
-                              "elderlyConditions.medNamePH",
-                              "Name"
-                            )}
+                            placeholder={t("elderlyConditions.medNamePH")}
                             placeholderTextColor="#9CA3AF"
                             value={m.name}
                             onChangeText={(v) => setMed(idx, mIdx, { name: v })}
@@ -445,10 +402,7 @@ export default function ElderlyConditions() {
                           />
                           <View style={{ width: 8 }} />
                           <TextInput
-                            placeholder={t(
-                              "elderlyConditions.medFreqPH",
-                              "Frequency"
-                            )}
+                            placeholder={t("elderlyConditions.medFreqPH")}
                             placeholderTextColor="#9CA3AF"
                             value={m.frequency}
                             onChangeText={(v) =>
@@ -461,7 +415,7 @@ export default function ElderlyConditions() {
                             style={[s.smallBtn, { marginLeft: 8 }]}
                           >
                             <Text style={s.smallBtnText}>
-                              {t("elderlyConditions.removeMed", "Remove")}
+                              {t("elderlyConditions.removeMed")}
                             </Text>
                           </Pressable>
                         </View>
@@ -471,7 +425,7 @@ export default function ElderlyConditions() {
                         style={[s.addBtn, { marginTop: 8 }]}
                       >
                         <Text style={s.addBtnText}>
-                          {t("elderlyConditions.addMed", "Add medication")}
+                          {t("elderlyConditions.addMed")}
                         </Text>
                       </Pressable>
                     </>
@@ -481,14 +435,14 @@ export default function ElderlyConditions() {
 
               <Pressable onPress={addCondition} style={s.addBtn}>
                 <Text style={s.addBtnText}>
-                  {t("elderlyConditions.addCondition", "Add condition")}
+                  {t("elderlyConditions.addCondition")}
                 </Text>
               </Pressable>
             </>
           )}
 
           <Text style={[s.heading, { marginTop: 8 }]}>
-            {t("elderlyConditions.assistive.label", "Assistive needs")}
+            {t("elderlyConditions.assistive.label")}
           </Text>
           <View style={s.chipsRow}>
             {ASSISTIVE_OPTIONS.map((opt) => {
@@ -508,10 +462,7 @@ export default function ElderlyConditions() {
 
           {assistive.includes("other") && (
             <TextInput
-              placeholder={t(
-                "elderlyConditions.assistive.otherPH",
-                "Other (specify)"
-              )}
+              placeholder={t("elderlyConditions.assistive.otherPH")}
               placeholderTextColor="#9CA3AF"
               value={assistiveOther}
               onChangeText={setAssistiveOther}
@@ -520,10 +471,7 @@ export default function ElderlyConditions() {
           )}
 
           <TextInput
-            placeholder={t(
-              "elderlyConditions.drugAllergiesPH",
-              "Drug allergies (e.g., Penicillin or NIL)"
-            )}
+            placeholder={t("elderlyConditions.drugAllergiesPH")}
             placeholderTextColor="#9CA3AF"
             value={drugAllergies}
             onChangeText={setDrugAllergies}
@@ -532,10 +480,7 @@ export default function ElderlyConditions() {
           />
 
           <TextInput
-            placeholder={t(
-              "elderlyConditions.publicNotePH",
-              "Public note (e.g., If found lost, please call …)"
-            )}
+            placeholder={t("elderlyConditions.publicNotePH")}
             placeholderTextColor="#9CA3AF"
             value={publicNote}
             onChangeText={setPublicNote}
@@ -548,9 +493,7 @@ export default function ElderlyConditions() {
             disabled={!canSubmit}
             style={[s.btn, !canSubmit && s.btnDisabled]}
           >
-            <Text style={s.btnText}>
-              {t("elderlyConditions.finish", "Finish")}
-            </Text>
+            <Text style={s.btnText}>{t("elderlyConditions.finish")}</Text>
           </Pressable>
 
           <View style={{ height: 24 }} />
@@ -673,7 +616,6 @@ const s = StyleSheet.create({
   },
   smallBtnText: { color: "#EF4444", fontWeight: "700", fontSize: 12 },
 
-  // checkbox pill styles
   checkPill: {
     borderWidth: 1,
     borderColor: "#D1D5DB",

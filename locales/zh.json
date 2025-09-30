@@ -146,9 +146,51 @@
     "viewActivities": "查看活动"
   },
   "rewards": {
-    "button": "奖励",
-    "coin": "金币",
-    "coins": "金币"
+    "title": "奖励",
+    "balance": "我的金币",
+    "coin": "枚金币",
+    "coins": "枚金币",
+    "catalogTitle": "可兑换项目",
+    "viewTerms": "使用条款 / 使用方法",
+    "redeem": "兑换",
+    "cost": "{{count}} 枚金币",
+    "confirmTitle": "确认兑换",
+    "confirmBody": "是否用 {{cost}} 兑换「{{name}}」？",
+    "cancel": "取消",
+    "confirm": "确认兑换",
+    "successTitle": "兑换成功",
+    "successBody": "您的兑换码是 {{code}}。可在“已拥有”查看。",
+    "notEnoughTitle": "金币不足",
+    "notEnoughBody": "您的金币不足，无法兑换该项目。",
+    "ownedTitle": "已拥有的礼券",
+    "noneOwned": "您还没有兑换任何礼券。",
+    "voucher": "礼券",
+    "code": "兑换码",
+    "redeemedAt": "兑换时间",
+    "howToUse": "使用方法",
+    "close": "关闭",
+    "items": {
+      "ntuc5": {
+        "title": "NTUC 超市 5 新币礼券",
+        "desc": "适用于参与门店。",
+        "terms": "• 仅限新加坡参与的 NTUC FairPrice 门店使用。\n• 结账时出示兑换码；仅限一次性使用。\n• 不可兑换现金，不找零。\n• 其他条款以商家为准。"
+      },
+      "ntuc10": {
+        "title": "NTUC 超市 10 新币礼券",
+        "desc": "适用于参与门店。",
+        "terms": "• 仅限新加坡参与的 NTUC FairPrice 门店使用。\n• 结账时出示兑换码；仅限一次性使用。\n• 不可兑换现金，不找零。\n• 其他条款以商家为准。"
+      },
+      "kopitiam5": {
+        "title": "Kopitiam 5 新币储值",
+        "desc": "可用于 Kopitiam 店内餐饮。",
+        "terms": "• 仅限新加坡参与的 Kopitiam 门店使用。\n• 付款前向收银员出示兑换码。\n• 仅限一次使用，不找零。\n• 其他条款以商家为准。"
+      },
+      "guardian5": {
+        "title": "Guardian 5 新币礼券",
+        "desc": "适用于药房及个护商品。",
+        "terms": "• 限新加坡参与门店；部分商品可能除外。\n• 仅限一次性使用，不找零。\n• 其他条款以商家为准。"
+      }
+    }
   },
   "common": {
     "on": "开",

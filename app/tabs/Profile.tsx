@@ -1,4 +1,3 @@
-// app/Elderly/profile.tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -13,14 +12,14 @@ import {
   ScrollView,
   Share,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
+import AppText from "../../src/components/AppText";
 import TopBar, { LangCode } from "../../src/components/TopBar";
-import { useCheckins } from "../../src/hooks/useCheckIns"; // account-scoped
+import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 import { useAppSettings } from "../../src/Providers/SettingsProvider";
 
@@ -46,7 +45,6 @@ const CAREGIVER_MESSAGE = (url: string) =>
   `Hi! This is my Emergency Contact Portal link:\n\n${url}\n\n` +
   `Please keep it safe. On first open, set a 4+ digit PIN. Use the same PIN next time to unlock. Thank you!`;
 
-// helper: normalize "NIL"
 const isNil = (v?: string | null) =>
   typeof v === "string" && v.trim().toUpperCase() === "NIL";
 
@@ -55,14 +53,14 @@ export default function ElderlyProfile() {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
 
-  // 🟢 account-scoped check-ins (includes computed `streak`)
-  const { coins, todayChecked, weekChecks, streak } = useCheckins(
-    session?.userId
-  );
+  const {
+    coins,
+    streak,
+    refresh: refreshCheckins,
+  } = useCheckins(session?.userId);
 
   const { textScale, setTextScale } = useAppSettings();
 
-  // data states
   const [name, setName] = useState<string>("-");
   const [yob, setYob] = useState<string>("-");
   const [emergency, setEmergency] = useState<EmergencyContact | null>(null);
@@ -72,17 +70,14 @@ export default function ElderlyProfile() {
   const [conditions, setConditions] = useState<ConditionItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // language via TopBar
   const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
   };
 
-  // fetcher (called on mount + when screen refocuses)
   const loadData = useCallback(async () => {
     if (!session?.userId) return;
 
-    // elderly_profiles (includes assistive fields)
     const { data: prof } = await supabase
       .from("elderly_profiles")
       .select(
@@ -112,7 +107,6 @@ export default function ElderlyProfile() {
       setPublicNote("");
     }
 
-    // elderly_conditions + elderly_medications
     const { data: conds, error: condErr } = await supabase
       .from("elderly_conditions")
       .select("id, condition, doctor, clinic, appointments")
@@ -153,26 +147,28 @@ export default function ElderlyProfile() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    refreshCheckins();
+  }, [loadData, refreshCheckins]);
 
-  // refresh on focus
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+      refreshCheckins();
+    }, [loadData, refreshCheckins])
   );
 
-  // pull-to-refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await Promise.all([loadData(), refreshCheckins()]);
     setRefreshing(false);
-  }, [loadData]);
+  }, [loadData, refreshCheckins]);
 
-  // realtime: refresh when profile/conditions/meds change
   useEffect(() => {
     if (!session?.userId) return;
-    const handle = () => loadData();
+    const handle = () => {
+      loadData();
+      refreshCheckins();
+    };
 
     const ch = supabase
       .channel(`ec:${session.userId}`)
@@ -206,29 +202,17 @@ export default function ElderlyProfile() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [session?.userId, loadData]);
+  }, [session?.userId, loadData, refreshCheckins]);
 
-  // reload when app returns to foreground
   useEffect(() => {
     const sub = AppState.addEventListener("change", (s) => {
-      if (s === "active") loadData();
+      if (s === "active") {
+        loadData();
+        refreshCheckins();
+      }
     });
     return () => sub.remove();
-  }, [loadData]);
-
-  // global text sizing
-  const textScalePx = useMemo(() => {
-    switch (textScale) {
-      case "md":
-        return 16;
-      case "lg":
-        return 18;
-      case "xl":
-        return 20;
-      default:
-        return 18;
-    }
-  }, [textScale]);
+  }, [loadData, refreshCheckins]);
 
   // Pretty-print assistive codes (and localize)
   const prettifyAssistive = (code: string) => {
@@ -255,7 +239,6 @@ export default function ElderlyProfile() {
       return;
     }
 
-    // 1) Try to get the latest token from ec_links
     const { data: linkRow } = await supabase
       .from("ec_links")
       .select("token")
@@ -266,7 +249,6 @@ export default function ElderlyProfile() {
 
     let token: string | null = linkRow?.token ?? null;
 
-    // 2) Optional fallback: RPC to issue/reuse
     if (!token) {
       const { data: rpcToken, error: rpcErr } = await supabase.rpc(
         "ec_issue_link_if_ready_for",
@@ -289,7 +271,6 @@ export default function ElderlyProfile() {
     await Share.share({ message: CAREGIVER_MESSAGE(url) });
   }, [session?.userId]);
 
-  // Render
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: "#F8FAFC" }}
@@ -311,20 +292,26 @@ export default function ElderlyProfile() {
       >
         {/* Basic Information */}
         <View style={s.card}>
-          <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
+          <AppText variant="h2" weight="800">
             {t("profile.basicInfo")}
-          </Text>
+          </AppText>
 
           <View style={s.rowBetween}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>Name</Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>{name}</Text>
+            <AppText variant="label" weight="700" color="#374151">
+              Name
+            </AppText>
+            <AppText variant="label" weight="700">
+              {name}
+            </AppText>
           </View>
 
           <View style={s.rowBetween}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>
+            <AppText variant="label" weight="700" color="#374151">
               {t("elderlyOnboarding.yobPH")}
-            </Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>{yob}</Text>
+            </AppText>
+            <AppText variant="label" weight="700">
+              {yob}
+            </AppText>
           </View>
 
           <Pressable
@@ -332,15 +319,17 @@ export default function ElderlyProfile() {
             style={s.linkRow}
           >
             <Ionicons name="create-outline" size={18} />
-            <Text style={s.linkText}>{t("profile.editBasic")}</Text>
+            <AppText variant="button" weight="800" color="#111827">
+              {t("profile.editBasic")}
+            </AppText>
           </Pressable>
         </View>
 
         {/* Emergency Health Card */}
         <View style={s.card}>
-          <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
+          <AppText variant="h2" weight="800">
             {t("profile.healthCard")}
-          </Text>
+          </AppText>
 
           {!!emergency &&
             (emergency.name ||
@@ -348,10 +337,10 @@ export default function ElderlyProfile() {
               emergency.phone ||
               emergency.email) && (
               <View style={s.block}>
-                <Text style={[s.k, { fontSize: textScalePx }]}>
+                <AppText variant="label" weight="700" color="#374151">
                   {t("profile.emergencyContacts")}
-                </Text>
-                <Text style={[s.v, { fontSize: textScalePx }]}>
+                </AppText>
+                <AppText variant="label" weight="700">
                   {[
                     emergency.name,
                     emergency.relation,
@@ -360,52 +349,56 @@ export default function ElderlyProfile() {
                   ]
                     .filter(Boolean)
                     .join(" · ")}
-                </Text>
+                </AppText>
               </View>
             )}
 
           {/* Always show these rows */}
           <View style={s.block}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>
+            <AppText variant="label" weight="700" color="#374151">
               {t("profile.drugAllergy")}
-            </Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>
+            </AppText>
+            <AppText variant="label" weight="700">
               {drugAllergies?.trim() || "–"}
-            </Text>
+            </AppText>
           </View>
 
           <View style={s.block}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>
+            <AppText variant="label" weight="700" color="#374151">
               {t("profile.assistive")}
-            </Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>
+            </AppText>
+            <AppText variant="label" weight="700">
               {assistiveDisplay?.trim() || "–"}
-            </Text>
+            </AppText>
           </View>
 
           <View style={s.block}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>
+            <AppText variant="label" weight="700" color="#374151">
               {t("profile.publicNote")}
-            </Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>
+            </AppText>
+            <AppText variant="label" weight="700">
               {publicNote?.trim() || "–"}
-            </Text>
+            </AppText>
           </View>
 
           {/* Share EC Portal link button */}
           <Pressable style={s.btn} onPress={onShareEcPortal}>
-            <Text style={s.btnText}>Share EC Portal link</Text>
+            <AppText variant="button" weight="800" color="#FFF">
+              Share EC Portal link
+            </AppText>
           </Pressable>
         </View>
 
         {/* Conditions */}
         <View style={s.card}>
-          <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
+          <AppText variant="h2" weight="800">
             {t("profile.conditions")}
-          </Text>
+          </AppText>
 
           {conditions.length === 0 ? (
-            <Text style={[s.v, { fontSize: textScalePx }]}>–</Text>
+            <AppText variant="label" weight="700">
+              –
+            </AppText>
           ) : (
             <View style={s.block}>
               {conditions.map((c) => {
@@ -415,22 +408,21 @@ export default function ElderlyProfile() {
                 const medsClean = (c.meds || [])
                   .filter((m) => m.name && !isNil(m.name))
                   .map((m) => {
-                    const name = m.name;
                     const freq =
                       m.frequency && !isNil(m.frequency)
                         ? ` — ${m.frequency}`
                         : "";
-                    return `${name}${freq}`;
+                    return `${m.name}${freq}`;
                   });
 
                 const medsPart =
                   medsClean.length > 0 ? ` (${medsClean.join("; ")})` : "";
 
                 return (
-                  <Text key={c.id} style={[s.v, { fontSize: textScalePx }]}>
+                  <AppText key={c.id} variant="label" weight="700">
                     • {condName}
                     {medsPart}
-                  </Text>
+                  </AppText>
                 );
               })}
             </View>
@@ -439,46 +431,76 @@ export default function ElderlyProfile() {
 
         {/* Activity & Rewards */}
         <View style={s.card}>
-          <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
+          <AppText variant="h2" weight="800">
             {t("profile.activity")}
-          </Text>
+          </AppText>
+
           <View style={s.rowBetween}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>
+            <AppText variant="label" weight="700" color="#374151">
               {t("profile.streak")}
-            </Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>{streak}</Text>
+            </AppText>
+            <AppText variant="label" weight="700">
+              {streak}
+            </AppText>
           </View>
+
           <View style={s.rowBetween}>
-            <Text style={[s.k, { fontSize: textScalePx }]}>
+            <AppText variant="label" weight="700" color="#374151">
               {t("profile.coins")}
-            </Text>
-            <Text style={[s.v, { fontSize: textScalePx }]}>{coins}</Text>
+            </AppText>
+            <AppText variant="label" weight="700">
+              {coins}
+            </AppText>
           </View>
+
           <Pressable style={s.btn} onPress={() => router.push("/tabs/Rewards")}>
-            <Text style={s.btnText}>{t("rewards.button")}</Text>
+            <AppText variant="button" weight="800" color="#FFF">
+              {t("rewards.title")}
+            </AppText>
           </Pressable>
         </View>
 
         {/* Accessibility (global text size) */}
         <View style={s.card}>
-          <Text style={[s.h2, { fontSize: textScalePx + 4 }]}>
+          <AppText variant="h2" weight="800">
             {t("profile.accessibility")}
-          </Text>
+          </AppText>
 
-          <Text style={[s.k, { marginTop: 2 }]}>{t("profile.textSize")}</Text>
+          <AppText
+            variant="label"
+            weight="700"
+            color="#374151"
+            style={{ marginTop: 2 }}
+          >
+            {t("profile.textSize")}
+          </AppText>
+
           <View style={s.chipsRow}>
             {(["md", "lg", "xl"] as const).map((sz) => (
-              <Text
+              <Pressable
                 key={sz}
-                onPress={() => setTextScale(sz)}
+                onPress={(e) => {
+                  e?.stopPropagation?.();
+                  e?.preventDefault?.();
+                  setTextScale(sz);
+                }}
+                accessibilityRole="button"
                 style={[s.chip, textScale === sz && s.chipActive]}
               >
-                {sz.toUpperCase()}
-              </Text>
+                <AppText
+                  variant="button"
+                  weight="800"
+                  color={textScale === sz ? "#FFF" : "#111827"}
+                >
+                  {sz.toUpperCase()}
+                </AppText>
+              </Pressable>
             ))}
           </View>
 
-          <Text style={s.note}>{t("profile.accessibilityNote")}</Text>
+          <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+            {t("profile.accessibilityNote")}
+          </AppText>
         </View>
 
         <View style={{ height: 24 }} />
@@ -497,14 +519,11 @@ const s = StyleSheet.create({
     borderColor: "#E5E7EB",
     marginBottom: 12,
   },
-  h2: { fontWeight: "800", color: "#111827", marginBottom: 8, fontSize: 20 },
   rowBetween: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: 4,
   },
-  k: { color: "#374151", fontWeight: "700" },
-  v: { color: "#111827", fontWeight: "700" },
   block: { marginTop: 6 },
 
   chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
@@ -512,16 +531,15 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D1D5DB",
     backgroundColor: "#FFF",
-    color: "#111827",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    fontWeight: "800",
+    alignItems: "center",
+    justifyContent: "center",
   },
   chipActive: {
     backgroundColor: "#111827",
     borderColor: "#111827",
-    color: "#FFF",
   },
 
   btn: {
@@ -532,8 +550,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  btnText: { color: "#FFF", fontWeight: "800" },
+
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  linkText: { fontWeight: "800", color: "#111827" },
-  note: { marginTop: 6, color: "#6B7280" },
 });

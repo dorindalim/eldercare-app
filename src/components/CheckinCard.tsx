@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+export type WeekCell = { date: string; checked: boolean };
+
 type Props = {
   titleKey: string;
   hintKey: string;
@@ -10,12 +12,20 @@ type Props = {
   checked: boolean;
   onPress: () => void;
 
-  weekChecks?: boolean[];
+  weekChecks?: WeekCell[];
   coins?: number;
   onPressRewards?: () => void;
 };
 
-const DAYS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
+const DOW_LABEL: Record<number, string> = {
+  0: "Su",
+  1: "M",
+  2: "T",
+  3: "W",
+  4: "Th",
+  5: "F",
+  6: "Sa",
+};
 
 export default function CheckinCard({
   titleKey,
@@ -23,7 +33,7 @@ export default function CheckinCard({
   hintWhenCheckedKey,
   checked,
   onPress,
-  weekChecks = [false, false, false, false, false, false, false],
+  weekChecks = [],
   coins = 0,
   onPressRewards,
 }: Props) {
@@ -60,24 +70,27 @@ export default function CheckinCard({
         {checked ? t(hintWhenCheckedKey) : t(hintKey)}
       </Text>
 
-      {/* ───────── Weekly tracker + rewards ───────── */}
+      {/* Weekly tracker */}
       <View
         style={s.trackerWrap}
         accessible
         accessibilityLabel="Weekly check-in tracker"
       >
-        {DAYS.map((d, i) => {
-          const isDone = !!weekChecks[i];
+        {weekChecks.map((cell) => {
+          const d = new Date(`${cell.date}T00:00:00`);
+          const label = DOW_LABEL[d.getDay()];
+          const isDone = !!cell.checked;
+
           return (
             <View
-              key={d + i}
+              key={cell.date}
               style={[s.dayBox, isDone ? s.dayBoxDone : s.dayBoxIdle]}
               accessibilityRole="image"
-              accessibilityLabel={`${d} ${
+              accessibilityLabel={`${label} ${
                 isDone ? "checked in" : "not checked in"
               }`}
             >
-              <Text style={[s.dayText, isDone && s.dayTextDone]}>{d}</Text>
+              <Text style={[s.dayText, isDone && s.dayTextDone]}>{label}</Text>
               {isDone && (
                 <Ionicons
                   name="checkmark"
@@ -98,9 +111,7 @@ export default function CheckinCard({
           accessibilityRole="button"
           style={s.rewardsBtn}
         >
-          <Text style={s.rewardsBtnText}>
-            {t("rewards.button") || "Rewards"}
-          </Text>
+          <Text style={s.rewardsBtnText}>{t("rewards.title")}</Text>
         </Pressable>
 
         <View

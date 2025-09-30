@@ -154,7 +154,6 @@ const s = StyleSheet.create({
   center: { alignItems: "center", gap: 2, flexDirection: "row" },
   title: { fontSize: 16, fontWeight: "700", color: "#111827", marginLeft: 6 },
 
-  // Modal stuff
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.2)",

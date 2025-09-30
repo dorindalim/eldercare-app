@@ -2,29 +2,20 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
+import AppText from "../../src/components/AppText";
 import CheckinCard from "../../src/components/CheckinCard";
 import TopBar, { LangCode } from "../../src/components/TopBar";
-// ✅ Use the account-scoped hook (make sure the filename matches)
 import { useCheckins } from "../../src/hooks/useCheckIns";
-import { supabase } from "../../src/lib/supabase";
 
 export default function ElderlyHome() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { session, logout } = useAuth();
 
-  // Pass userId so check-ins are per-account (and card turns green correctly)
   const { coins, weekChecks, todayChecked, checkInToday } = useCheckins(
     session?.userId
   );
@@ -37,23 +28,7 @@ export default function ElderlyHome() {
   const handleCheckin = async () => {
     const res = await checkInToday();
     if (!res.ok) {
-      // Already checked today (or no-user)
       Alert.alert(t("home.checkedIn"), t("home.checkedIn"));
-      return;
-    }
-
-    // OPTIONAL: also mirror to Supabase for server-side rules/alerts
-    try {
-      if (session?.userId) {
-        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-        await supabase.rpc("upsert_checkin_and_increment", {
-          p_user: session.userId,
-          p_day: today,
-        });
-      }
-    } catch (e) {
-      // swallow; local UI already updated
-      console.warn("check-in cloud sync failed:", (e as any)?.message || e);
     }
   };
 
@@ -80,7 +55,7 @@ export default function ElderlyHome() {
           hintKey="home.tapToCheckIn"
           hintWhenCheckedKey="home.checkedIn"
           checked={todayChecked}
-          onPress={handleCheckin}
+          onPress={checkInToday}
           weekChecks={weekChecks}
           coins={coins}
           onPressRewards={() => router.push("/tabs/Rewards")}
@@ -93,7 +68,9 @@ export default function ElderlyHome() {
             onPress={() => router.push("/tabs/Navigation")}
           >
             <Ionicons name="navigate-outline" size={28} color="#222" />
-            <Text style={s.rectText}>{t("home.navigation", "Navigation")}</Text>
+            <AppText variant="title" weight="700" style={s.rectText}>
+              {t("home.navigation", "Navigation")}
+            </AppText>
           </Pressable>
 
           <Pressable
@@ -101,9 +78,9 @@ export default function ElderlyHome() {
             onPress={() => router.push("/tabs/Community")}
           >
             <Ionicons name="people-outline" size={28} color="#222" />
-            <Text style={s.rectText}>
+            <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.ccActivities", "CC Activities")}
-            </Text>
+            </AppText>
           </Pressable>
         </View>
 
@@ -114,7 +91,9 @@ export default function ElderlyHome() {
             onPress={() => router.push("/tabs/Profile")}
           >
             <Ionicons name="person-circle-outline" size={28} color="#222" />
-            <Text style={s.rectText}>{t("home.profile", "Profile")}</Text>
+            <AppText variant="title" weight="700" style={s.rectText}>
+              {t("home.profile", "Profile")}
+            </AppText>
           </Pressable>
 
           <Pressable
@@ -122,16 +101,18 @@ export default function ElderlyHome() {
             onPress={() => router.push("/tabs/Walking")}
           >
             <Ionicons name="walk-outline" size={28} color="#222" />
-            <Text style={s.rectText}>
+            <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.walkingRoutes", "Walking Routes")}
-            </Text>
+            </AppText>
           </Pressable>
         </View>
 
         {/* SOS Button */}
         <View style={s.sosWrap}>
           <Pressable style={s.sos}>
-            <Text style={s.sosText}>SOS</Text>
+            <AppText variant="h1" weight="900" color="#FFF">
+              SOS
+            </AppText>
           </Pressable>
         </View>
       </ScrollView>
@@ -147,6 +128,7 @@ const s = StyleSheet.create({
     paddingBottom: 24,
     paddingTop: 6,
   },
+
   row: {
     width: "100%",
     maxWidth: 520,
@@ -175,10 +157,8 @@ const s = StyleSheet.create({
   rectText: {
     marginTop: 8,
     textAlign: "center",
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
   },
+
   sosWrap: { alignItems: "center", marginTop: 20, marginBottom: 12 },
   sos: {
     width: 140,
@@ -192,11 +172,5 @@ const s = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
-  },
-  sosText: {
-    color: "#FFF",
-    fontWeight: "900",
-    fontSize: 32,
-    letterSpacing: 1,
   },
 });

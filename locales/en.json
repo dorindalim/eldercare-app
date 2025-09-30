@@ -64,29 +64,29 @@
   },
 
   "elderlyConditions": {
-    "title": "Medical Conditions",
+    "title": "Health Conditions & Medications",
     "conditionTitle": "Condition {{index}}",
     "remove": "Remove",
     "conditionPH": "Condition (e.g., Hypertension)",
     "medicationsPH": "Medications (comma-separated)",
     "medicationFrequencyPH": "Medication frequency (e.g., twice daily)",
-    "doctorPH": "Doctor (optional)",
-    "clinicPH": "Clinic (optional)",
-    "appointmentsPH": "Appointments / notes (optional)",
+    "doctorPH": "Doctor",
+    "clinicPH": "Clinic/Hospital",
+    "appointmentsPH": "Appointments / Notes",
     "addCondition": "Add another condition",
-    "finish": "Finish & Go Home",
+    "finish": "Finish",
     "medsLabel": "Medications",
-    "medNamePH": "Medication name (e.g., Metformin)",
-    "medFreqPH": "Frequency (e.g., twice daily)",
+    "medNamePH": "Medication Name",
+    "medFreqPH": "Frequency",
     "removeMed": "Remove",
     "addMed": "Add medication",
     "assistive": {
-      "label": "Assistive devices",
+      "label": "Assistive Needs",
       "walking_cane": "Walking cane",
       "wheelchair": "Wheelchair",
       "hearing_aid": "Hearing aid",
       "glasses": "Glasses",
-      "other": "Other",
+      "other": "Others (specify)",
       "otherPH": "Please specify (e.g., grab bar at home)"
     },
     "drugAllergiesPH": "Any known drug allergies?",
@@ -149,12 +149,54 @@
     "community": "Community",
     "ccActivities": "Show nearby community activities",
     "viewActivities": "View activities"
-  },
+},
 
-  "rewards": {
-    "button": "Rewards",
+"rewards": {
+  "title": "Rewards",
+    "balance": "Your Coins",
     "coin": "coin",
-    "coins": "coins"
+    "coins": "coins",
+    "catalogTitle": "Redeemable Items",
+    "viewTerms": "T&Cs / How to use",
+    "redeem": "Redeem",
+    "cost": "{{count}} coins",
+    "confirmTitle": "Confirm Redemption",
+    "confirmBody": "Redeem {{name}} for {{cost}} coins?",
+    "cancel": "Cancel",
+    "confirm": "Redeem",
+    "successTitle": "Redeemed!",
+    "successBody": "Your voucher code is {{code}}. You can find it under “Owned”.",
+    "notEnoughTitle": "Not enough coins",
+    "notEnoughBody": "You don't have enough coins to redeem this item.",
+    "ownedTitle": "Owned vouchers",
+    "noneOwned": "You haven't redeemed anything yet.",
+    "voucher": "Voucher",
+    "code": "Code",
+    "redeemedAt": "Redeemed at",
+    "howToUse": "How to use",
+    "close": "Close",
+    "items": {
+      "ntuc5": {
+        "title": "NTUC FairPrice $5 Voucher",
+        "desc": "Use at participating NTUC FairPrice outlets.",
+        "terms": "• Valid at participating NTUC FairPrice outlets in Singapore.\n• Present code at checkout; one-time use only.\n• Not exchangeable for cash; no change will be given.\n• Merchant T&Cs apply; see in-store for details."
+      },
+      "ntuc10": {
+        "title": "NTUC FairPrice $10 Voucher",
+        "desc": "Use at participating NTUC FairPrice outlets.",
+        "terms": "• Valid at participating NTUC FairPrice outlets in Singapore.\n• Present code at checkout; one-time use only.\n• Not exchangeable for cash; no change will be given.\n• Merchant T&Cs apply; see in-store for details."
+      },
+      "kopitiam5": {
+        "title": "Kopitiam $5 Stored Value",
+        "desc": "For meals and drinks at Kopitiam outlets.",
+        "terms": "• Valid at participating Kopitiam outlets in Singapore.\n• Present code to cashier before payment.\n• One-time use; no change will be given.\n• Merchant T&Cs apply."
+      },
+      "guardian5": {
+        "title": "Guardian $5 Voucher",
+        "desc": "Valid for pharmacy and personal care items.",
+        "terms": "• Valid at participating Guardian stores in Singapore.\n• Not applicable to excluded items per store policy.\n• One-time use; no change given.\n• Merchant T&Cs apply."
+      }
+    }
   },
 
   "common": {

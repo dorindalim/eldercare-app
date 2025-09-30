@@ -1,4 +1,3 @@
-// app/Authentication/Signup.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -53,7 +52,7 @@ export default function Signup() {
       );
     }
 
-    // 1) Create the user (AuthProvider writes session)
+    // 1) Create the user
     const ok = await registerWithPhone(phone.trim(), password);
     if (!ok) {
       return Alert.alert(

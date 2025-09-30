@@ -1,4 +1,3 @@
-// src/auth/AuthProvider.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
@@ -82,7 +81,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // hydrate stored session so Expo fast-refresh doesn't log you out
   useEffect(() => {
     (async () => {
       try {
@@ -257,20 +255,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { success: true };
   };
 
-  /**
-   * SAVE CONDITIONS (REPLACE MODE) + EXTRAS
-   * - Always updates extras (allows clearing using nulls)
-   * - Deletes existing conditions/meds for user, then inserts the new set
-   * - Inserts each condition and then its medications (captures condition_id)
-   * - Works with "NIL" placeholders built by your UI
-   */
   const saveElderlyConditions = async (
     conds: ElderlyConditionInput[],
     extras?: ElderlyHealthExtras
   ) => {
     if (!session) return { success: false };
-
-    // 1) ALWAYS update extras (also supports clearing)
     {
       const { error: profErr } = await supabase
         .from("elderly_profiles")
@@ -294,7 +283,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    // 2) REPLACE: delete existing rows first
     {
       const { data: oldConds, error: fetchErr } = await supabase
         .from("elderly_conditions")
@@ -328,10 +316,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    // 3) If no conditions to insert, done (extras already updated)
     if (!conds?.length) return { success: true };
 
-    // 4) Insert each condition + its meds
     for (const c of conds) {
       const { data: inserted, error: condErr } = await supabase
         .from("elderly_conditions")

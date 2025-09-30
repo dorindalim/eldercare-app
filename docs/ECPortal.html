@@ -85,12 +85,10 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  // --- Supabase init ---
   const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";
   const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
   const supabase = createClient(PROJECT_URL, ANON_KEY);
 
-  // --- Helpers & constants ---
   const token = new URLSearchParams(location.search).get('token') || '';
   const assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
   const labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
@@ -99,7 +97,7 @@
   const NIL_MED  = { name:'NIL', frequency:'NIL' };
   const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
 
-  let noConditions = false; // global toggle
+  let noConditions = false;
 
   function chip(parent, key, active) {
     const span = document.createElement('span');
@@ -123,7 +121,7 @@
     return row;
   }
 
-  // Per-condition block (with per-condition No Medications toggle)
+  // Per-condition block
   function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
     const wrap = document.createElement('div'); wrap.className='card';
 
@@ -192,7 +190,6 @@
     return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
   }
 
-  // --- RPC wrappers ---
   async function rpcGet(pinHash) {
     const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
     return { data, error };
@@ -233,7 +230,6 @@
     el('noCondsChip').classList.toggle('active', on);
   }
 
-  // -------- NEW: read nested emergency from RPC payload --------
   function getEmergency(profile = {}) {
     if (profile.emergency && typeof profile.emergency === 'object') {
       const e = profile.emergency;
@@ -244,7 +240,6 @@
         email:    e.email ?? ''
       };
     }
-    // fallback to flat
     return {
       name:     profile.emergency_name ?? '',
       relation: profile.emergency_relation ?? '',
@@ -253,7 +248,6 @@
     };
   }
 
-  // -------- Render using { profile, conditions } --------
   function render(resp) {
     console.log('RPC payload:', resp);
 
@@ -303,14 +297,12 @@
     };
   }
 
-  // --- Boot ---
   (async function boot(){
     const noCondsChip = el('noCondsChip');
     noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
 
     if (!token) { el('status').textContent='Missing token'; return; }
 
-    // try cached pin
     let pin = localStorage.getItem('ec_pin_'+token) || '';
     let pinHash = pin ? await sha256Hex(pin) : '';
 
@@ -343,7 +335,6 @@
     if (error) { el('status').textContent = error.message || 'Failed to load'; return; }
     el('status').textContent=''; render(data);
 
-    // save handler
     el('saveBtn').onclick = async () => {
       el('saveMsg').textContent='Saving…';
 
