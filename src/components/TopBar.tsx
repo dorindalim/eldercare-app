@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useNavigation, usePathname, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Modal,
@@ -25,7 +25,9 @@ type Props = {
 
   title?: string;
   showHeart?: boolean;
-  onSpeak?: () => void;
+
+  /** Optional: override profile navigation */
+  onOpenProfile?: () => void;
 
   onLogout?: () => void;
 };
@@ -35,27 +37,50 @@ export default function TopBar({
   setLanguage,
   title = "Home",
   showHeart = true,
-  onSpeak,
+  onOpenProfile,
   onLogout,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const navigation = useNavigation();
 
   const activeLang = useMemo(
     () => LANGS.find((l) => language?.startsWith(l.code))?.code ?? "en",
     [language]
   );
 
+  const normalizedPath = (pathname || "/").replace(/\/+$/g, "") || "/";
+  const HOME_PATHS = new Set<string>(["/tabs/HomePage"]);
+  const isHome = HOME_PATHS.has(normalizedPath);
+
+  const showBack = !isHome;
+
   return (
     <View style={s.topBar}>
-      {/* Left: Settings (opens menu) */}
-      <Pressable
-        accessibilityLabel="Settings"
-        hitSlop={8}
-        onPress={() => setMenuOpen(true)}
-      >
-        <Ionicons name="settings-outline" size={24} />
-      </Pressable>
+      {/* Left: Back on non-home, else Settings */}
+      {showBack ? (
+        <Pressable
+          accessibilityLabel="Go back"
+          hitSlop={8}
+          onPress={() => router.back()}
+          style={{ padding: 4 }}
+        >
+          <Ionicons
+            name={Platform.OS === "ios" ? "chevron-back" : "arrow-back"}
+            size={26}
+          />
+        </Pressable>
+      ) : (
+        <Pressable
+          accessibilityLabel="Settings"
+          hitSlop={8}
+          onPress={() => setMenuOpen(true)}
+          style={{ padding: 4 }}
+        >
+          <Ionicons name="settings-outline" size={24} />
+        </Pressable>
+      )}
 
       {/* Center title (optional) */}
       <View style={s.center}>
@@ -69,15 +94,17 @@ export default function TopBar({
         {!!title && <Text style={s.title}>{title}</Text>}
       </View>
 
-      {/* Right: TTS button (optional) */}
+      {/* Right: Profile (bigger icon) */}
       <Pressable
-        onPress={onSpeak}
-        accessibilityLabel="Read screen aloud"
+        onPress={() => {
+          if (onOpenProfile) onOpenProfile();
+          else router.push("/tabs/Profile");
+        }}
+        accessibilityLabel="Open profile"
         hitSlop={8}
-        style={{ opacity: onSpeak ? 1 : 0.35 }}
-        disabled={!onSpeak}
+        style={{ padding: 4 }}
       >
-        <Ionicons name="volume-high-outline" size={20} />
+        <Ionicons name="person-circle-outline" size={30} />
       </Pressable>
 
       {/* Settings Menu (modal) */}

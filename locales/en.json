@@ -111,13 +111,9 @@
   "ccActivities": "CC Activities",
   "profile": "Profile",
   "walkingRoutes": "Walking Routes",
+  "clinics": "Clinics",
 
-  "sos": "SOS",
-
-  "nearby": "Navigation",
-  "activities": "CC Activities",
-  "appt": "Profile",
-  "meds": "Walking Routes"
+  "sos": "SOS"
 },
 
   "profile": {
