@@ -38,6 +38,7 @@ export default function ElderlyHome() {
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
         title="Home"
+        showHeart={false}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

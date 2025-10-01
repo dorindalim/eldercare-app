@@ -26,11 +26,15 @@ type Props = {
   title?: string;
   showHeart?: boolean;
 
-  /** Optional: override profile navigation */
   onOpenProfile?: () => void;
 
-  onLogout?: () => void;
+  onLogout?: () => Promise<void> | void;
 };
+
+function normalize(path?: string | null) {
+  const p = (path || "/").replace(/\/+$/g, "") || "/";
+  return p;
+}
 
 export default function TopBar({
   language,
@@ -42,17 +46,31 @@ export default function TopBar({
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
   const navigation = useNavigation();
+  const pathname = usePathname();
 
   const activeLang = useMemo(
     () => LANGS.find((l) => language?.startsWith(l.code))?.code ?? "en",
     [language]
   );
 
-  const normalizedPath = (pathname || "/").replace(/\/+$/g, "") || "/";
+  const normalizedPath = normalize(pathname);
   const HOME_PATHS = new Set<string>(["/tabs/HomePage"]);
   const isHome = HOME_PATHS.has(normalizedPath);
+
+  const goBackSafe = () => {
+    const navAny = navigation as any;
+    if (typeof navAny?.canGoBack === "function" && navAny.canGoBack()) {
+      navAny.goBack();
+      return;
+    }
+    const routerAny = router as any;
+    if (typeof routerAny?.canGoBack === "function" && routerAny.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/tabs/HomePage");
+  };
 
   const showBack = !isHome;
 
@@ -62,8 +80,9 @@ export default function TopBar({
       {showBack ? (
         <Pressable
           accessibilityLabel="Go back"
+          accessibilityHint="Returns to the previous screen"
           hitSlop={8}
-          onPress={() => router.back()}
+          onPress={goBackSafe}
           style={{ padding: 4 }}
         >
           <Ionicons
@@ -74,6 +93,7 @@ export default function TopBar({
       ) : (
         <Pressable
           accessibilityLabel="Settings"
+          accessibilityHint="Open app settings and language"
           hitSlop={8}
           onPress={() => setMenuOpen(true)}
           style={{ padding: 4 }}
@@ -82,7 +102,7 @@ export default function TopBar({
         </Pressable>
       )}
 
-      {/* Center title (optional) */}
+      {/* Center title */}
       <View style={s.center}>
         {showHeart && (
           <Ionicons
@@ -94,7 +114,7 @@ export default function TopBar({
         {!!title && <Text style={s.title}>{title}</Text>}
       </View>
 
-      {/* Right: Profile (bigger icon) */}
+      {/* Right: Profile */}
       <Pressable
         onPress={() => {
           if (onOpenProfile) onOpenProfile();
@@ -144,24 +164,25 @@ export default function TopBar({
 
           <View style={s.divider} />
 
-          <Pressable
-            onPress={async () => {
-              setMenuOpen(false);
-              if (onLogout) await onLogout();
-              router.replace("/Authentication/LogIn");
-            }}
-            style={s.rowBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Log out"
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={20}
-              color="#B91C1C"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={[s.rowBtnText, { color: "#B91C1C" }]}>Log out</Text>
-          </Pressable>
+          {!!onLogout && (
+            <Pressable
+              onPress={async () => {
+                setMenuOpen(false);
+                await onLogout();
+              }}
+              style={s.rowBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Log out"
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color="#B91C1C"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[s.rowBtnText, { color: "#B91C1C" }]}>Log out</Text>
+            </Pressable>
+          )}
         </View>
       </Modal>
     </View>
@@ -229,15 +250,7 @@ const s = StyleSheet.create({
   langText: { fontSize: 12, fontWeight: "700", color: "#111827" },
   langTextActive: { color: "#FFFFFF" },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E7EB",
-    marginVertical: 10,
-  },
-  rowBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
+  divider: { height: 1, backgroundColor: "#E5E7EB", marginVertical: 10 },
+  rowBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
   rowBtnText: { fontSize: 14, fontWeight: "800", color: "#111827" },
 });
