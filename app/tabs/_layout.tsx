@@ -1,14 +1,13 @@
-// app/tabs/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import "../../i18n";
-
 export default function ElderlyTabs() {
   return (
     <Tabs
       initialRouteName="HomePage"
       screenOptions={{ headerShown: false, tabBarLabelStyle: { fontSize: 12 } }}
     >
+      {" "}
       <Tabs.Screen
         name="Navigation"
         options={{
@@ -17,7 +16,7 @@ export default function ElderlyTabs() {
             <Ionicons name="navigate-outline" color={color} size={size} />
           ),
         }}
-      />
+      />{" "}
       <Tabs.Screen
         name="Walking"
         options={{
@@ -26,7 +25,7 @@ export default function ElderlyTabs() {
             <Ionicons name="walk-outline" color={color} size={size} />
           ),
         }}
-      />
+      />{" "}
       <Tabs.Screen
         name="HomePage"
         options={{
@@ -35,7 +34,7 @@ export default function ElderlyTabs() {
             <Ionicons name="home-outline" color={color} size={size} />
           ),
         }}
-      />
+      />{" "}
       <Tabs.Screen
         name="Community"
         options={{
@@ -44,24 +43,19 @@ export default function ElderlyTabs() {
             <Ionicons name="people-outline" color={color} size={size} />
           ),
         }}
-      />
+      />{" "}
       <Tabs.Screen
-        name="Profile"
+        name="Clinic"
         options={{
-          title: "Profile",
+          title: "Clinic",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle-outline" color={color} size={size} />
+            <Ionicons name="medkit-outline" color={color} size={size} />
           ),
         }}
-      />
-
-      {/* Hidden tab, still navigable via router.push("/tabs/Rewards") */}
-      <Tabs.Screen
-        name="Rewards"
-        options={{
-          href: null, // ✅ hides from tab bar & deep links; still works with router.push
-        }}
-      />
+      />{" "}
+      {/* Hidden screens (still navigable via router.push) */}{" "}
+      <Tabs.Screen name="Profile" options={{ href: null }} />{" "}
+      <Tabs.Screen name="Rewards" options={{ href: null }} />{" "}
     </Tabs>
   );
 }

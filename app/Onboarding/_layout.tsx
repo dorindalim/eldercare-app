@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Slot, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Alert, StatusBar, View } from "react-native";
+import { StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import TopBar, { LangCode } from "../../src/components/TopBar";
@@ -27,7 +27,6 @@ export default function ElderlyOnboardingLayout() {
         setLanguage={setLang}
         title="Onboarding"
         showHeart={false}
-        onSpeak={() => Alert.alert("TTS", "Read screen aloud")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

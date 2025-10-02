@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useNavigation, usePathname, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Modal,
@@ -25,39 +25,84 @@ type Props = {
 
   title?: string;
   showHeart?: boolean;
-  onSpeak?: () => void;
 
-  onLogout?: () => void;
+  onOpenProfile?: () => void;
+
+  onLogout?: () => Promise<void> | void;
 };
+
+function normalize(path?: string | null) {
+  const p = (path || "/").replace(/\/+$/g, "") || "/";
+  return p;
+}
 
 export default function TopBar({
   language,
   setLanguage,
   title = "Home",
   showHeart = true,
-  onSpeak,
+  onOpenProfile,
   onLogout,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const navigation = useNavigation();
+  const pathname = usePathname();
 
   const activeLang = useMemo(
     () => LANGS.find((l) => language?.startsWith(l.code))?.code ?? "en",
     [language]
   );
 
+  const normalizedPath = normalize(pathname);
+  const HOME_PATHS = new Set<string>(["/tabs/HomePage"]);
+  const isHome = HOME_PATHS.has(normalizedPath);
+
+  const goBackSafe = () => {
+    const navAny = navigation as any;
+    if (typeof navAny?.canGoBack === "function" && navAny.canGoBack()) {
+      navAny.goBack();
+      return;
+    }
+    const routerAny = router as any;
+    if (typeof routerAny?.canGoBack === "function" && routerAny.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/tabs/HomePage");
+  };
+
+  const showBack = !isHome;
+
   return (
     <View style={s.topBar}>
-      {/* Left: Settings (opens menu) */}
-      <Pressable
-        accessibilityLabel="Settings"
-        hitSlop={8}
-        onPress={() => setMenuOpen(true)}
-      >
-        <Ionicons name="settings-outline" size={24} />
-      </Pressable>
+      {/* Left: Back on non-home, else Settings */}
+      {showBack ? (
+        <Pressable
+          accessibilityLabel="Go back"
+          accessibilityHint="Returns to the previous screen"
+          hitSlop={8}
+          onPress={goBackSafe}
+          style={{ padding: 4 }}
+        >
+          <Ionicons
+            name={Platform.OS === "ios" ? "chevron-back" : "arrow-back"}
+            size={26}
+          />
+        </Pressable>
+      ) : (
+        <Pressable
+          accessibilityLabel="Settings"
+          accessibilityHint="Open app settings and language"
+          hitSlop={8}
+          onPress={() => setMenuOpen(true)}
+          style={{ padding: 4 }}
+        >
+          <Ionicons name="settings-outline" size={24} />
+        </Pressable>
+      )}
 
-      {/* Center title (optional) */}
+      {/* Center title */}
       <View style={s.center}>
         {showHeart && (
           <Ionicons
@@ -69,15 +114,17 @@ export default function TopBar({
         {!!title && <Text style={s.title}>{title}</Text>}
       </View>
 
-      {/* Right: TTS button (optional) */}
+      {/* Right: Profile */}
       <Pressable
-        onPress={onSpeak}
-        accessibilityLabel="Read screen aloud"
+        onPress={() => {
+          if (onOpenProfile) onOpenProfile();
+          else router.push("/tabs/Profile");
+        }}
+        accessibilityLabel="Open profile"
         hitSlop={8}
-        style={{ opacity: onSpeak ? 1 : 0.35 }}
-        disabled={!onSpeak}
+        style={{ padding: 4 }}
       >
-        <Ionicons name="volume-high-outline" size={20} />
+        <Ionicons name="person-circle-outline" size={30} />
       </Pressable>
 
       {/* Settings Menu (modal) */}
@@ -117,24 +164,25 @@ export default function TopBar({
 
           <View style={s.divider} />
 
-          <Pressable
-            onPress={async () => {
-              setMenuOpen(false);
-              if (onLogout) await onLogout();
-              router.replace("/Authentication/LogIn");
-            }}
-            style={s.rowBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Log out"
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={20}
-              color="#B91C1C"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={[s.rowBtnText, { color: "#B91C1C" }]}>Log out</Text>
-          </Pressable>
+          {!!onLogout && (
+            <Pressable
+              onPress={async () => {
+                setMenuOpen(false);
+                await onLogout();
+              }}
+              style={s.rowBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Log out"
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color="#B91C1C"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[s.rowBtnText, { color: "#B91C1C" }]}>Log out</Text>
+            </Pressable>
+          )}
         </View>
       </Modal>
     </View>
@@ -202,15 +250,7 @@ const s = StyleSheet.create({
   langText: { fontSize: 12, fontWeight: "700", color: "#111827" },
   langTextActive: { color: "#FFFFFF" },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E7EB",
-    marginVertical: 10,
-  },
-  rowBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
+  divider: { height: 1, backgroundColor: "#E5E7EB", marginVertical: 10 },
+  rowBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
   rowBtnText: { fontSize: 14, fontWeight: "800", color: "#111827" },
 });

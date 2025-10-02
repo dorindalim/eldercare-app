@@ -16,7 +16,7 @@ export default function NavigationScreen() {
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        title="Walking Routes"
+        title="Clinic"
         showHeart={false}
       />
     </SafeAreaView>

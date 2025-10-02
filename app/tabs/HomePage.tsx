@@ -38,8 +38,7 @@ export default function ElderlyHome() {
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
         title="Home"
-        showHeart
-        onSpeak={() => Alert.alert("TTS", "Read screen aloud")}
+        showHeart={false}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");
@@ -86,13 +85,10 @@ export default function ElderlyHome() {
 
         {/* Row 2: Profile + Walking Routes */}
         <View style={s.row}>
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/tabs/Profile")}
-          >
-            <Ionicons name="person-circle-outline" size={28} color="#222" />
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
+            <Ionicons name="medkit-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.profile", "Profile")}
+              {t("home.clinics", "Clinics")}
             </AppText>
           </Pressable>
 
