@@ -1,187 +1,209 @@
+import polyline from "@mapbox/polyline";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import * as Location from "expo-location";
+import { useRouter } from "expo-router";
 import * as Speech from "expo-speech";
 import { useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import { useTranslation } from "react-i18next";
+import { Alert, FlatList, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../src/auth/AuthProvider";
+import TopBar, { type LangCode } from "../../src/components/TopBar";
+
+const GOOGLE_WEB_API_KEY = "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGs";
+
+type LatLng = { latitude: number; longitude: number };
 
 export default function NavigationScreen() {
-  // State variables
-  const [location, setLocation] = useState(null);
+  const router = useRouter();
+  const { logout } = useAuth();
+  const { i18n } = useTranslation();
+  const setLang = async (code: string) => {
+    await i18n.changeLanguage(code);
+    await AsyncStorage.setItem("lang", code);
+  };
+
+  const [location, setLocation] = useState<LatLng | null>(null);
   const [query, setQuery] = useState("");
-  const [destination, setDestination] = useState(null);
-  const [routeCoords, setRouteCoords] = useState([]);
-  const [steps, setSteps] = useState([]);
+  const [destination, setDestination] = useState<LatLng | null>(null);
+  const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
+  const [steps, setSteps] = useState<{ id: string; html: string; dist: string; endLoc: { lat: number; lng: number } }[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [eta, setEta] = useState(null);
-  const [mode, setMode] = useState("driving");
+  const [eta, setEta] = useState<{ duration: string; distance: string } | null>(null);
+  const [mode, setMode] = useState<"driving" | "walking" | "bicycling" | "transit">("driving");
   const [navigating, setNavigating] = useState(false);
-  const [error, setError] = useState(null);
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
 
-  const mapRef = useRef(null);
+  const mapRef = useRef<MapView | null>(null);
 
-  // Request location permissions
+  const isExpoGo = Constants.appOwnership === "expo";
+  const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE; 
+
   useEffect(() => {
-    requestLocationPermission();
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        setPermissionGranted(true);
+        const pos = await Location.getCurrentPositionAsync({});
+        setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      } else {
+        Alert.alert("Location permission needed", "Please enable location services to navigate.");
+      }
+    })();
   }, []);
 
-  const requestLocationPermission = async () => {
-    try {
-      console.log('Requesting location permission...');
-      
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log('Location permission status:', status);
-      
-      if (status === 'granted') {
-        setPermissionGranted(true);
-        const position = await Location.getCurrentPositionAsync({});
-        setLocation(position.coords);
-        console.log('Got initial location:', position.coords);
-      } else {
-        setError('Location permission denied. Please enable location services.');
-      }
-    } catch (err) {
-      console.error('Permission error:', err);
-      setError(`Location error: ${err.message}`);
+  useEffect(() => {
+    let sub: Location.LocationSubscription | null = null;
+    if (navigating) {
+      (async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          sub = await Location.watchPositionAsync(
+            { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
+            (pos) => {
+              const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+              setLocation(coords);
+              if (destination) fetchDirections(coords, destination, /*speak*/ false);
+              checkStepProgress(coords);
+            }
+          );
+        }
+      })();
     }
-  };
+    return () => sub && sub.remove();
+  }, [navigating, destination, mode]);
 
-  // Mock search function
   const searchDestination = async () => {
-    if (!query.trim()) {
-      Alert.alert('Error', 'Please enter a destination');
-      return;
-    }
+    if (!query.trim()) return Alert.alert("Enter a destination");
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_WEB_API_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.results?.length) return Alert.alert("Not found", "Try a more specific place name.");
+      const loc = data.results[0].geometry.location;
+      const dest = { latitude: loc.lat, longitude: loc.lng };
+      setDestination(dest);
 
-    // Mock destination coordinates (Singapore)
-    const mockDestination = {
-      latitude: 1.3521, 
-      longitude: 103.8198,
-    };
-    
-    setDestination(mockDestination);
-    
-    // Mock route data
-    setEta({ duration: "15 mins", distance: "5 km" });
-    setSteps([{
-      id: "1",
-      html: "Head <b>north</b> on Main Street",
-      dist: "200 m",
-      endLoc: mockDestination
-    }]);
-
-    // Zoom map to show both locations
-    if (location && mapRef.current) {
-      mapRef.current.fitToCoordinates(
-        [
-          { latitude: location.latitude, longitude: location.longitude },
-          mockDestination,
-        ],
-        {
+      if (location && mapRef.current) {
+        mapRef.current.fitToCoordinates([location, dest], {
           edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
           animated: true,
-        }
-      );
-    }
-  };
-
-  // Mock directions function
-  const fetchDirections = async (origin, dest, speak = true) => {
-    if (!origin || !dest) return;
-
-    // Create a simple straight-line route for demo
-    const mockCoords = [
-      { latitude: origin.latitude, longitude: origin.longitude },
-      { latitude: dest.latitude, longitude: dest.longitude },
-    ];
-    
-    setRouteCoords(mockCoords);
-    setEta({ duration: "15 mins", distance: "5 km" });
-    setSteps([
-      {
-        id: "1",
-        html: "Head toward your destination",
-        dist: "5 km",
-        endLoc: dest
+        });
       }
-    ]);
-
-    if (speak) {
-      Speech.speak("Route ready. ETA 15 minutes, distance 5 kilometers");
+    } catch (e) {
+      Alert.alert("Search error", String(e));
     }
   };
 
-  // Handle navigation start
+  const fetchDirections = async (origin: LatLng, dest: LatLng, speak = true) => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&mode=${mode}&key=${GOOGLE_WEB_API_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.routes?.length) return;
+
+      const route = data.routes[0];
+      const pts = polyline.decode(route.overview_polyline.points);
+      const coords = pts.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+      setRouteCoords(coords);
+
+      const leg = route.legs[0];
+      setEta({ duration: leg.duration.text, distance: leg.distance.text });
+      setSteps(
+        leg.steps.map((s: any, idx: number) => ({
+          id: String(idx),
+          html: s.html_instructions,
+          dist: s.distance.text,
+          endLoc: s.end_location, // { lat, lng }
+        }))
+      );
+
+      if (speak && mapRef.current) {
+        mapRef.current.fitToCoordinates(coords, {
+          edgePadding: { top: 80, right: 40, bottom: 220, left: 40 },
+          animated: true,
+        });
+        Speech.speak(`Route ready. ETA ${leg.duration.text}, distance ${leg.distance.text}`);
+      }
+    } catch (e) {
+      Alert.alert("Directions error", String(e));
+    }
+  };
+
+  const checkStepProgress = (pos: LatLng) => {
+    if (!steps.length) return;
+    const step = steps[currentStepIndex];
+    const dist = distanceMeters(pos, { latitude: step.endLoc.lat, longitude: step.endLoc.lng });
+    if (dist < 30 && currentStepIndex < steps.length - 1) {
+      const next = steps[currentStepIndex + 1];
+      setCurrentStepIndex((i) => i + 1);
+      Speech.speak(stripHtml(next.html));
+    }
+  };
+
+  const distanceMeters = (a: LatLng, b: LatLng) => {
+    const R = 6371e3;
+    const φ1 = (a.latitude * Math.PI) / 180;
+    const φ2 = (b.latitude * Math.PI) / 180;
+    const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
+    const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
+    const x =
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  };
+
+  const stripHtml = (html: string) => html?.replace(/<[^>]+>/g, "") || "";
+
   const startNavigation = () => {
-    if (!destination) {
-      Alert.alert('Error', 'Please set a destination first');
-      return;
-    }
-
+    if (!location || !destination) return Alert.alert("Pick a destination first");
     setNavigating(true);
-    fetchDirections(location, destination);
     setCurrentStepIndex(0);
-    
-    Speech.speak(`Navigation started. Heading to destination. ETA 15 minutes.`);
+    fetchDirections(location, destination, /*speak*/ true);
+    Speech.speak("Navigation started.");
   };
 
-  // Simple HTML strip function
-  const stripHtml = (html) => {
-    if (!html) return '';
-    return html.replace(/<[^>]+>/g, "");
-  };
-
-  // Error display
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Location Error</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={requestLocationPermission}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // Main UI
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Search Section */}
+    <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
+      {/* Top Bar */}
+      <TopBar
+        language={i18n.language as LangCode}
+        setLanguage={setLang as (c: LangCode) => void}
+        title="Navigation"
+        showHeart={false}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
+      />
+
+      {/* Search + mode (hidden while navigating) */}
       {!navigating && (
-        <View style={styles.searchSection}>
-          <View style={styles.searchBox}>
+        <View style={s.searchWrap}>
+          <View style={s.searchRow}>
             <TextInput
-              style={styles.input}
-              placeholder="Enter destination (e.g., City Hall)"
+              style={s.input}
+              placeholder="Enter destination"
               value={query}
               onChangeText={setQuery}
               onSubmitEditing={searchDestination}
+              returnKeyType="search"
             />
-            <TouchableOpacity style={styles.searchButton} onPress={searchDestination}>
-              <Text style={styles.searchButtonText}>Search</Text>
+            <TouchableOpacity style={s.searchBtn} onPress={searchDestination}>
+              <Text style={s.searchBtnText}>Search</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Travel Mode Selector */}
-          <View style={styles.modeRow}>
-            {["driving", "walking", "transit"].map((m) => (
+          <View style={s.modeRow}>
+            {(["driving", "walking", "bicycling", "transit"] as const).map((m) => (
               <TouchableOpacity
                 key={m}
-                style={[styles.modeBtn, mode === m && styles.modeBtnActive]}
+                style={[s.modeBtn, mode === m && s.modeBtnActive]}
                 onPress={() => setMode(m)}
               >
-                <Text style={mode === m ? styles.modeTextActive : styles.modeText}>
+                <Text style={mode === m ? s.modeTextActive : s.modeText}>
                   {m.charAt(0).toUpperCase() + m.slice(1)}
                 </Text>
               </TouchableOpacity>
@@ -193,252 +215,167 @@ export default function NavigationScreen() {
       {/* Map */}
       <MapView
         ref={mapRef}
-        style={styles.map}
-        showsUserLocation={true}
+        style={s.map}
+        provider={providerProp}
+        showsUserLocation={permissionGranted}
         showsMyLocationButton={true}
         initialRegion={{
-          latitude: location?.latitude || 1.3521,
-          longitude: location?.longitude || 103.8198,
+          latitude: location?.latitude ?? 1.3521,
+          longitude: location?.longitude ?? 103.8198,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
       >
-        {destination && (
-          <Marker 
-            coordinate={destination} 
-            title="Destination"
-            pinColor="red"
-          />
-        )}
+        {destination && <Marker coordinate={destination} title="Destination" />}
         {routeCoords.length > 0 && (
-          <Polyline
-            coordinates={routeCoords}
-            strokeWidth={4}
-            strokeColor="#007AFF"
-          />
+          <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#007AFF" />
         )}
       </MapView>
 
-      {/* Navigation Controls */}
+      {/* Start/Stop */}
       {destination && !navigating && (
-        <View style={styles.controlBar}>
-          <TouchableOpacity style={styles.navButton} onPress={startNavigation}>
-            <Text style={styles.navButtonText}>Start Navigation</Text>
+        <View style={s.bottomBar}>
+          <TouchableOpacity style={s.startBtn} onPress={startNavigation}>
+            <Text style={s.startText}>Start Navigation</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Navigation Instructions */}
-      {navigating && (
-        <View style={styles.instructions}>
-          <Text style={styles.eta}>
-            🎯 ETA: {eta?.duration} ({eta?.distance})
+      {navigating && eta && (
+        <View style={s.instructions}>
+          <Text style={s.eta}>ETA: {eta.duration} ({eta.distance})</Text>
+          <Text style={s.nextStep}>
+            Next: {steps[currentStepIndex] ? stripHtml(steps[currentStepIndex].html) : "Arrived"}
           </Text>
-          <Text style={styles.nextStep}>
-            Next: {steps[currentStepIndex] ? stripHtml(steps[currentStepIndex].html) : "Arrived!"}
-          </Text>
-          
           <FlatList
             data={steps}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(it) => it.id}
             renderItem={({ item, index }) => (
-              <Text style={[
-                styles.step,
-                index === currentStepIndex && styles.currentStep
-              ]}>
+              <Text style={[s.step, index === currentStepIndex && s.stepActive]}>
                 • {stripHtml(item.html)} ({item.dist})
               </Text>
             )}
-            style={styles.stepsList}
+            style={s.stepList}
           />
-          
-          <TouchableOpacity style={styles.stopButton} onPress={() => setNavigating(false)}>
-            <Text style={styles.stopButtonText}>Stop Navigation</Text>
+          <TouchableOpacity
+            style={s.stopBtn}
+            onPress={() => {
+              setNavigating(false);
+              setRouteCoords([]);
+              setSteps([]);
+              setEta(null);
+              Speech.speak("Navigation stopped.");
+            }}
+          >
+            <Text style={s.stopText}>Stop Navigation</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Loading State */}
-      {!permissionGranted && !error && (
-        <View style={styles.loadingOverlay}>
-          <Text>Requesting location access...</Text>
+      {/* Hint while waiting for permission */}
+      {!permissionGranted && (
+        <View style={s.overlay}>
+          <Text>Requesting location access…</Text>
         </View>
       )}
     </SafeAreaView>
   );
 }
 
-// Styles
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  errorContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 20 
-  },
-  errorTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    marginBottom: 10 
-  },
-  errorText: { 
-    textAlign: 'center', 
-    marginBottom: 20 
-  },
-  retryButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  searchSection: {
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#FFF" },
+
+  // Search + mode
+  searchWrap: {
     position: "absolute",
-    top: Platform.OS === 'ios' ? 40 : 20,
-    left: 10,
-    right: 10,
+    top: Platform.OS === "ios" ? 56 + 8 : 56, // under TopBar
+    left: 12,
+    right: 12,
     zIndex: 10,
   },
-  searchBox: {
-    backgroundColor: "white",
-    borderRadius: 8,
+  searchRow: {
     flexDirection: "row",
+    backgroundColor: "#FFF",
+    borderRadius: 10,
     padding: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
     marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  input: { 
-    flex: 1, 
-    marginRight: 8,
-    padding: 8,
-  },
-  searchButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    justifyContent: 'center',
-  },
-  searchButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  modeRow: {
-    backgroundColor: "white",
+  input: { flex: 1, paddingVertical: 8, paddingHorizontal: 6, marginRight: 8 },
+  searchBtn: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 14,
     borderRadius: 8,
+    justifyContent: "center",
+  },
+  searchBtnText: { color: "#FFF", fontWeight: "700" },
+
+  modeRow: {
     flexDirection: "row",
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    padding: 6,
     justifyContent: "space-around",
-    padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
-  modeBtn: { 
-    padding: 8, 
-    borderRadius: 6 
-  },
-  modeBtnActive: { 
-    backgroundColor: "#007AFF" 
-  },
-  modeText: { 
-    color: "#333" 
-  },
-  modeTextActive: { 
-    color: "#fff", 
-    fontWeight: "600" 
-  },
-  map: { 
-    flex: 1 
-  },
-  controlBar: {
+  modeBtn: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
+  modeBtnActive: { backgroundColor: "#007AFF" },
+  modeText: { color: "#333" },
+  modeTextActive: { color: "#FFF", fontWeight: "700" },
+
+  // Map
+  map: { flex: 1 },
+
+  // Bottom bar
+  bottomBar: {
     position: "absolute",
     bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: "white",
+    left: 12,
+    right: 12,
+    backgroundColor: "#FFF",
+    padding: 14,
     borderRadius: 12,
-    padding: 16,
+    elevation: 5,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
   },
-  navButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  navButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  startBtn: { backgroundColor: "#007AFF", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
+  startText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+
+  // Instructions
   instructions: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    padding: 16,
+    backgroundColor: "rgba(255,255,255,0.96)",
+    padding: 14,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    maxHeight: 300,
+    maxHeight: 280,
   },
-  eta: { 
-    fontWeight: "700", 
-    marginBottom: 8, 
-    fontSize: 16 
-  },
-  nextStep: { 
-    fontSize: 15, 
-    marginBottom: 12, 
-    color: "#007AFF",
-    fontWeight: "600"
-  },
-  stepsList: {
-    maxHeight: 150,
-    marginBottom: 12,
-  },
-  step: { 
-    fontSize: 14, 
-    marginVertical: 4 
-  },
-  currentStep: { 
-    fontWeight: "bold", 
-    color: "#007AFF" 
-  },
-  stopButton: {
-    backgroundColor: '#FF3B30',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  stopButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.8)",
+  eta: { fontWeight: "800", marginBottom: 6, fontSize: 16 },
+  nextStep: { fontSize: 15, marginBottom: 8, color: "#007AFF", fontWeight: "700" },
+  stepList: { maxHeight: 150, marginBottom: 10 },
+  step: { fontSize: 14, marginVertical: 3 },
+  stepActive: { fontWeight: "800", color: "#007AFF" },
+  stopBtn: { backgroundColor: "#FF3B30", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  stopText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+
+  // Overlay while waiting for permission
+  overlay: {
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.85)",
   },
 });
