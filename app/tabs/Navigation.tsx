@@ -214,9 +214,9 @@ export default function NavigationScreen() {
 
       {/* Map */}
       <MapView
+        provider="google"
         ref={mapRef}
         style={s.map}
-        provider={providerProp}
         showsUserLocation={permissionGranted}
         showsMyLocationButton={true}
         initialRegion={{
