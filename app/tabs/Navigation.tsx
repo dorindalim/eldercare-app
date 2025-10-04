@@ -41,6 +41,10 @@ export default function NavigationScreen() {
   const isExpoGo = Constants.appOwnership === "expo";
   const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE; 
 
+  const params = useLocalSearchParams();
+  const presetQuery = params.presetQuery as string;
+
+
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -74,6 +78,17 @@ export default function NavigationScreen() {
     }
     return () => sub && sub.remove();
   }, [navigating, destination, mode]);
+
+     useEffect(() => {
+    if (presetQuery) {
+      setQuery(presetQuery);
+      // Auto-search after a short delay to ensure the query is set
+      const timer = setTimeout(() => {
+        searchDestination();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [presetQuery]);
 
   const searchDestination = async () => {
     if (!query.trim()) return Alert.alert("Enter a destination");
