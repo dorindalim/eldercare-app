@@ -182,6 +182,12 @@
     const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
     const medsWrap=document.createElement('div');
 
+    const addMedBtn = document.createElement('button');
+    addMedBtn.className = 'btn ghost';
+    addMedBtn.textContent = '+ Add medication';
+    addMedBtn.style.marginTop = '6px';
+    addMedBtn.onclick = () => medsWrap.appendChild(medRow({name:'',frequency:''}));
+
     const initialNoMeds = Array.isArray(c.medications)
       && c.medications.length===1
       && String(c.medications[0]?.name).toUpperCase()==='NIL';
@@ -197,10 +203,12 @@
         noMedsChip.classList.add('active');
         medsLabel.style.display='none';
         medsWrap.style.display='none';
+        addMedBtn.style.display='none';
       } else {
         noMedsChip.classList.remove('active');
         medsLabel.style.display='';
         medsWrap.style.display='';
+        addMedBtn.style.display='';
         if (medsWrap.children.length===0) medsWrap.appendChild(medRow({name:'',frequency:''}));
       }
     }
@@ -209,7 +217,7 @@
 
     const rmC=document.createElement('button'); rmC.textContent='Remove condition'; rmC.className='btn secondary'; rmC.style.marginTop='6px'; rmC.onclick=()=>wrap.remove();
 
-    wrap.append(t,d,cl,ap,togglesRow,medsLabel,medsWrap,rmC);
+    wrap.append(t,d,cl,ap,togglesRow,medsLabel,medsWrap,addMedBtn,rmC);
 
     wrap._get=()=>({
       condition: t.value.trim()||null,
