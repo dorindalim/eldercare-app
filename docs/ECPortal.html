@@ -69,6 +69,9 @@
       <h1>Emergency Contact Portal</h1>
       <div class="hdr-sub">Quickly view and update emergency contact & medical details</div>
     </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
+      <button id="logoutBtn" class="btn secondary" style="height:36px; display:none">Log out</button>
+    </div>
   </div>
 
   <div class="card">
@@ -354,7 +357,9 @@
     const noCondsChip = el('noCondsChip');
     noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
 
-    if (!token) { el('status').textContent='Missing token'; return; }
+  const logoutBtn = el('logoutBtn');
+
+  if (!token) { el('status').textContent='Missing token'; return; }
 
     let pin = localStorage.getItem('ec_pin_'+token) || '';
     let pinHash = pin ? await sha256Hex(pin) : '';
@@ -423,6 +428,26 @@
       const { error: e } = await rpcSave(h, payload);
       el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
     };
+
+    // Logout button: clear stored PIN and return to PIN entry
+    logoutBtn.onclick = () => {
+      try {
+        localStorage.removeItem('ec_pin_'+token);
+      } catch(e) { /* ignore */ }
+      el('main').style.display = 'none';
+      el('pinBlock').style.display = '';
+      el('status').textContent = 'Signed out - enter PIN to continue.';
+    };
+
+    // show logout button when main is visible, hide when pinBlock is visible
+    const updateLogoutVisibility = () => {
+      logoutBtn.style.display = (el('main').style.display === '' ? '' : 'none');
+    };
+    updateLogoutVisibility();
+
+    // ensure logout visibility updates after pin actions
+    el('pinUseBtn').addEventListener('click', () => setTimeout(updateLogoutVisibility, 50));
+    el('pinSetBtn').addEventListener('click', () => setTimeout(updateLogoutVisibility, 50));
   })();
 </script>
 </body>
