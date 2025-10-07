@@ -194,5 +194,73 @@
     "ok": "好的",
     "notLoggedIn": "未登录",
     "pleaseLoginAgain": "请重新登录。"
+  },
+  "community": {
+    "title": "社区活动",
+    "searchPlaceholder": "按标题搜索",
+    "noResults": "未找到活动。",
+    "register": "报名",
+    "getDirections": "获取路线",
+    "filters": {
+      "title": "筛选",
+      "categories": "类别",
+      "timing": "时间",
+      "distance": "距离",
+      "price": "费用",
+      "reset": "重置",
+      "apply": "应用"
+    },
+    "timing": {
+      "today": "今天",
+      "week": "本周",
+      "upcoming": "即将开始"
+    },
+    "distance": {
+      "near": "最近",
+      "far": "最远",
+      "none": "不排序"
+    },
+    "price": {
+      "all": "全部",
+      "freeOnly": "仅免费",
+      "paidOnly": "仅付费"
+    },
+    "summary": {
+      "allCategories": "所有类别",
+      "today": "今天",
+      "thisWeek": "本周",
+      "upcoming": "即将开始",
+      "nearest": "最近",
+      "farthest": "最远",
+      "noDistance": "不按距离排序",
+      "allPrices": "所有费用",
+      "freeOnly": "仅免费",
+      "paidOnly": "仅付费"
+    },
+    "categorySummary": {
+      "one": "共有 {{count}} 个活动属于 {{category}}",
+      "other": "共有 {{count}} 个活动属于 {{category}}"
+    },
+    "categories": {
+      "healthFitness": "健康与健身",
+      "artsCulture": "艺术与文化",
+      "activeAging": "乐龄活动",
+      "parentingEducation": "育儿与教育",
+      "exhibitionFair": "展览与集市",
+      "neighbourhoodEvents": "邻里活动",
+      "celebrationFestivity": "庆典与节日",
+      "kopiTalksDialogues": "咖啡谈与对话",
+      "charityVolunteerism": "慈善与志愿",
+      "overseasOutingsTours": "海外出游与旅行"
+    },
+    "ui": {
+      "search": "搜索",
+      "free": "免费"
+    },
+    "sortSummary": {
+      "default": "所有类别 · 即将举行 · 最近 · 费用：全部",
+      "custom": "{{categories}} · {{timing}} · {{distance}} "
+  }
   }
 }
+

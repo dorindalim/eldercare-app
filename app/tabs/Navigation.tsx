@@ -6,7 +6,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Speech from "expo-speech";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
@@ -29,7 +38,9 @@ export default function NavigationScreen() {
   const [query, setQuery] = useState("");
   const [destination, setDestination] = useState<LatLng | null>(null);
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
-  const [steps, setSteps] = useState<{ id: string; html: string; dist: string; endLoc: { lat: number; lng: number } }[]>([]);
+  const [steps, setSteps] = useState<
+    { id: string; html: string; dist: string; endLoc: { lat: number; lng: number } }[]
+  >([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [eta, setEta] = useState<{ duration: string; distance: string } | null>(null);
   const [mode, setMode] = useState<"driving" | "walking" | "bicycling" | "transit">("driving");
@@ -39,12 +50,14 @@ export default function NavigationScreen() {
   const mapRef = useRef<MapView | null>(null);
 
   const isExpoGo = Constants.appOwnership === "expo";
-  const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE; 
+  const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE;
 
   const params = useLocalSearchParams();
-  const presetQuery = params.presetQuery as string;
+  const presetQuery = params.presetQuery as string | undefined;
 
+  const autoRanRef = useRef(false);
 
+  /* Permission + Location */
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -58,6 +71,7 @@ export default function NavigationScreen() {
     })();
   }, []);
 
+  /* Live Location */
   useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
     if (navigating) {
@@ -79,21 +93,22 @@ export default function NavigationScreen() {
     return () => sub && sub.remove();
   }, [navigating, destination, mode]);
 
-     useEffect(() => {
-    if (presetQuery) {
+  useEffect(() => {
+    if (presetQuery && !autoRanRef.current) {
+      autoRanRef.current = true;
       setQuery(presetQuery);
-      // Auto-search after a short delay to ensure the query is set
-      const timer = setTimeout(() => {
-        searchDestination();
-      }, 1000);
-      return () => clearTimeout(timer);
+      searchDestination(presetQuery);
     }
   }, [presetQuery]);
 
-  const searchDestination = async () => {
-    if (!query.trim()) return Alert.alert("Enter a destination");
+  /* Helpers */
+  const searchDestination = async (override?: string) => {
+    const q = (override ?? query).trim();
+    if (!q) return Alert.alert("Enter a destination");
     try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_WEB_API_KEY}`;
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        q
+      )}&key=${GOOGLE_WEB_API_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
       if (!data.results?.length) return Alert.alert("Not found", "Try a more specific place name.");
@@ -131,7 +146,7 @@ export default function NavigationScreen() {
           id: String(idx),
           html: s.html_instructions,
           dist: s.distance.text,
-          endLoc: s.end_location, // { lat, lng }
+          endLoc: s.end_location,
         }))
       );
 
@@ -203,10 +218,10 @@ export default function NavigationScreen() {
               placeholder="Enter destination"
               value={query}
               onChangeText={setQuery}
-              onSubmitEditing={searchDestination}
+              onSubmitEditing={() => searchDestination()}
               returnKeyType="search"
             />
-            <TouchableOpacity style={s.searchBtn} onPress={searchDestination}>
+            <TouchableOpacity style={s.searchBtn} onPress={() => searchDestination()}>
               <Text style={s.searchBtnText}>Search</Text>
             </TouchableOpacity>
           </View>
@@ -258,7 +273,9 @@ export default function NavigationScreen() {
 
       {navigating && eta && (
         <View style={s.instructions}>
-          <Text style={s.eta}>ETA: {eta.duration} ({eta.distance})</Text>
+          <Text style={s.eta}>
+            ETA: {eta.duration} ({eta.distance})
+          </Text>
           <Text style={s.nextStep}>
             Next: {steps[currentStepIndex] ? stripHtml(steps[currentStepIndex].html) : "Arrived"}
           </Text>
@@ -300,10 +317,9 @@ export default function NavigationScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FFF" },
 
-  // Search + mode
   searchWrap: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 56 + 8 : 56, // under TopBar
+    top: Platform.OS === "ios" ? 56 + 8 : 56, 
     left: 12,
     right: 12,
     zIndex: 10,
@@ -367,7 +383,6 @@ const s = StyleSheet.create({
   startBtn: { backgroundColor: "#007AFF", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
   startText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
 
-  // Instructions
   instructions: {
     position: "absolute",
     bottom: 0,
@@ -387,7 +402,6 @@ const s = StyleSheet.create({
   stopBtn: { backgroundColor: "#FF3B30", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
   stopText: { color: "#FFF", fontSize: 16, fontWeight: "700" },
 
-  // Overlay while waiting for permission
   overlay: {
     position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
     alignItems: "center", justifyContent: "center",

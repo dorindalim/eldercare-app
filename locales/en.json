@@ -203,5 +203,73 @@
     "cancel": "Cancel",
     "notLoggedIn": "Not logged in",
     "pleaseLoginAgain": "Please log in again."
+    },
+
+  "community": {
+    "title": "CC Activities",
+    "searchPlaceholder": "Search by title",
+    "noResults": "No events found.",
+    "register": "Register",
+    "getDirections": "Get Directions",
+    "filters": {
+      "title": "Filters",
+      "categories": "Categories",
+      "timing": "Timing",
+      "distance": "Distance",
+      "price": "Price",
+      "reset": "Reset",
+      "apply": "Apply"
+    },
+    "timing": {
+      "today": "Today",
+      "week": "This Week",
+      "upcoming": "Upcoming"
+    },
+    "distance": {
+      "near": "Nearest",
+      "far": "Farthest",
+      "none": "No sort"
+    },
+    "price": {
+      "all": "All",
+      "freeOnly": "Free only",
+      "paidOnly": "Paid only"
+    },
+    "summary": {
+      "allCategories": "All categories",
+      "today": "Today",
+      "thisWeek": "This Week",
+      "upcoming": "Upcoming",
+      "nearest": "Nearest",
+      "farthest": "Farthest",
+      "noDistance": "No distance sort",
+      "allPrices": "All prices",
+      "freeOnly": "Free only",
+      "paidOnly": "Paid only"
+    },
+    "categorySummary": {
+      "one": "There is {{count}} event under {{category}}",
+      "other": "There are {{count}} events under {{category}}"
+    },
+    "categories": {
+      "healthFitness": "Health & Fitness",
+      "artsCulture": "Arts & Culture",
+      "activeAging": "Active Aging",
+      "parentingEducation": "Parenting & Education",
+      "exhibitionFair": "Exhibition & Fair",
+      "neighbourhoodEvents": "Neighbourhood Events",
+      "celebrationFestivity": "Celebration & Festivity",
+      "kopiTalksDialogues": "Kopi Talks & Dialogues",
+      "charityVolunteerism": "Charity & Volunteerism",
+      "overseasOutingsTours": "Overseas Outings & Tours"
+    },
+    "ui": {
+      "search": "Search",
+      "free": "Free"
+    },
+    "sortSummary": {
+      "default": "All categories · Upcoming · Nearest · Price: All",
+      "custom": "{{categories}} · {{timing}} · {{distance}} "
     }
+  }
 }

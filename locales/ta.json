@@ -193,5 +193,74 @@
     "ok": "சரி",
     "notLoggedIn": "உள்நுழையவில்லை",
     "pleaseLoginAgain": "தயவுசெய்து மீண்டும் உள்நுழைக."
+  },
+
+  "community": {
+    "title": "சமூக நிகழ்வுகள்",
+    "searchPlaceholder": "தலைப்பால் தேடுக",
+    "noResults": "நிகழ்வுகள் எதுவும் இல்லை.",
+    "register": "பதிவு",
+    "getDirections": "வழி காண்",
+    "filters": {
+      "title": "வடிகட்டல்கள்",
+      "categories": "வகைகள்",
+      "timing": "நேரம்",
+      "distance": "தூரம்",
+      "price": "கட்டணம்",
+      "reset": "மீட்டமை",
+      "apply": "விண்ணப்பி"
+    },
+    "timing": {
+      "today": "இன்று",
+      "week": "இந்த வாரம்",
+      "upcoming": "விரைவில்"
+    },
+    "distance": {
+      "near": "அருகிலான",
+      "far": "தூரமான",
+      "none": "ஒழுங்குமுறை இல்லை"
+    },
+    "price": {
+      "all": "அனைத்தும்",
+      "freeOnly": "இலவசம் மட்டும்",
+      "paidOnly": "கட்டணம் மட்டும்"
+    },
+    "summary": {
+      "allCategories": "அனைத்து வகைகள்",
+      "today": "இன்று",
+      "thisWeek": "இந்த வாரம்",
+      "upcoming": "விரைவில்",
+      "nearest": "அருகிலான",
+      "farthest": "தூரமான",
+      "noDistance": "தூர ஒழுங்குமுறை இல்லை",
+      "allPrices": "அனைத்து கட்டணங்கள்",
+      "freeOnly": "இலவசம் மட்டும்",
+      "paidOnly": "கட்டணம் மட்டும்"
+    },
+    "categorySummary": {
+      "one": "{{category}} வகையில் {{count}} நிகழ்வு உள்ளது",
+      "other": "{{category}} வகையில் {{count}} நிகழ்வுகள் உள்ளன"
+    },
+    "categories": {
+      "healthFitness": "சுகாதாரம் & உடற்பயிற்சி",
+      "artsCulture": "கலை & கலாசாரம்",
+      "activeAging": "சுறுசுறுப்பான முதியோர்",
+      "parentingEducation": "பெற்றோர்கள் & கல்வி",
+      "exhibitionFair": "கண்காட்சி & திருவிழா",
+      "neighbourhoodEvents": "அருகாமை நிகழ்வுகள்",
+      "celebrationFestivity": "விழா & கொண்டாட்டம்",
+      "kopiTalksDialogues": "கோபி டாக்ஸ் & உரையாடல்கள்",
+      "charityVolunteerism": "தானம் & தன்னார்வம்",
+      "overseasOutingsTours": "வெளிநாட்டு சுற்றுப்பயணங்கள்"
+    },
+    "ui": {
+      "search": "தேடு",
+      "free": "இலவசம்"
+    },
+    "sortSummary": {
+      "default": "அனைத்து வகைகள் · விரைவில் · அருகில் · கட்டணம்: அனைத்தும்",
+      "custom": "{{categories}} · {{timing}} · {{distance}}"
+    }
   }
 }
+

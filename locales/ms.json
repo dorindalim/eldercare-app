@@ -193,5 +193,74 @@
     "ok": "OK",
     "notLoggedIn": "Belum log masuk",
     "pleaseLoginAgain": "Sila log masuk semula."
+  },
+
+  "community": {
+    "title": "Aktiviti CC",
+    "searchPlaceholder": "Cari mengikut tajuk",
+    "noResults": "Tiada aktiviti ditemui.",
+    "register": "Daftar",
+    "getDirections": "Dapatkan Arah",
+    "filters": {
+      "title": "Penapis",
+      "categories": "Kategori",
+      "timing": "Masa",
+      "distance": "Jarak",
+      "price": "Harga",
+      "reset": "Set semula",
+      "apply": "Guna"
+    },
+    "timing": {
+      "today": "Hari Ini",
+      "week": "Minggu Ini",
+      "upcoming": "Akan Datang"
+    },
+    "distance": {
+      "near": "Terdekat",
+      "far": "Terjauh",
+      "none": "Tiada susunan"
+    },
+    "price": {
+      "all": "Semua",
+      "freeOnly": "Percuma sahaja",
+      "paidOnly": "Berbayar sahaja"
+    },
+    "summary": {
+      "allCategories": "Semua kategori",
+      "today": "Hari Ini",
+      "thisWeek": "Minggu Ini",
+      "upcoming": "Akan Datang",
+      "nearest": "Terdekat",
+      "farthest": "Terjauh",
+      "noDistance": "Tiada susunan jarak",
+      "allPrices": "Semua harga",
+      "freeOnly": "Percuma sahaja",
+      "paidOnly": "Berbayar sahaja"
+    },
+    "categorySummary": {
+      "one": "Terdapat {{count}} acara di bawah {{category}}",
+      "other": "Terdapat {{count}} acara di bawah {{category}}"
+    },
+    "categories": {
+      "healthFitness": "Kesihatan & Kecergasan",
+      "artsCulture": "Seni & Budaya",
+      "activeAging": "Penuaan Aktif",
+      "parentingEducation": "Keibubapaan & Pendidikan",
+      "exhibitionFair": "Pameran & Pesta",
+      "neighbourhoodEvents": "Acara Kejiranan",
+      "celebrationFestivity": "Perayaan & Pesta",
+      "kopiTalksDialogues": "Kopi Talks & Dialog",
+      "charityVolunteerism": "Kebajikan & Sukarelawan",
+      "overseasOutingsTours": "Percutian & Lawatan Luar Negara"
+    },
+    "ui": {
+      "search": "Cari",
+      "free": "Percuma"
+    },
+    "sortSummary": {
+      "default": "Semua kategori · Akan Datang · Terdekat · Harga: Semua",
+      "custom": "{{categories}} · {{timing}} · {{distance}}"
+    }
   }
 }
+
