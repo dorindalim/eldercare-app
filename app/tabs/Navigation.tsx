@@ -196,13 +196,16 @@ export default function NavigationScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={s.safe} edges={["left", "right"]}>
       {/* Top Bar */}
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
+        bgColor="#C6DBE6"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
         title="Navigation"
-        showHeart={false}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

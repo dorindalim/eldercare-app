@@ -26,7 +26,6 @@
       "login": "Log in"
     }
   },
-
   "alerts": {
     "codeSentTitle": "Code sent",
     "codeSentBody": "Use 123456 for now (mock).",
@@ -43,7 +42,6 @@
     "noAccountTitle": "No account found",
     "noAccountBody": "You’ll be redirected to sign up."
   },
-
   "elderlyOnboarding": {
     "title": "Please fill in these fields",
     "namePH": "Full Name",
@@ -62,7 +60,6 @@
     "ecPhonePH": "Emergency Contact Phone",
     "ecEmailPH": "Emergency Contact Email (optional)"
   },
-
   "elderlyConditions": {
     "title": "Health Conditions & Medications",
     "conditionTitle": "Condition {{index}}",
@@ -91,32 +88,28 @@
     },
     "drugAllergiesPH": "Any known drug allergies?",
     "publicNotePH": "Note to public (e.g., please call this number if found disoriented)",
-
     "noConditions": "No conditions",
     "noMedicationsForThis": "No medications for this condition",
-
     "errors": {
       "invalidMed": "Medication name and frequency cannot be empty.",
       "missingConditionName": "Please enter at least one condition name (or tick 'No conditions').",
       "saveFailed": "Could not save. Please try again."
     }
   },
-
-"home": {
-  "imActive": "I’m Active",
-  "tapToCheckIn": "Tap to check in",
-  "checkedIn": "Checked in today",
-
-  "navigation": "Navigation",
-  "ccActivities": "CC Activities",
-  "profile": "Profile",
-  "walkingRoutes": "Walking Routes",
-  "clinics": "Clinics",
-
-  "sos": "SOS"
-},
-
+  "home": {
+    "imActive": "I’m Active",
+    "tapToCheckIn": "Tap to check in",
+    "checkedIn": "Checked in today",
+    "navigation": "Navigation",
+    "ccActivities": "CC Activities",
+    "profile": "Profile",
+    "walkingRoutes": "Walking Routes",
+    "clinics": "Clinics",
+    "sos": "SOS"
+  },
+  "homeTab": "Home",
   "profile": {
+    "title": "Profile",
     "basicInfo": "Basic Information",
     "editBasic": "Edit basic details",
     "healthCard": "Emergency Health Card",
@@ -144,11 +137,11 @@
     "navigationNote": "You can change route and reminder preferences here later. Real-time clinic wait times and safe routes show in the map screen.",
     "community": "Community",
     "ccActivities": "Show nearby community activities",
-    "viewActivities": "View activities"
-},
-
-"rewards": {
-  "title": "Rewards",
+    "viewActivities": "View activities",
+    "open": "Open profile"
+  },
+  "rewards": {
+    "title": "Rewards",
     "balance": "Your Coins",
     "coin": "coin",
     "coins": "coins",
@@ -194,23 +187,15 @@
       }
     }
   },
-
-  "common": {
-    "on": "On",
-    "off": "Off",
-    "ok": "OK",
-    "save": "Save",
-    "cancel": "Cancel",
-    "notLoggedIn": "Not logged in",
-    "pleaseLoginAgain": "Please log in again."
-    },
-
   "community": {
     "title": "CC Activities",
     "searchPlaceholder": "Search by title",
-    "noResults": "No events found.",
+    "ui": { "search": "Search" },
+    "noEvents": "No events found.",
+    "details": "No description.",
     "register": "Register",
     "getDirections": "Get Directions",
+    "all": "All",
     "filters": {
       "title": "Filters",
       "categories": "Categories",
@@ -235,21 +220,9 @@
       "freeOnly": "Free only",
       "paidOnly": "Paid only"
     },
-    "summary": {
-      "allCategories": "All categories",
-      "today": "Today",
-      "thisWeek": "This Week",
-      "upcoming": "Upcoming",
-      "nearest": "Nearest",
-      "farthest": "Farthest",
-      "noDistance": "No distance sort",
-      "allPrices": "All prices",
-      "freeOnly": "Free only",
-      "paidOnly": "Paid only"
-    },
-    "categorySummary": {
-      "one": "There is {{count}} event under {{category}}",
-      "other": "There are {{count}} events under {{category}}"
+    "priceOptions": {
+      "free": "Free",
+      "paid": "Paid"
     },
     "categories": {
       "healthFitness": "Health & Fitness",
@@ -263,13 +236,38 @@
       "charityVolunteerism": "Charity & Volunteerism",
       "overseasOutingsTours": "Overseas Outings & Tours"
     },
-    "ui": {
-      "search": "Search",
-      "free": "Free"
+    "categorySummary": {
+      "one": "There is {{count}} event under {{category}}",
+      "other": "There are {{count}} events under {{category}}"
     },
     "sortSummary": {
       "default": "All categories · Upcoming · Nearest · Price: All",
-      "custom": "{{categories}} · {{timing}} · {{distance}} "
+      "custom": "{{categories}} · {{timing}} · {{distance}}"
     }
+  },
+  "clinic": {
+    "title": "Clinic"
+  },
+  "walkingRoutes": {
+    "title": "Walking Routes"
+  },
+  "navigation": {
+    "title": "Navigation"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "hint": "Open app settings and language",
+    "switchTo": "Switch language to",
+    "logout": "Log out"
+  },
+  "common": {
+    "on": "On",
+    "off": "Off",
+    "ok": "OK",
+    "save": "Save",
+    "cancel": "Cancel",
+    "notLoggedIn": "Not logged in",
+    "pleaseLoginAgain": "Please log in again."
   }
 }

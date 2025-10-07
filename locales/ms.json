@@ -23,24 +23,24 @@
       "confirmPH": "Masukkan semula kata laluan",
       "button": "Daftar",
       "haveAccount": "Sudah ada akaun?",
-      "login": "Log masuk"
+      "login": "Log Masuk"
     }
   },
   "alerts": {
     "codeSentTitle": "Kod dihantar",
-    "codeSentBody": "Buat masa ini gunakan 123456 (olokan).",
-    "sendFailedTitle": "Maaf",
-    "sendFailedBody": "Akaun belum didaftarkan.",
+    "codeSentBody": "Buat masa ini gunakan 123456 (mock).",
+    "sendFailedTitle": "Ralat",
+    "sendFailedBody": "Akaun tidak berdaftar.",
     "invalidCodeTitle": "Kod tidak sah",
     "invalidCodeBody": "Sila semak dan cuba lagi.",
-    "signupInvalidTitle": "Semak butiran",
-    "signupInvalidBody": "Nombor telefon dan kata laluan diperlukan. Kata laluan mesti sekurang-kurangnya 6 aksara.",
+    "signupInvalidTitle": "Semak maklumat",
+    "signupInvalidBody": "Telefon dan kata laluan diperlukan. Kata laluan sekurang-kurangnya 6 aksara.",
     "passwordMismatchTitle": "Kata laluan tidak sepadan",
     "passwordMismatchBody": "Sila masukkan semula kata laluan.",
     "signupFailedTitle": "Pendaftaran gagal",
-    "signupFailedBody": "Nombor telefon itu mungkin telah didaftarkan.",
+    "signupFailedBody": "Nombor telefon mungkin sudah berdaftar.",
     "noAccountTitle": "Akaun tidak ditemui",
-    "noAccountBody": "Anda akan dialihkan ke halaman pendaftaran."
+    "noAccountBody": "Anda akan diarahkan ke pendaftaran."
   },
   "elderlyOnboarding": {
     "title": "Sila isi maklumat berikut",
@@ -49,160 +49,139 @@
     "genderLabel": "Jantina",
     "male": "Lelaki",
     "female": "Perempuan",
-    "na": "Tidak ingin dinyatakan",
+    "na": "Tidak mahu nyatakan",
     "finish": "Selesai",
-    "alertIncompleteTitle": "Sila lengkapkan semua medan",
+    "alertIncompleteTitle": "Sila lengkapkan semua ruangan",
     "saveErrorTitle": "Ralat",
-    "saveErrorMsg": "Gagal menyimpan profil. Sila cuba lagi.",
-    "emergencySectionTitle": "Kenalan kecemasan",
+    "saveErrorMsg": "Gagal menyimpan profil. Cuba lagi.",
+    "emergencySectionTitle": "Kenalan Kecemasan",
     "ecNamePH": "Nama kenalan kecemasan",
     "ecRelationPH": "Hubungan (cth. anak, jiran)",
     "ecPhonePH": "Telefon kenalan kecemasan",
-    "ecEmailPH": "Emel kenalan kecemasan (pilihan)"
+    "ecEmailPH": "Emel kenalan (pilihan)"
   },
   "elderlyConditions": {
-    "title": "Keadaan Kesihatan",
+    "title": "Keadaan Kesihatan & Ubat",
     "conditionTitle": "Keadaan {{index}}",
     "remove": "Buang",
-    "conditionPH": "Keadaan (cth: Hipertensi)",
-    "medicationsPH": "Ubat-ubatan (dipisahkan dengan koma)",
-    "medicationFrequencyPH": "Kekerapan ubat (cth: dua kali sehari)",
-    "doctorPH": "Doktor (pilihan)",
-    "clinicPH": "Klinik (pilihan)",
-    "appointmentsPH": "Temu janji / nota (pilihan)",
+    "conditionPH": "Keadaan (cth., Hipertensi)",
+    "medicationsPH": "Ubat (dipisahkan koma)",
+    "medicationFrequencyPH": "Kekerapan ubat (cth., dua kali sehari)",
+    "doctorPH": "Doktor",
+    "clinicPH": "Klinik/Hospital",
+    "appointmentsPH": "Temujanji / Nota",
     "addCondition": "Tambah keadaan lain",
-    "finish": "Selesai & Pergi ke Laman Utama",
-    "medsLabel": "Ubat-ubatan",
-    "medNamePH": "Nama ubat (cth: Metformin)",
-    "medFreqPH": "Kekerapan (cth: dua kali sehari)",
+    "finish": "Selesai",
+    "medsLabel": "Ubat",
+    "medNamePH": "Nama ubat",
+    "medFreqPH": "Kekerapan",
     "removeMed": "Buang",
     "addMed": "Tambah ubat",
     "assistive": {
-      "label": "Alat bantuan",
+      "label": "Keperluan Bantuan",
       "walking_cane": "Tongkat",
       "wheelchair": "Kerusi roda",
       "hearing_aid": "Alat bantu dengar",
       "glasses": "Cermin mata",
-      "other": "Lain-lain",
-      "otherPH": "Sila nyatakan (cth: palang sokongan di rumah)"
+      "other": "Lain-lain (nyatakan)",
+      "otherPH": "Sila nyatakan (cth., palang sokongan di rumah)"
     },
-    "drugAllergiesPH": "Sebarang alahan ubat atau reaksi buruk yang diketahui",
-    "publicNotePH": "Nota kepada orang awam (cth: hubungi nombor ini jika ditemui dalam keadaan keliru)",
+    "drugAllergiesPH": "Ada alergi ubat?",
+    "publicNotePH": "Nota untuk orang awam (cth., sila hubungi nombor ini jika ditemui tersesat)",
     "noConditions": "Tiada keadaan",
     "noMedicationsForThis": "Tiada ubat untuk keadaan ini",
     "errors": {
       "invalidMed": "Nama ubat dan kekerapan tidak boleh kosong.",
-      "missingConditionName": "Sila masukkan sekurang-kurangnya satu nama keadaan (atau tandakan 'Tiada keadaan').",
-      "saveFailed": "Tidak dapat menyimpan. Sila cuba lagi."
+      "missingConditionName": "Masukkan sekurang-kurangnya satu nama keadaan (atau tanda ‘Tiada keadaan’).",
+      "saveFailed": "Tidak dapat menyimpan. Cuba lagi."
     }
   },
   "home": {
     "imActive": "Saya Aktif",
-    "tapToCheckIn": "Ketuk untuk daftar hadir",
-    "checkedIn": "Sudah daftar hadir hari ini",
-
+    "tapToCheckIn": "Tekan untuk daftar",
+    "checkedIn": "Sudah daftar hari ini",
     "navigation": "Navigasi",
     "ccActivities": "Aktiviti CC",
     "profile": "Profil",
     "walkingRoutes": "Laluan Berjalan",
-
-    "sos": "SOS",
-    "clinics": "Klinik"
+    "clinics": "Klinik",
+    "sos": "SOS"
   },
+  "homeTab": "Laman Utama",
   "profile": {
+    "title": "Profil",
     "basicInfo": "Maklumat Asas",
-    "editBasic": "Edit butiran asas",
+    "editBasic": "Edit maklumat asas",
     "healthCard": "Kad Kesihatan Kecemasan",
     "emergencyContacts": "Kenalan Kecemasan",
     "drugAllergy": "Alergi Ubat",
     "conditions": "Keadaan",
     "assistive": "Keperluan bantuan",
-    "publicNote": "Nota untuk umum",
+    "publicNote": "Nota untuk awam",
     "editCard": "Edit Kad",
-    "showQr": "Tunjukkan QR",
-    "lockScreenHint": "Petua: Tambahkan kad ini pada widget skrin kunci supaya orang lain boleh melihat tanpa membuka telefon.",
+    "showQr": "Papar QR",
+    "lockScreenHint": "Tip: Tambah kad ini pada widget skrin kunci supaya orang boleh melihat tanpa membuka telefon.",
     "inactivityAlerts": "Amaran tidak aktif (jam)",
     "sosNotify": "Notifikasi SOS",
-    "locationShare": "Perkongsian lokasi masa nyata",
+    "locationShare": "Kongsi lokasi masa nyata",
     "accessibility": "Kebolehcapaian",
-    "tts": "Teks-ke-pertuturan",
+    "tts": "Teks ke pertuturan",
     "textSize": "Saiz teks",
-    "accessibilityNote": "Teks besar dan kontras ringkas membantu keterbacaan. Anda juga boleh gunakan butang suara untuk membaca skrin.",
+    "accessibilityNote": "Teks besar dan kontras ringkas membantu bacaan. Anda juga boleh guna butang pembesar suara untuk membaca skrin.",
     "activity": "Aktiviti & Ganjaran",
-    "streak": "Rentetan semasa (hari)",
+    "streak": "Rentetan (hari)",
     "coins": "Jumlah syiling",
     "navigation": "Navigasi",
-    "accessibleRoutes": "Utamakan laluan boleh capai (lif/landai)",
+    "accessibleRoutes": "Utamakan laluan mesra OKU (lif/ram)",
     "remindEvery10": "Peringatan destinasi setiap 10 minit",
-    "navigationNote": "Anda boleh ubah keutamaan laluan dan peringatan di sini. Masa menunggu klinik dan laluan selamat ditunjukkan pada peta.",
+    "navigationNote": "Anda boleh ubah tetapan laluan dan peringatan di sini nanti. Masa menunggu klinik dan laluan selamat dipaparkan di peta.",
     "community": "Komuniti",
-    "ccActivities": "Tunjukkan aktiviti komuniti berdekatan",
-    "viewActivities": "Lihat aktiviti"
+    "ccActivities": "Tunjuk aktiviti komuniti berdekatan",
+    "viewActivities": "Lihat aktiviti",
+    "open": "Buka profil"
   },
-
   "rewards": {
     "title": "Ganjaran",
-    "balance": "Syiling Saya",
+    "balance": "Syiling Anda",
     "coin": "syiling",
     "coins": "syiling",
     "catalogTitle": "Barangan Boleh Tebus",
-    "viewTerms": "S&K / Cara guna",
+    "viewTerms": "Terma & Cara guna",
     "redeem": "Tebus",
     "cost": "{{count}} syiling",
     "confirmTitle": "Sahkan Penebusan",
-    "confirmBody": "Tebus {{name}} dengan {{cost}}?",
+    "confirmBody": "Tebus {{name}} dengan {{cost}} syiling?",
     "cancel": "Batal",
-    "confirm": "Sahkan",
-    "successTitle": "Berjaya ditebus",
-    "successBody": "Kod baucar anda: {{code}}. Lihat di bahagian 'Dimiliki'.",
+    "confirm": "Tebus",
+    "successTitle": "Berjaya!",
+    "successBody": "Kod baucar anda: {{code}}. Anda boleh lihat di 'Dimiliki'.",
     "notEnoughTitle": "Syiling tidak mencukupi",
     "notEnoughBody": "Syiling anda tidak mencukupi untuk menebus item ini.",
-    "ownedTitle": "Baucar dimiliki",
-    "noneOwned": "Anda belum menebus sebarang baucar.",
+    "ownedTitle": "Baucar Dimiliki",
+    "noneOwned": "Anda belum menebus apa-apa.",
     "voucher": "Baucar",
     "code": "Kod",
-    "redeemedAt": "Masa ditebus",
+    "redeemedAt": "Ditebus pada",
     "howToUse": "Cara guna",
     "close": "Tutup",
     "items": {
-      "ntuc5": {
-        "title": "Baucar NTUC FairPrice $5",
-        "desc": "Sah di cawangan NTUC FairPrice yang mengambil bahagian.",
-        "terms": "• Sah di cawangan NTUC FairPrice terpilih di Singapura.\n• Tunjukkan kod semasa pembayaran; sekali guna sahaja.\n• Tidak boleh ditukar kepada wang tunai; tiada baki dipulangkan.\n• T&S pedagang terpakai."
-      },
-      "ntuc10": {
-        "title": "Baucar NTUC FairPrice $10",
-        "desc": "Sah di cawangan NTUC FairPrice yang mengambil bahagian.",
-        "terms": "• Sah di cawangan NTUC FairPrice terpilih di Singapura.\n• Tunjukkan kod semasa pembayaran; sekali guna sahaja.\n• Tidak boleh ditukar kepada wang tunai; tiada baki dipulangkan.\n• T&S pedagang terpakai."
-      },
-      "kopitiam5": {
-        "title": "Nilai Tersimpan Kopitiam $5",
-        "desc": "Untuk makanan/minuman di Kopitiam.",
-        "terms": "• Sah di cawangan Kopitiam terpilih di Singapura.\n• Tunjukkan kod kepada juruwang sebelum pembayaran.\n• Sekali guna; tiada baki dipulangkan.\n• T&S pedagang terpakai."
-      },
-      "guardian5": {
-        "title": "Baucar Guardian $5",
-        "desc": "Sah untuk barangan farmasi & penjagaan diri.",
-        "terms": "• Sah di cawangan Guardian terpilih di Singapura.\n• Item tertentu mungkin dikecualikan.\n• Sekali guna; tiada baki dipulangkan.\n• T&S pedagang terpakai."
-      }
+      "ntuc5": { "title": "Baucar NTUC FairPrice $5", "desc": "Guna di cawangan NTUC FairPrice terlibat.", "terms": "• Sah di cawangan terlibat di Singapura.\n• Tunjukkan kod di kaunter; sekali guna sahaja.\n• Tidak boleh ditebus tunai; tiada baki dipulangkan.\n• T&S pedagang terpakai; rujuk di kedai." },
+      "ntuc10": { "title": "Baucar NTUC FairPrice $10", "desc": "Guna di cawangan NTUC FairPrice terlibat.", "terms": "• Sah di cawangan terlibat di Singapura.\n• Tunjukkan kod di kaunter; sekali guna sahaja.\n• Tidak boleh ditebus tunai; tiada baki dipulangkan.\n• T&S pedagang terpakai; rujuk di kedai." },
+      "kopitiam5": { "title": "Nilai Tersimpan Kopitiam $5", "desc": "Untuk makanan & minuman di Kopitiam.", "terms": "• Sah di cawangan terlibat.\n• Tunjukkan kod sebelum bayar.\n• Sekali guna; tiada baki.\n• T&S pedagang terpakai." },
+      "guardian5": { "title": "Baucar Guardian $5", "desc": "Sah untuk farmasi & penjagaan diri.", "terms": "• Sah di cawangan Guardian terlibat.\n• Tidak sah untuk item tertentu.\n• Sekali guna; tiada baki.\n• T&S pedagang terpakai." }
     }
   },
-  "common": {
-    "on": "Hidup",
-    "off": "Mati",
-    "ok": "OK",
-    "notLoggedIn": "Belum log masuk",
-    "pleaseLoginAgain": "Sila log masuk semula."
-  },
-
   "community": {
     "title": "Aktiviti CC",
     "searchPlaceholder": "Cari mengikut tajuk",
-    "noResults": "Tiada aktiviti ditemui.",
+    "ui": { "search": "Cari" },
+    "noEvents": "Tiada aktiviti ditemui.",
+    "details": "Tiada keterangan.",
     "register": "Daftar",
-    "getDirections": "Dapatkan Arah",
+    "getDirections": "Arah",
+    "all": "Semua",
     "filters": {
-      "title": "Penapis",
+      "title": "Tapis",
       "categories": "Kategori",
       "timing": "Masa",
       "distance": "Jarak",
@@ -211,56 +190,68 @@
       "apply": "Guna"
     },
     "timing": {
-      "today": "Hari Ini",
-      "week": "Minggu Ini",
-      "upcoming": "Akan Datang"
+      "today": "Hari ini",
+      "week": "Minggu ini",
+      "upcoming": "Akan datang"
     },
     "distance": {
       "near": "Terdekat",
       "far": "Terjauh",
-      "none": "Tiada susunan"
+      "none": "Tiada susun"
     },
     "price": {
       "all": "Semua",
       "freeOnly": "Percuma sahaja",
       "paidOnly": "Berbayar sahaja"
     },
-    "summary": {
-      "allCategories": "Semua kategori",
-      "today": "Hari Ini",
-      "thisWeek": "Minggu Ini",
-      "upcoming": "Akan Datang",
-      "nearest": "Terdekat",
-      "farthest": "Terjauh",
-      "noDistance": "Tiada susunan jarak",
-      "allPrices": "Semua harga",
-      "freeOnly": "Percuma sahaja",
-      "paidOnly": "Berbayar sahaja"
-    },
-    "categorySummary": {
-      "one": "Terdapat {{count}} acara di bawah {{category}}",
-      "other": "Terdapat {{count}} acara di bawah {{category}}"
+    "priceOptions": {
+      "free": "Percuma",
+      "paid": "Berbayar"
     },
     "categories": {
       "healthFitness": "Kesihatan & Kecergasan",
       "artsCulture": "Seni & Budaya",
-      "activeAging": "Penuaan Aktif",
+      "activeAging": "Warga Emas Aktif",
       "parentingEducation": "Keibubapaan & Pendidikan",
-      "exhibitionFair": "Pameran & Pesta",
-      "neighbourhoodEvents": "Acara Kejiranan",
-      "celebrationFestivity": "Perayaan & Pesta",
-      "kopiTalksDialogues": "Kopi Talks & Dialog",
+      "exhibitionFair": "Pameran & Ekspo",
+      "neighbourhoodEvents": "Aktiviti Kejiranan",
+      "celebrationFestivity": "Perayaan & Sambutan",
+      "kopiTalksDialogues": "Bicara Kopi & Dialog",
       "charityVolunteerism": "Kebajikan & Sukarelawan",
-      "overseasOutingsTours": "Percutian & Lawatan Luar Negara"
+      "overseasOutingsTours": "Lawatan & Pakej Luar Negara"
     },
-    "ui": {
-      "search": "Cari",
-      "free": "Percuma"
+    "categorySummary": {
+      "one": "Terdapat {{count}} aktiviti dalam {{category}}",
+      "other": "Terdapat {{count}} aktiviti dalam {{category}}"
     },
     "sortSummary": {
-      "default": "Semua kategori · Akan Datang · Terdekat · Harga: Semua",
+      "default": "Semua kategori · Akan datang · Terdekat · Harga: Semua",
       "custom": "{{categories}} · {{timing}} · {{distance}}"
     }
+  },
+  "clinic": {
+    "title": "Klinik"
+  },
+  "walkingRoutes": {
+    "title": "Laluan Berjalan"
+  },
+  "Navigation": {
+    "title": "Navigasi"
+  },
+  "settings": {
+    "title": "Tetapan",
+    "language": "Bahasa",
+    "hint": "Buka tetapan & bahasa",
+    "switchTo": "Tukar bahasa ke",
+    "logout": "Log keluar"
+  },
+  "common": {
+    "on": "Hidup",
+    "off": "Mati",
+    "ok": "OK",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "notLoggedIn": "Belum log masuk",
+    "pleaseLoginAgain": "Sila log masuk semula."
   }
 }
-

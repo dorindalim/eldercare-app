@@ -204,12 +204,15 @@ export default function RewardsScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
       <TopBar
         title={t("rewards.title")}
-        showHeart={false}
         language={i18n.language as LangCode}
         setLanguage={(lng: LangCode) => i18n.changeLanguage(lng)}
+        bgColor="#D2AB80"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
       />
 
       <ScrollView

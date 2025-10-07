@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../src/auth/AuthProvider";
 
 import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
@@ -43,7 +44,7 @@ type EventRow = {
 
 type LatLng = { latitude: number; longitude: number };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 const ACCENT = "#007AFF";
 const APPLY = "#111827";
 const SEARCH = "#111827";
@@ -151,6 +152,7 @@ function Chip({
 
 export default function CommunityScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { t, i18n } = useTranslation();
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
@@ -518,13 +520,21 @@ export default function CommunityScreen() {
       : t("community.sortSummary.default");
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.safe} edges={["left", "right"]}>
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
+        bgColor="#FFEE8C"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
         title={t("community.title")}
-        showHeart={false}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
       />
+
 
       {/* Search */}
       <View style={styles.controls}>

@@ -19,7 +19,7 @@ type ParkLocation = {
 export default function WalkingScreen() {
   const router = useRouter();
   const { logout } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
@@ -152,8 +152,11 @@ export default function WalkingScreen() {
         <TopBar
           language={i18n.language as LangCode}
           setLanguage={setLang as (c: LangCode) => void}
-          title="Singapore Parks"
-          showHeart={false}
+          bgColor="#D9D991"
+          title={t("walkingRoutes.title")}
+          includeTopInset={true} // top bar thingy
+          barHeight={44}
+          topPadding={2}
           onLogout={async () => {
             await logout();
             router.replace("/Authentication/LogIn");
@@ -175,8 +178,11 @@ export default function WalkingScreen() {
         <TopBar
           language={i18n.language as LangCode}
           setLanguage={setLang as (c: LangCode) => void}
-          title="Singapore Parks"
-          showHeart={false}
+          bgColor="#D9D991"
+          title={t("walkingRoutes.title")}
+          includeTopInset={true}
+          barHeight={44}
+          topPadding={2}
           onLogout={async () => {
             await logout();
             router.replace("/Authentication/LogIn");
@@ -197,13 +203,16 @@ export default function WalkingScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={s.safe} edges={["left", "right"]}>
       {/* Top Bar */}
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        title="Singapore Parks"
-        showHeart={false}
+        bgColor="#D9D991"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
+        title={t("walkingRoutes.title")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

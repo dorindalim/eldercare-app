@@ -7,213 +7,192 @@
       "phonePH": "+65 9123 4567",
       "getCode": "获取验证码",
       "codeLabel": "验证码",
-      "codePH": "输入 6 位验证码",
+      "codePH": "输入6位验证码",
       "verify": "验证并登录",
-      "noAccount": "还没有账户？",
+      "noAccount": "还没有账号？",
       "signup": "注册"
     },
     "signup": {
-      "title": "创建账户",
-      "subtitle": "使用手机号注册",
+      "title": "创建账号",
+      "subtitle": "使用手机号码注册",
       "phoneLabel": "手机号码",
       "phonePH": "+65 9123 4567",
       "passwordLabel": "密码",
-      "passwordPH": "创建一个密码",
+      "passwordPH": "创建密码",
       "confirmLabel": "确认密码",
       "confirmPH": "再次输入密码",
       "button": "注册",
-      "haveAccount": "已经有账户？",
+      "haveAccount": "已经有账号？",
       "login": "登录"
     }
   },
   "alerts": {
     "codeSentTitle": "验证码已发送",
-    "codeSentBody": "目前请使用 123456（模拟）。",
-    "sendFailedTitle": "提示",
-    "sendFailedBody": "该手机号尚未注册。",
+    "codeSentBody": "目前可使用 123456（模拟）。",
+    "sendFailedTitle": "出错了",
+    "sendFailedBody": "账号未注册。",
     "invalidCodeTitle": "验证码无效",
-    "invalidCodeBody": "请检查后重试。",
+    "invalidCodeBody": "请检查后再试。",
     "signupInvalidTitle": "请检查信息",
-    "signupInvalidBody": "需要填写手机号和密码。密码至少 6 个字符。",
+    "signupInvalidBody": "需要填写手机与密码。密码至少6个字符。",
     "passwordMismatchTitle": "两次密码不一致",
     "passwordMismatchBody": "请重新输入密码。",
     "signupFailedTitle": "注册失败",
-    "signupFailedBody": "该手机号可能已注册。",
-    "noAccountTitle": "未找到账户",
+    "signupFailedBody": "该手机号可能已被注册。",
+    "noAccountTitle": "未找到账号",
     "noAccountBody": "将为您跳转到注册页面。"
   },
   "elderlyOnboarding": {
     "title": "请填写以下信息",
     "namePH": "姓名",
-    "yobPH": "出生年份（例如 1950）",
+    "yobPH": "出生年份（如 1950）",
     "genderLabel": "性别",
     "male": "男",
     "female": "女",
-    "na": "不便透露",
+    "na": "不愿透露",
     "finish": "完成",
-    "alertIncompleteTitle": "请填写所有必填项",
+    "alertIncompleteTitle": "请完成所有字段",
     "saveErrorTitle": "错误",
-    "saveErrorMsg": "保存资料失败，请稍后重试。",
+    "saveErrorMsg": "保存资料失败，请重试。",
     "emergencySectionTitle": "紧急联系人",
-    "ecNamePH": "紧急联系人姓名",
-    "ecRelationPH": "与您的关系（例如 女儿、邻居）",
-    "ecPhonePH": "紧急联系人电话",
-    "ecEmailPH": "紧急联系人邮箱（可选）"
+    "ecNamePH": "联系人姓名",
+    "ecRelationPH": "关系（如 女儿、邻居）",
+    "ecPhonePH": "联系人电话",
+    "ecEmailPH": "联系人邮箱（可选）"
   },
   "elderlyConditions": {
-    "title": "健康状况",
-    "conditionTitle": "病况 {{index}}",
+    "title": "健康状况与用药",
+    "conditionTitle": "病症 {{index}}",
     "remove": "删除",
-    "conditionPH": "病症（例如：高血压）",
-    "medicationsPH": "药物（用逗号分隔）",
-    "medicationFrequencyPH": "用药频率（例如：每日两次）",
-    "doctorPH": "医生（可选）",
-    "clinicPH": "诊所（可选）",
-    "appointmentsPH": "预约 / 备注（可选）",
+    "conditionPH": "病症（例如 高血压）",
+    "medicationsPH": "药物（逗号分隔）",
+    "medicationFrequencyPH": "用药频率（例如 每日两次）",
+    "doctorPH": "医生",
+    "clinicPH": "诊所/医院",
+    "appointmentsPH": "预约 / 备注",
     "addCondition": "添加另一项病症",
-    "finish": "完成并返回主页",
-    "medsLabel": "用药",
-    "medNamePH": "药物名称（例如：二甲双胍）",
-    "medFreqPH": "用药频率（例如：每日两次）",
-    "removeMed": "删除",
+    "finish": "完成",
+    "medsLabel": "药物",
+    "medNamePH": "药名",
+    "medFreqPH": "频率",
+    "removeMed": "移除",
     "addMed": "添加药物",
     "assistive": {
-      "label": "辅助器具",
+      "label": "辅助需求",
       "walking_cane": "拐杖",
       "wheelchair": "轮椅",
       "hearing_aid": "助听器",
       "glasses": "眼镜",
-      "other": "其他",
-      "otherPH": "请说明（例如：家中安装扶手）"
+      "other": "其他（请说明）",
+      "otherPH": "请说明（例如 家中需安装扶手）"
     },
-    "drugAllergiesPH": "任何已知药物过敏或不良反应",
-    "publicNotePH": "给公众的备注（例如：若迷路请拨打此号码）",
-    "noConditions": "无病况",
-    "noMedicationsForThis": "此病况无用药",
+    "drugAllergiesPH": "是否有已知药物过敏？",
+    "publicNotePH": "公众提示（例如：若迷路请拨打此号码）",
+    "noConditions": "无病症",
+    "noMedicationsForThis": "此病症暂无药物",
     "errors": {
-      "invalidMed": "药物名称和频率不能为空。",
-      "missingConditionName": "请至少填写一个病症名称（或勾选“无病况”）。",
+      "invalidMed": "药名与频率不能为空。",
+      "missingConditionName": "请至少输入一项病症名称（或勾选“无病症”）。",
       "saveFailed": "保存失败，请重试。"
     }
   },
-
   "home": {
-    "imActive": "我很活跃",
-    "tapToCheckIn": "点此签到",
+    "imActive": "我已活动",
+    "tapToCheckIn": "轻触签到",
     "checkedIn": "今日已签到",
-
     "navigation": "导航",
-    "ccActivities": "CC 活动",
+    "ccActivities": "社区活动",
     "profile": "个人资料",
     "walkingRoutes": "步行路线",
-
-    "sos": "SOS",
-    "clinics": "诊所"
+    "clinics": "诊所",
+    "sos": "紧急求助"
   },
-
+  "homeTab": "首页",
   "profile": {
+    "title": "个人资料",
     "basicInfo": "基本信息",
     "editBasic": "编辑基本资料",
     "healthCard": "紧急健康卡",
     "emergencyContacts": "紧急联系人",
     "drugAllergy": "药物过敏",
-    "conditions": "病况",
+    "conditions": "病症",
     "assistive": "辅助需求",
-    "publicNote": "公开备注",
+    "publicNote": "公众提示",
     "editCard": "编辑卡片",
     "showQr": "显示二维码",
-    "lockScreenHint": "提示：可将此卡添加到锁屏小组件，方便他人无需解锁即可查看。",
+    "lockScreenHint": "提示：将此卡添加到锁屏小组件，便于他人在无需解锁的情况下查看。",
     "inactivityAlerts": "不活跃提醒（小时）",
     "sosNotify": "SOS 通知",
     "locationShare": "实时位置共享",
     "accessibility": "无障碍",
     "tts": "文字转语音",
     "textSize": "文字大小",
-    "accessibilityNote": "较大的文字和清晰的对比度有助于阅读。您也可以使用朗读按钮朗读屏幕内容。",
+    "accessibilityNote": "较大的文字与清晰对比度有助阅读。可使用扬声器按钮朗读屏幕内容。",
     "activity": "活动与奖励",
-    "streak": "当前连续天数",
-    "coins": "总金币数",
+    "streak": "连续天数",
+    "coins": "总积分",
     "navigation": "导航",
     "accessibleRoutes": "优先无障碍路线（电梯/坡道）",
-    "remindEvery10": "每 10 分钟目的地提醒",
-    "navigationNote": "您可在此更改路线与提醒偏好。地图会显示实时候诊时间与安全路线。",
+    "remindEvery10": "每10分钟提醒一次目的地",
+    "navigationNote": "您可稍后在此更改路线与提醒偏好。地图页面会显示诊所等候时间与安全路线。",
     "community": "社区",
     "ccActivities": "显示附近社区活动",
-    "viewActivities": "查看活动"
+    "viewActivities": "查看活动",
+    "open": "打开个人资料"
   },
   "rewards": {
     "title": "奖励",
-    "balance": "我的金币",
-    "coin": "枚金币",
-    "coins": "枚金币",
+    "balance": "您的积分",
+    "coin": "积分",
+    "coins": "积分",
     "catalogTitle": "可兑换项目",
-    "viewTerms": "使用条款 / 使用方法",
+    "viewTerms": "条款与用法",
     "redeem": "兑换",
-    "cost": "{{count}} 枚金币",
+    "cost": "{{count}} 积分",
     "confirmTitle": "确认兑换",
-    "confirmBody": "是否用 {{cost}} 兑换「{{name}}」？",
+    "confirmBody": "是否用 {{cost}} 积分兑换 {{name}}？",
     "cancel": "取消",
-    "confirm": "确认兑换",
-    "successTitle": "兑换成功",
-    "successBody": "您的兑换码是 {{code}}。可在“已拥有”查看。",
-    "notEnoughTitle": "金币不足",
-    "notEnoughBody": "您的金币不足，无法兑换该项目。",
-    "ownedTitle": "已拥有的礼券",
-    "noneOwned": "您还没有兑换任何礼券。",
-    "voucher": "礼券",
+    "confirm": "兑换",
+    "successTitle": "兑换成功！",
+    "successBody": "您的兑换码是 {{code}}。可在“已拥有”中查看。",
+    "notEnoughTitle": "积分不足",
+    "notEnoughBody": "您的积分不足以兑换该项目。",
+    "ownedTitle": "已拥有的券码",
+    "noneOwned": "您还未兑换任何项目。",
+    "voucher": "券",
     "code": "兑换码",
     "redeemedAt": "兑换时间",
-    "howToUse": "使用方法",
+    "howToUse": "使用说明",
     "close": "关闭",
     "items": {
-      "ntuc5": {
-        "title": "NTUC 超市 5 新币礼券",
-        "desc": "适用于参与门店。",
-        "terms": "• 仅限新加坡参与的 NTUC FairPrice 门店使用。\n• 结账时出示兑换码；仅限一次性使用。\n• 不可兑换现金，不找零。\n• 其他条款以商家为准。"
-      },
-      "ntuc10": {
-        "title": "NTUC 超市 10 新币礼券",
-        "desc": "适用于参与门店。",
-        "terms": "• 仅限新加坡参与的 NTUC FairPrice 门店使用。\n• 结账时出示兑换码；仅限一次性使用。\n• 不可兑换现金，不找零。\n• 其他条款以商家为准。"
-      },
-      "kopitiam5": {
-        "title": "Kopitiam 5 新币储值",
-        "desc": "可用于 Kopitiam 店内餐饮。",
-        "terms": "• 仅限新加坡参与的 Kopitiam 门店使用。\n• 付款前向收银员出示兑换码。\n• 仅限一次使用，不找零。\n• 其他条款以商家为准。"
-      },
-      "guardian5": {
-        "title": "Guardian 5 新币礼券",
-        "desc": "适用于药房及个护商品。",
-        "terms": "• 限新加坡参与门店；部分商品可能除外。\n• 仅限一次性使用，不找零。\n• 其他条款以商家为准。"
-      }
+      "ntuc5": { "title": "NTUC FairPrice $5 代金券", "desc": "适用于参与的 NTUC FairPrice 门店。", "terms": "• 仅限新加坡参与门店。\n• 结账时出示兑换码；仅限一次使用。\n• 不找零、不可兑换现金。\n• 以商家条款为准，详情见门店。" },
+      "ntuc10": { "title": "NTUC FairPrice $10 代金券", "desc": "适用于参与的 NTUC FairPrice 门店。", "terms": "• 仅限新加坡参与门店。\n• 结账时出示兑换码；仅限一次使用。\n• 不找零、不可兑换现金。\n• 以商家条款为准，详情见门店。" },
+      "kopitiam5": { "title": "Kopitiam $5 储值", "desc": "适用于 Kopitiam 门店餐饮。", "terms": "• 仅限新加坡参与门店。\n• 付款前向收银员出示兑换码。\n• 仅限一次使用，不找零。\n• 以商家条款为准。" },
+      "guardian5": { "title": "Guardian $5 代金券", "desc": "适用于药房和个护用品。", "terms": "• 仅限新加坡参与门店。\n• 部分商品不适用。\n• 仅限一次使用，不找零。\n• 以商家条款为准。" }
     }
-  },
-  "common": {
-    "on": "开",
-    "off": "关",
-    "ok": "好的",
-    "notLoggedIn": "未登录",
-    "pleaseLoginAgain": "请重新登录。"
   },
   "community": {
     "title": "社区活动",
     "searchPlaceholder": "按标题搜索",
-    "noResults": "未找到活动。",
+    "ui": { "search": "搜索" },
+    "noEvents": "未找到活动。",
+    "details": "暂无简介。",
     "register": "报名",
-    "getDirections": "获取路线",
+    "getDirections": "路线",
+    "all": "全部",
     "filters": {
       "title": "筛选",
-      "categories": "类别",
+      "categories": "分类",
       "timing": "时间",
       "distance": "距离",
-      "price": "费用",
+      "price": "价格",
       "reset": "重置",
       "apply": "应用"
     },
     "timing": {
       "today": "今天",
       "week": "本周",
-      "upcoming": "即将开始"
+      "upcoming": "即将举办"
     },
     "distance": {
       "near": "最近",
@@ -225,42 +204,56 @@
       "freeOnly": "仅免费",
       "paidOnly": "仅付费"
     },
-    "summary": {
-      "allCategories": "所有类别",
-      "today": "今天",
-      "thisWeek": "本周",
-      "upcoming": "即将开始",
-      "nearest": "最近",
-      "farthest": "最远",
-      "noDistance": "不按距离排序",
-      "allPrices": "所有费用",
-      "freeOnly": "仅免费",
-      "paidOnly": "仅付费"
-    },
-    "categorySummary": {
-      "one": "共有 {{count}} 个活动属于 {{category}}",
-      "other": "共有 {{count}} 个活动属于 {{category}}"
+    "priceOptions": {
+      "free": "免费",
+      "paid": "付费"
     },
     "categories": {
       "healthFitness": "健康与健身",
       "artsCulture": "艺术与文化",
       "activeAging": "乐龄活动",
       "parentingEducation": "育儿与教育",
-      "exhibitionFair": "展览与集市",
+      "exhibitionFair": "展览与展会",
       "neighbourhoodEvents": "邻里活动",
-      "celebrationFestivity": "庆典与节日",
-      "kopiTalksDialogues": "咖啡谈与对话",
-      "charityVolunteerism": "慈善与志愿",
-      "overseasOutingsTours": "海外出游与旅行"
+      "celebrationFestivity": "节庆与庆典",
+      "kopiTalksDialogues": "咖啡座谈",
+      "charityVolunteerism": "慈善与义工",
+      "overseasOutingsTours": "海外出游"
     },
-    "ui": {
-      "search": "搜索",
-      "free": "免费"
+    "categorySummary": {
+      "one": "共有 {{count}} 场活动于 {{category}}",
+      "other": "共有 {{count}} 场活动于 {{category}}"
     },
     "sortSummary": {
-      "default": "所有类别 · 即将举行 · 最近 · 费用：全部",
-      "custom": "{{categories}} · {{timing}} · {{distance}} "
-  }
+      "default": "全部分类 · 即将举办 · 最近 · 价格：全部",
+      "custom": "{{categories}} · {{timing}} · {{distance}}"
+    }
+  },
+  "clinic": {
+    "title": "诊所"
+  },
+  "walkingRoutes": {
+    "title": "步行路线"
+  },
+  "navigation": {
+    "title": "导航"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "hint": "打开设置与语言",
+    "switchTo": "切换语言为",
+    "logout": "退出登录"
+  },
+  "common": {
+    "on": "开",
+    "off": "关",
+    "ok": "好的",
+    "save": "保存",
+    "cancel": "取消",
+    "notLoggedIn": "未登录",
+    "pleaseLoginAgain": "请重新登录。"
   }
 }
+
 

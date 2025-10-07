@@ -272,15 +272,15 @@ export default function ElderlyProfile() {
   }, [session?.userId]);
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#F8FAFC" }}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang}
-        title="Profile"
-        showHeart={false}
+        bgColor="#D2AB80"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
+        title={t("profile.title")}
       />
 
       <ScrollView

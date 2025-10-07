@@ -1,26 +1,27 @@
-
-import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import TopBar, { type LangCode } from "../../src/components/TopBar";
-import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import AppText from "../../src/components/AppText";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../src/auth/AuthProvider";
+import AppText from "../../src/components/AppText";
+import TopBar, { type LangCode } from "../../src/components/TopBar";
 
 const datasetId = "d_9d0bbe366aee923a6e202f80bb356bb9";
 const url = "https://data.gov.sg/api/action/datastore_search?resource_id=" + datasetId;
 
 export default function ClinicScreen() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
-  const [clinics, setClinics] = useState([]);
+  const { logout } = useAuth();
+  const [clinics, setClinics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const setLang = async (code: string) => {
-    await i18n.changeLanguage(code);
-    await AsyncStorage.setItem("lang", code);
+  const setLang = (code: LangCode) => {
+    i18n.changeLanguage(code);
+    AsyncStorage.setItem("lang", code).catch(() => {});
   };
 
   const fetchClinics = () => {
@@ -34,8 +35,8 @@ export default function ClinicScreen() {
         return response.json();
       })
       .then((data) => {
-        const records = data.result.records;
-        const sortedClinics = records.sort((a, b) => a.minutes - b.minutes);
+        const records = data.result?.records || [];
+        const sortedClinics = records.sort((a: any, b: any) => (a.minutes || 0) - (b.minutes || 0));
         setClinics(sortedClinics);
         setLoading(false);
       })
@@ -81,8 +82,15 @@ export default function ClinicScreen() {
         <TopBar
           language={i18n.language as LangCode}
           setLanguage={setLang as (c: LangCode) => void}
-          title="Clinic Waiting Times"
-          showHeart={false}
+          bgColor="#FFFAF6"
+          includeTopInset={true}
+          barHeight={44}
+          topPadding={2}
+          title={t("clinic.title")}
+          onLogout={async () => {
+            await logout();
+            router.replace("/Authentication/LogIn");
+          }}
         />
         <View style={s.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
@@ -100,8 +108,15 @@ export default function ClinicScreen() {
         <TopBar
           language={i18n.language as LangCode}
           setLanguage={setLang as (c: LangCode) => void}
-          title="Clinic Waiting Times"
-          showHeart={false}
+          bgColor="#FAE6D4"
+          includeTopInset={true}
+          barHeight={44}
+          topPadding={2}
+          title={t("clinic.title")}
+          onLogout={async () => {
+            await logout();
+            router.replace("/Authentication/LogIn");
+          }}
         />
         <View style={s.errorContainer}>
           <AppText variant="body" weight="600" style={s.errorText}>
@@ -113,12 +128,19 @@ export default function ClinicScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        title="Clinic Waiting Times"
-        showHeart={false}
+        bgColor="#FAE6D4"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
+        title={t("clinic.title")}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
       />
 
       <View style={s.header}>
@@ -133,7 +155,7 @@ export default function ClinicScreen() {
       <FlatList
         data={clinics}
         renderItem={renderClinicItem}
-        keyExtractor={(item) => item._id.toString()}
+        keyExtractor={(item) => (item._id ? item._id.toString() : Math.random().toString())}
         contentContainerStyle={s.listContainer}
         showsVerticalScrollIndicator={false}
       />
