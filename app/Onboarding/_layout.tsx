@@ -8,7 +8,7 @@ import TopBar, { LangCode } from "../../src/components/TopBar";
 
 export default function ElderlyOnboardingLayout() {
   const router = useRouter();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { logout } = useAuth();
 
   const setLang = async (code: LangCode) => {
@@ -24,9 +24,11 @@ export default function ElderlyOnboardingLayout() {
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <TopBar
         language={i18n.language as LangCode}
-        setLanguage={setLang}
-        title="Onboarding"
-        showHeart={false}
+        setLanguage={setLang as (c: LangCode) => void}
+        title={t("elderlyOnboarding.title")}
+        includeTopInset={false}
+        barHeight={44}
+        topPadding={2}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

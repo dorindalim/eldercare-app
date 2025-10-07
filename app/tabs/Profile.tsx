@@ -51,7 +51,7 @@ const isNil = (v?: string | null) =>
 export default function ElderlyProfile() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
 
   const {
     coins,
@@ -281,6 +281,10 @@ export default function ElderlyProfile() {
         barHeight={44}
         topPadding={2}
         title={t("profile.title")}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
       />
 
       <ScrollView

@@ -43,7 +43,7 @@
     "noAccountBody": "You’ll be redirected to sign up."
   },
   "elderlyOnboarding": {
-    "title": "Please fill in these fields",
+    "title": "Onboarding",
     "namePH": "Full Name",
     "yobPH": "Year of Birth (e.g. 1950)",
     "genderLabel": "Gender",

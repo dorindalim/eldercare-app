@@ -16,6 +16,7 @@ import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
 import TopBar, { LangCode } from "../../src/components/TopBar";
 
+import { router } from "expo-router";
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 
@@ -43,7 +44,7 @@ const genCode = () =>
 
 export default function RewardsScreen() {
   const { t } = useTranslation();
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const userId = session?.userId ?? "local";
   const { coins = 0, refresh: refreshCheckins } = useCheckins(session?.userId);
 
@@ -213,6 +214,10 @@ export default function RewardsScreen() {
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
       />
 
       <ScrollView

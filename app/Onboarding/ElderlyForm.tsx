@@ -21,7 +21,8 @@ import { useAuth } from "../../src/auth/AuthProvider";
 export default function ElderlyBasics() {
   const router = useRouter();
   const { saveElderlyProfile, session } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
 
   const [name, setName] = useState("");
   const [yob, setYob] = useState("");
@@ -91,7 +92,6 @@ export default function ElderlyBasics() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={s.card}>
-              <Text style={s.heading}>{t("elderlyOnboarding.title")}</Text>
 
               <TextInput
                 placeholder={t("elderlyOnboarding.namePH")}
@@ -221,37 +221,37 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 520,
     alignSelf: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#E8EDF2",
     backgroundColor: "#FFFFFF",
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    padding: 18,
+    shadowColor: "#021627",
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   heading: {
     fontSize: 20,
     fontWeight: "700",
-    marginBottom: 8,
-    color: "#111827",
+    marginBottom: 10,
+    color: "#0F1724",
   },
   sectionHeading: {
     fontSize: 16,
     fontWeight: "700",
     marginTop: 8,
-    color: "#111827",
+    color: "#0F1724",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
+    borderColor: "#E6EDF5",
+    borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    color: "#0F1724",
+    backgroundColor: "#FBFDFF",
     marginBottom: 12,
   },
   label: { marginTop: 6, marginBottom: 6, fontWeight: "700", color: "#111827" },
@@ -263,25 +263,30 @@ const s = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#E6EDF5",
     backgroundColor: "#FFF",
-    color: "#111827",
+    color: "#0F1724",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   chipActive: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
+    backgroundColor: "#0F1724",
+    borderColor: "#0F1724",
     color: "#FFFFFF",
   },
   btn: {
-    backgroundColor: "#111827",
+    backgroundColor: "#0F1724",
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   btnDisabled: { backgroundColor: "#9CA3AF" },
   btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
