@@ -231,7 +231,7 @@ export default function RewardsScreen() {
               {t("rewards.balance")}
             </AppText>
             <View style={s.balancePill}>
-              <Ionicons name="logo-usd" size={18} color="#111827" />
+              {/* <Ionicons name="logo-usd" size={18} color="#111827" /> */}
               <AppText weight="800" style={{ marginLeft: 6 }}>
                 {coins} {coins === 1 ? t("rewards.coin") : t("rewards.coins")}
               </AppText>
