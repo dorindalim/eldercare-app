@@ -12,8 +12,6 @@ export type Session = {
   userId: string;
   phone: string;
   onboardingCompleted?: boolean;
-  deletedAt?: string | null;
-  purgeAt?: string | null;
 };
 
 export type ElderlyProfileInput = {
@@ -54,15 +52,11 @@ export type ElderlyHealthExtras = {
 
 type SaveResult = { success: boolean; error?: string };
 
-type SignInProbe =
-  | { ok: true; softDeleted: boolean; purgeAt?: string | null }
-  | { ok: false };
-
 type AuthCtx = {
   session: Session | null;
   loading: boolean;
 
-  startPhoneSignIn: (phone: string) => Promise<SignInProbe>;
+  startPhoneSignIn: (phone: string) => Promise<boolean>;
   confirmPhoneCode: (code: string) => Promise<boolean>;
   registerWithPhone: (phone: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -73,11 +67,6 @@ type AuthCtx = {
     conds: ElderlyConditionInput[],
     extras?: ElderlyHealthExtras
   ) => Promise<{ success: boolean }>;
-
-  // NEW: deletion lifecycle
-  requestAccountDeletion: (reason?: string) => Promise<SaveResult>;
-  recoverAccount: () => Promise<SaveResult>;
-  hardDeleteNow: () => Promise<SaveResult>;
 };
 
 const Ctx = createContext<AuthCtx>({} as any);
@@ -110,25 +99,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     })();
   }, []);
 
-  // 1) Login (mock OTP)
-  const startPhoneSignIn = async (phone: string): Promise<SignInProbe> => {
+  // 1) Login (mock OTP). Returns true if user exists; false otherwise.
+  const startPhoneSignIn = async (phone: string) => {
     const normalized = phone.trim();
-    if (!normalized) return { ok: false };
+    if (!normalized) return false;
 
     const { data: user, error } = await supabase
       .from("users")
-      .select("id, phone, onboarding_completed, deleted_at, purge_at")
+      .select("*")
       .eq("phone", normalized)
       .maybeSingle();
 
-    if (error || !user) return { ok: false };
+    if (error) {
+      console.error("startPhoneSignIn error:", error);
+      return false;
+    }
+
+    if (!user) return false;
 
     pendingPhone = normalized; // pretend we sent OTP
-    return {
-      ok: true,
-      softDeleted: !!user.deleted_at,
-      purgeAt: user.purge_at ?? null,
-    };
+    return true;
   };
 
   const confirmPhoneCode = async (code: string) => {
@@ -141,6 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .single();
 
     if (error || !user) {
+      console.error("confirmPhoneCode fetch error:", error);
       pendingPhone = null;
       return false;
     }
@@ -149,12 +140,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userId: user.id,
       phone: user.phone,
       onboardingCompleted: user.onboarding_completed,
-      deletedAt: user.deleted_at,
-      purgeAt: user.purge_at,
     };
 
     setSession(next);
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
+
     pendingPhone = null;
     return true;
   };
@@ -191,12 +181,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userId: user.id,
       phone: user.phone,
       onboardingCompleted: user.onboarding_completed,
-      deletedAt: user.deleted_at,
-      purgeAt: user.purge_at,
     };
 
     setSession(next);
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
+
     return true;
   };
 
@@ -226,6 +215,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<SaveResult> => {
     if (!session) return { success: false, error: "No session" };
 
+    // Guard YOB
     const yobNum = Number(profile.year_of_birth);
     const year_of_birth =
       Number.isFinite(yobNum) && yobNum > 1900 && yobNum < 3000 ? yobNum : null;
@@ -371,50 +361,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { success: true };
   };
 
-  const requestAccountDeletion = async (reason?: string) => {
-    if (!session) return { success: false, error: "No session" };
-
-    const { error } = await supabase.rpc("request_account_deletion", {
-      p_user: session.userId,
-      p_reason: reason ?? null,
-    });
-
-    if (error) return { success: false, error: error.message };
-
-    const purgeAt = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString();
-    const next = {
-      ...session,
-      deletedAt: new Date().toISOString(),
-      purgeAt,
-    };
-    setSession(next);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
-    return { success: true };
-  };
-
-  const recoverAccount = async () => {
-    if (!session?.userId) return { success: false, error: "No session" };
-    const { error } = await supabase.rpc("recover_account", {
-      p_user: session.userId,
-    });
-    if (error) return { success: false, error: error.message };
-
-    const next = { ...session, deletedAt: null, purgeAt: null };
-    setSession(next);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
-    return { success: true };
-  };
-
-  const hardDeleteNow = async () => {
-    if (!session?.userId) return { success: false, error: "No session" };
-    const { error } = await supabase.rpc("hard_delete_user", {
-      p_user: session.userId,
-    });
-    if (error) return { success: false, error: error.message };
-    await logout();
-    return { success: true };
-  };
-
   const value = useMemo<AuthCtx>(
     () => ({
       session,
@@ -426,9 +372,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       markOnboarding,
       saveElderlyProfile,
       saveElderlyConditions,
-      requestAccountDeletion,
-      recoverAccount,
-      hardDeleteNow,
     }),
     [session, loading]
   );

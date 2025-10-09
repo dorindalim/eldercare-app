@@ -7,13 +7,11 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   AppState,
-  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -50,94 +48,10 @@ const CAREGIVER_MESSAGE = (url: string) =>
 const isNil = (v?: string | null) =>
   typeof v === "string" && v.trim().toUpperCase() === "NIL";
 
-function ConfirmDeleteModal({
-  visible,
-  onCancel,
-  onConfirm,
-  t,
-}: {
-  visible: boolean;
-  onCancel: () => void;
-  onConfirm: (reason: string) => void;
-  t: (k: string, p?: any) => string;
-}) {
-  const [text, setText] = useState("");
-  const [reason, setReason] = useState("");
-
-  useEffect(() => {
-    if (!visible) {
-      setText("");
-      setReason("");
-    }
-  }, [visible]);
-
-  return (
-    <Modal visible={visible} animationType="fade" transparent>
-      <View style={s.modalBackdrop}>
-        <View style={s.modalCard}>
-          <AppText variant="h2" weight="800">
-            {t("profile.delete.confirmTitle")}
-          </AppText>
-          <AppText variant="label" weight="700" color="#374151" style={{ marginTop: 8 }}>
-            {t("profile.delete.confirmBody")}
-          </AppText>
-
-          <View style={{ height: 8 }} />
-
-          <AppText variant="caption" color="#6B7280">
-            {t("profile.delete.typeDelete")}
-          </AppText>
-          <TextInput
-            placeholder="DELETE"
-            placeholderTextColor="#9CA3AF"
-            value={text}
-            onChangeText={setText}
-            style={s.input}
-            autoCapitalize="characters"
-          />
-
-          <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
-            {t("profile.delete.reasonPH")}
-          </AppText>
-          <TextInput
-            placeholder={t("profile.delete.reasonPH")}
-            placeholderTextColor="#9CA3AF"
-            value={reason}
-            onChangeText={setReason}
-            style={s.input}
-          />
-
-          <View style={s.rowBetween}>
-            <Pressable onPress={onCancel} style={[s.btn, { backgroundColor: "#E5E7EB" }]}>
-              <AppText variant="button" weight="800" color="#111827">
-                {t("common.cancel")}
-              </AppText>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                if (text.trim().toUpperCase() !== "DELETE") {
-                  Alert.alert(t("alerts.inputMismatchTitle"), t("alerts.inputMismatchBody"));
-                  return;
-                }
-                onConfirm(reason.trim());
-              }}
-              style={[s.btn, { backgroundColor: "#B91C1C" }]}
-            >
-              <AppText variant="button" weight="800" color="#FFF">
-                {t("profile.delete.continue")}
-              </AppText>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
 export default function ElderlyProfile() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { session, logout, requestAccountDeletion } = useAuth();
+  const { session, logout } = useAuth();
 
   const {
     coins,
@@ -155,7 +69,6 @@ export default function ElderlyProfile() {
   const [publicNote, setPublicNote] = useState<string>("");
   const [conditions, setConditions] = useState<ConditionItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
 
   const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
@@ -301,6 +214,7 @@ export default function ElderlyProfile() {
     return () => sub.remove();
   }, [loadData, refreshCheckins]);
 
+  // Pretty-print assistive codes (and localize)
   const prettifyAssistive = (code: string) => {
     if (code.startsWith("other:")) return code.replace(/^other:/, "").trim();
     const MAP: Record<string, string> = {
@@ -318,6 +232,7 @@ export default function ElderlyProfile() {
     return assistiveNeeds.map(prettifyAssistive).join(", ");
   }, [assistiveNeeds, i18n.language]);
 
+  // Share EC Portal link
   const onShareEcPortal = useCallback(async () => {
     if (!session?.userId) {
       Alert.alert("Not logged in", "Please log in again.");
@@ -346,8 +261,8 @@ export default function ElderlyProfile() {
 
     if (!token) {
       Alert.alert(
-        t("profile.noPortalTitle"),
-        t("profile.noPortalBody")
+        "No portal link yet",
+        "Your profile may be incomplete, or a link hasn’t been created."
       );
       return;
     }
@@ -387,7 +302,7 @@ export default function ElderlyProfile() {
 
           <View style={s.rowBetween}>
             <AppText variant="label" weight="700" color="#374151">
-              {t("profile.name")}
+              Name
             </AppText>
             <AppText variant="label" weight="700">
               {name}
@@ -473,7 +388,7 @@ export default function ElderlyProfile() {
           {/* Share EC Portal link button */}
           <Pressable style={s.btn} onPress={onShareEcPortal}>
             <AppText variant="button" weight="800" color="#FFF">
-              {t("profile.sharePortal")}
+              Share EC Portal link
             </AppText>
           </Pressable>
         </View>
@@ -592,55 +507,8 @@ export default function ElderlyProfile() {
           </AppText>
         </View>
 
-        {/* Danger Zone */}
-        <View style={s.card}>
-          <AppText variant="h2" weight="800">
-            {t("profile.delete.title")}
-          </AppText>
-          <AppText variant="label" weight="700" color="#374151" style={{ marginTop: 6 }}>
-            {t("profile.delete.explain")}
-          </AppText>
-
-          <Pressable
-            accessibilityRole="button"
-            style={[s.btn, { backgroundColor: "#B91C1C" }]}
-            onPress={() => setShowDelete(true)}
-          >
-            <AppText variant="button" weight="800" color="#FFF">
-              {t("profile.delete.button")}
-            </AppText>
-          </Pressable>
-        </View>
-
         <View style={{ height: 24 }} />
       </ScrollView>
-
-      <ConfirmDeleteModal
-        visible={showDelete}
-        onCancel={() => setShowDelete(false)}
-        onConfirm={async (reason) => {
-          setShowDelete(false);
-          const res = await requestAccountDeletion(reason);
-          if (res.success) {
-            Alert.alert(
-              t("profile.delete.scheduledTitle"),
-              t("profile.delete.scheduledBody"),
-              [
-                {
-                  text: t("common.ok"),
-                  onPress: () => router.replace("/Authentication/LogIn"),
-                },
-              ]
-            );
-          } else {
-            Alert.alert(
-              t("alerts.genericFailTitle"),
-              res.error ?? t("alerts.genericFailBody")
-            );
-          }
-        }}
-        t={t}
-      />
     </SafeAreaView>
   );
 }
@@ -688,29 +556,5 @@ const s = StyleSheet.create({
   },
 
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalCard: {
-    width: "100%",
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#FFF",
-    color: "#111827",
-    marginTop: 6,
-  },
 });
+
