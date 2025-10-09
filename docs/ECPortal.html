@@ -256,7 +256,7 @@
     return await supabase.rpc('ec_portal_fetch', { p_token: token });
   }
   async function rpcGet(pinHash) {
-    return await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
+    return await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash || null});
   }
   async function rpcSetPin(pinHash) {
     return await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
@@ -421,8 +421,18 @@
       return;
     }
 
-    if (error) { status.textContent = error.message || 'Failed to load'; return; }
-
+    if (error) {
+      const msg = String(error.message || '');
+      if (msg.toLowerCase().startsWith('disabled')) {
+        el('gateCard').innerHTML = `<div class="banner">${gate.disabled_message || 'This portal link is disabled.'}</div>`;
+        return;
+      }
+      if (/invalid pin|pin required/i.test(msg)) {
+      } else {
+        status.textContent = msg || 'Failed to load';
+      }
+      return;
+    }
     status.textContent='';
     el('gateCard').style.display='none';
     render(data);
