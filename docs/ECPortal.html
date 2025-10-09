@@ -71,16 +71,8 @@
     </div>
   </div>
 
-    <div class="card">
+  <div class="card">
     <p class="muted" id="status">Loading…</p>
-    <!-- token input shown when portal is opened without ?token=... -->
-    <div id="tokenBlock" style="display:none; margin-top:8px">
-      <div style="display:flex; gap:8px; align-items:center">
-        <input id="tokenInput" placeholder="Paste token from app link (e.g. ?token=...)" />
-        <button id="tokenBtn" class="btn">Open</button>
-      </div>
-      <p id="tokenMsg" class="muted"></p>
-    </div>
     <div id="pinBlock" style="display:none">
       <div style="display:flex; gap:8px; align-items:center">
         <input id="pinInput" placeholder="Enter 4+ digit PIN" />
@@ -142,7 +134,7 @@
   const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
   const supabase = createClient(PROJECT_URL, ANON_KEY);
 
-  let token = new URLSearchParams(location.search).get('token') || '';
+  const token = new URLSearchParams(location.search).get('token') || '';
   const assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
   const labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
   const el = id => document.getElementById(id);
@@ -362,17 +354,7 @@
     const noCondsChip = el('noCondsChip');
     noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
 
-    if (!token) {
-        el('status').textContent='Missing token. Paste token below to open the portal.';
-        el('tokenBlock').style.display = '';
-        el('tokenBtn').onclick = () => {
-          const v = el('tokenInput').value.trim();
-          if (!v) { el('tokenMsg').textContent = 'Enter a token to continue'; return; }
-          // reload with token in query string so the normal flow (and localStorage key) works
-          location.search = '?token=' + encodeURIComponent(v);
-        };
-        return;
-    }
+    if (!token) { el('status').textContent='Missing token'; return; }
 
     let pin = localStorage.getItem('ec_pin_'+token) || '';
     let pinHash = pin ? await sha256Hex(pin) : '';
