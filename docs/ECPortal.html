@@ -47,6 +47,7 @@
     .ghost{background:transparent;border:1px dashed rgba(17,24,39,0.06);color:var(--accent)}
     .muted{color:var(--muted);font-size:13px}
 
+    /* Save area on mobile */
     .actions{display:flex;justify-content:flex-end;gap:12px;align-items:center}
     @media (max-width:640px){
       .wrap{padding:14px;margin:16px}
@@ -54,6 +55,7 @@
       .card:last-of-type{padding-bottom:74px}
     }
 
+    /* subtle helpers */
     input::placeholder, textarea::placeholder{color:#9CA3AF}
   </style>
 </head>
@@ -66,9 +68,6 @@
     <div class="hdr-title">
       <h1>Emergency Contact Portal</h1>
       <div class="hdr-sub">Quickly view and update emergency contact & medical details</div>
-    </div>
-    <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
-      <button id="logoutBtn" class="btn secondary" style="height:36px; display:none">Log out</button>
     </div>
   </div>
 
@@ -167,6 +166,7 @@
     return row;
   }
 
+  // Per-condition block
   function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
     const wrap = document.createElement('div'); wrap.className='card';
 
@@ -311,12 +311,14 @@
     const profile    = payload.profile || {};
     const conditions = Array.isArray(payload.conditions) ? payload.conditions : [];
 
+    // Emergency contact
     const em = getEmergency(profile);
     el('ec_name').value     = em.name || '';
     el('ec_relation').value = em.relation || '';
     el('ec_phone').value    = em.phone || '';
     el('ec_email').value    = em.email || '';
 
+    // Extras
     el('drug_allergies').value = profile.drug_allergies || '';
     el('public_note').value    = profile.public_note || '';
     const needs = Array.isArray(profile.assistive_needs) ? profile.assistive_needs : [];
@@ -331,6 +333,7 @@
       ? String(needs.find(v=>String(v).startsWith('other:'))).replace(/^other:/,'')
       : '';
 
+    // Conditions UI
     const list = el('conds'); list.innerHTML='';
     const isSingleNil = conditions.length===1 && String(conditions[0]?.condition).toUpperCase()==='NIL';
     setNoConditionsUI(isSingleNil);
@@ -351,9 +354,7 @@
     const noCondsChip = el('noCondsChip');
     noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
 
-  const logoutBtn = el('logoutBtn');
-
-  if (!token) { el('status').textContent='Missing token'; return; }
+    if (!token) { el('status').textContent='Missing token'; return; }
 
     let pin = localStorage.getItem('ec_pin_'+token) || '';
     let pinHash = pin ? await sha256Hex(pin) : '';
@@ -422,23 +423,6 @@
       const { error: e } = await rpcSave(h, payload);
       el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
     };
-
-    logoutBtn.onclick = () => {
-      try {
-        localStorage.removeItem('ec_pin_'+token);
-      } catch(e) { /* ignore */ }
-      el('main').style.display = 'none';
-      el('pinBlock').style.display = '';
-      el('status').textContent = 'Signed out - enter PIN to continue.';
-    };
-
-    const updateLogoutVisibility = () => {
-      logoutBtn.style.display = (el('main').style.display === '' ? '' : 'none');
-    };
-    updateLogoutVisibility();
-
-    el('pinUseBtn').addEventListener('click', () => setTimeout(updateLogoutVisibility, 50));
-    el('pinSetBtn').addEventListener('click', () => setTimeout(updateLogoutVisibility, 50));
   })();
 </script>
 </body>
