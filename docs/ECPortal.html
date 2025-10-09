@@ -15,18 +15,21 @@
       --pill:#F3F4F6;
       --radius:14px;
     }
-
     html,body{height:100%;}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); margin:0; color:var(--accent)}
     .wrap{max-width:980px; margin:28px auto; padding:20px}
 
-    /* Header */
     .portal-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
     .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#EFF6FF,#F8FAFC);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.06)}
     .logo svg{width:34px;height:34px;fill:var(--accent)}
-    .hdr-title{display:flex;flex-direction:column}
+    .hdr-title{display:flex;flex-direction:column;flex:1}
     .hdr-title h1{font-size:20px;margin:0;font-weight:800}
     .hdr-sub{font-size:13px;color:var(--muted);margin-top:4px}
+
+    .btn{background:var(--accent);color:#fff;font-weight:800;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;box-shadow:0 6px 14px rgba(17,24,39,0.12);transition:transform .08s ease,box-shadow .08s ease}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{background:transparent;color:var(--accent);border:1px solid rgba(17,24,39,0.08);box-shadow:none}
+    .btn.ghost{background:transparent;border:1px dashed rgba(17,24,39,0.08);color:var(--accent)}
 
     .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 18px rgba(2,6,23,0.04)}
     h2{font-size:15px;margin:8px 0 12px;font-weight:800;color:var(--accent)}
@@ -35,27 +38,18 @@
     textarea{min-height:88px}
 
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-
-    .btn{background:var(--accent);color:#fff;font-weight:800;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;box-shadow:0 6px 14px rgba(17,24,39,0.12);transition:transform .08s ease,box-shadow .08s ease}
-    .btn:active{transform:translateY(1px)}
-    .btn.secondary{background:transparent;color:var(--accent);border:1px solid rgba(17,24,39,0.08);box-shadow:none}
-    .btn.ghost{background:transparent;border:1px dashed rgba(17,24,39,0.08);color:var(--accent)}
-
     .chip{border:1px solid #E2E8F0;padding:8px 12px;border-radius:999px;cursor:pointer;user-select:none;font-weight:800;display:inline-block;margin:4px 6px 0 0;background:transparent}
     .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
     .medrow{display:flex;gap:8px;margin-top:6px}
-    .ghost{background:transparent;border:1px dashed rgba(17,24,39,0.06);color:var(--accent)}
-    .muted{color:var(--muted);font-size:13px}
 
-    /* Save area on mobile */
-    .actions{display:flex;justify-content:flex-end;gap:12px;align-items:center}
+    .muted{color:var(--muted);font-size:13px}
+    .hdr-actions{display:flex;gap:8px}
+
     @media (max-width:640px){
       .wrap{padding:14px;margin:16px}
       .actions{position:sticky;bottom:12px;background:transparent;padding:6px 0}
       .card:last-of-type{padding-bottom:74px}
     }
-
-    /* subtle helpers */
     input::placeholder, textarea::placeholder{color:#9CA3AF}
   </style>
 </head>
@@ -67,7 +61,10 @@
     </div>
     <div class="hdr-title">
       <h1>Emergency Contact Portal</h1>
-      <div class="hdr-sub">Quickly view and update emergency contact & medical details</div>
+      <div class="hdr-sub">Quickly view and update emergency contact &amp; medical details</div>
+    </div>
+    <div class="hdr-actions">
+      <button id="logoutBtn" class="btn secondary" title="Lock / Logout">Logout</button>
     </div>
   </div>
 
@@ -104,19 +101,15 @@
     </div>
 
     <div class="card">
-      <h2>Conditions & Medications</h2>
-
+      <h2>Conditions &amp; Medications</h2>
       <div class="row" style="margin-bottom:8px">
         <span id="noCondsChip" class="chip">No conditions</span>
         <span class="muted">Tip: you can still add a condition even if this is on — the form will auto-reappear.</span>
       </div>
-
       <div id="noCondsNote" class="muted" style="display:none; margin-bottom:8px">
         You marked “No conditions”. We will save a single NIL placeholder. You can still add a condition below.
       </div>
-
       <div id="conds"></div>
-
       <button id="addCond" class="btn ghost" style="margin-top:8px">+ Add condition</button>
     </div>
 
@@ -143,15 +136,19 @@
   const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
 
   let noConditions = false;
+  let cachedPin = '';      // in-memory copy (for convenience)
 
+  // --- UI helpers ---
   function chip(parent, key, active) {
     const span = document.createElement('span');
     span.className = 'chip' + (active ? ' active':'');
     span.textContent = labels[key];
     span.onclick = () => {
       span.classList.toggle('active');
-      if (key==='other') document.getElementById('assistive_other_wrap').style.display =
-        span.classList.contains('active') ? '' : 'none';
+      if (key==='other') {
+        const wrap = document.getElementById('assistive_other_wrap');
+        if (wrap) wrap.style.display = span.classList.contains('active') ? '' : 'none';
+      }
     };
     parent.appendChild(span);
   }
@@ -166,10 +163,8 @@
     return row;
   }
 
-  // Per-condition block
   function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
     const wrap = document.createElement('div'); wrap.className='card';
-
     const t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
     const d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
     const cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
@@ -181,16 +176,16 @@
 
     const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
     const medsWrap=document.createElement('div');
-
     const addMedBtn = document.createElement('button');
     addMedBtn.className = 'btn ghost';
     addMedBtn.textContent = '+ Add medication';
     addMedBtn.style.marginTop = '6px';
     addMedBtn.onclick = () => medsWrap.appendChild(medRow({name:'',frequency:''}));
 
-    const initialNoMeds = Array.isArray(c.medications)
-      && c.medications.length===1
-      && String(c.medications[0]?.name).toUpperCase()==='NIL';
+    const initialNoMeds =
+      Array.isArray(c.medications) &&
+      c.medications.length===1 &&
+      String(c.medications[0]?.name).toUpperCase()==='NIL';
 
     if (c.medications?.length && !initialNoMeds) {
       c.medications.forEach(m=> medsWrap.appendChild(medRow(m)));
@@ -230,7 +225,7 @@
             const [n,f]=r.querySelectorAll('input');
             const name=(n.value||'').trim();
             const frequency=(f.value||'').trim();
-            return name ? { name, frequency: frequency||null } : null;
+            return name ? { name, frequency: (frequency||null) } : null;
           }).filter(Boolean)
     });
 
@@ -243,6 +238,7 @@
     return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
   }
 
+  // --- RPC wrappers ---
   async function rpcGet(pinHash) {
     const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
     return { data, error };
@@ -256,20 +252,48 @@
       p_token: token,
       p_pin_hash: pinHash,
       p_emergency: payload.emergency,
-      p_extras: payload.extras,
-      p_conditions: payload.conditions
+      p_extras:    payload.extras,
+      p_conditions:payload.conditions
     });
     return { data, error };
   }
 
+  // --- UI state helpers: show pin / show main / logout ---
+  function showPinUI(msg='This link is protected by a PIN.') {
+    el('status').textContent = msg;
+    el('pinBlock').style.display = '';
+    el('main').style.display = 'none';
+    el('pinMsg').textContent = '';
+    el('pinInput').value = '';
+  }
+  function showMainUI() {
+    el('status').textContent = '';
+    el('pinBlock').style.display = 'none';
+    el('main').style.display = '';
+  }
+  function logout() {
+    // Clear only this token's PIN and return to lock screen
+    try { localStorage.removeItem('ec_pin_'+token); } catch {}
+    cachedPin = '';
+    // wipe fields quickly (optional)
+    ['ec_name','ec_relation','ec_phone','ec_email','drug_allergies','public_note','assistive_other'].forEach(id=>{
+      const x=el(id); if (x) x.value = '';
+    });
+    const conds = el('conds'); if (conds) conds.innerHTML='';
+    setNoConditionsUI(false);
+    showPinUI('Locked. Please enter PIN to continue.');
+  }
+
+  // --- Business logic ---
   function gatherAssistive() {
-    const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=> {
+    const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=>{
       const label = ch.textContent;
       const key = Object.entries(labels).find(([,v])=>v===label)?.[0] || label;
       return key;
     });
     if (picks.includes('other')) {
-      const other = el('assistive_other').value.trim();
+      const otherEl = el('assistive_other');
+      const other = otherEl ? (otherEl.value||'').trim() : '';
       if (other) picks.push('other:'+other);
       return picks.filter(p=>p!=='other');
     }
@@ -302,11 +326,6 @@
   }
 
   function render(resp) {
-    console.log('RPC payload:', resp);
-
-    el('status').textContent='';
-    el('main').style.display='';
-
     const payload    = Array.isArray(resp) ? (resp[0] || {}) : (resp || {});
     const profile    = payload.profile || {};
     const conditions = Array.isArray(payload.conditions) ? payload.conditions : [];
@@ -321,6 +340,7 @@
     // Extras
     el('drug_allergies').value = profile.drug_allergies || '';
     el('public_note').value    = profile.public_note || '';
+
     const needs = Array.isArray(profile.assistive_needs) ? profile.assistive_needs : [];
     const showOther = needs.some(v=>String(v).startsWith('other:'));
     const assistDiv = el('assistive'); assistDiv.innerHTML='';
@@ -343,52 +363,67 @@
       : (conditions.length ? conditions : [{ medications:[{name:'',frequency:''}] }]);
 
     initialConds.forEach(c=> list.appendChild(condBlock(c)));
-
-    el('addCond').onclick = ()=> {
-      if (noConditions) setNoConditionsUI(false);
-      list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
-    };
   }
 
+  // --- Boot flow ---
   (async function boot(){
-    const noCondsChip = el('noCondsChip');
-    noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
-
     if (!token) { el('status').textContent='Missing token'; return; }
 
-    let pin = localStorage.getItem('ec_pin_'+token) || '';
+    // Logout button
+    el('logoutBtn').onclick = logout;
+
+    // No conditions toggle
+    el('noCondsChip').onclick = ()=> setNoConditionsUI(!noConditions);
+
+    // Restore PIN if previously saved for this token
+    let pin = '';
+    try { pin = localStorage.getItem('ec_pin_'+token) || ''; } catch {}
+    cachedPin = pin;
     let pinHash = pin ? await sha256Hex(pin) : '';
 
+    // Try fetch
     let { data, error } = await rpcGet(pinHash);
     if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-      el('status').textContent='This link is protected by a PIN.';
-      el('pinBlock').style.display='';
+      showPinUI('This link is protected by a PIN.');
+      // Wire up PIN actions
       el('pinUseBtn').onclick = async () => {
-        const p = el('pinInput').value.trim();
+        const p = (el('pinInput').value||'').trim();
         if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
         const h = await sha256Hex(p);
         const r = await rpcGet(h);
         if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        el('pinBlock').style.display='none'; render(r.data);
+        cachedPin = p;
+        try { localStorage.setItem('ec_pin_'+token, p); } catch {}
+        showMainUI(); render(r.data);
       };
       el('pinSetBtn').onclick = async () => {
-        const p = el('pinInput').value.trim();
+        const p = (el('pinInput').value||'').trim();
         if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
         const h = await sha256Hex(p);
         const r = await rpcSetPin(h);
         if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to set PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        const g = await rpcGet(h); render(g.data);
-        el('pinBlock').style.display='none';
+        cachedPin = p;
+        try { localStorage.setItem('ec_pin_'+token, p); } catch {}
+        const g = await rpcGet(h);
+        showMainUI(); render(g.data);
       };
+      return;
+    } else if (error && /invalid token/i.test(error.message || String(error))) {
+      el('status').textContent = 'This link is invalid or has been revoked.';
+      return;
+    } else if (error) {
+      el('status').textContent = error.message || 'Failed to load';
       return;
     }
 
-    if (error) { el('status').textContent = error.message || 'Failed to load'; return; }
-    el('status').textContent=''; render(data);
+    // Success path
+    showMainUI();
+    render(data);
 
+    // Save handler
     el('saveBtn').onclick = async () => {
+      const btn = el('saveBtn');
+      btn.disabled = true;
       el('saveMsg').textContent='Saving…';
 
       const list = [...document.querySelectorAll('#conds > .card')];
@@ -418,10 +453,10 @@
         conditions
       };
 
-      const storedPin = localStorage.getItem('ec_pin_'+token) || '';
-      const h = await sha256Hex(storedPin || '');
+      const h = cachedPin ? await sha256Hex(cachedPin) : '';
       const { error: e } = await rpcSave(h, payload);
       el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+      btn.disabled = false;
     };
   })();
 </script>
