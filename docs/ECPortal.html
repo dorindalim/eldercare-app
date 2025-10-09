@@ -151,6 +151,9 @@
   const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
 
   let noConditions = false;
+  let pinHandlersBound = false;  
+  let currentPin = '';            
+  let currentPinHash = null;     
 
   function chip(parent, key, active) {
     const span = document.createElement('span');
@@ -250,26 +253,16 @@
     return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
   }
 
-  // --- RPCs ---
-  async function rpcGate() {
-    // must exist on server; returns { allowed, disabled, disabled_message, ... }
-    return await supabase.rpc('ec_portal_fetch', { p_token: token });
-  }
-  async function rpcGet(pinHash) {
-    return await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash || null});
-  }
-  async function rpcSetPin(pinHash) {
-    return await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
-  }
-  async function rpcSave(pinHash, payload) {
-    return await supabase.rpc('ec_save_portal', {
-      p_token: token,
-      p_pin_hash: pinHash,
-      p_emergency: payload.emergency,
-      p_extras: payload.extras,
-      p_conditions: payload.conditions
-    });
-  }
+  const rpcGate = () => supabase.rpc('ec_portal_fetch', { p_token: token });
+  const rpcGet  = (pinHash) => supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash ?? null });
+  const rpcSetPin = (pinHash) => supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash ?? null });
+  const rpcSave = (pinHash, payload) => supabase.rpc('ec_save_portal', {
+    p_token: token,
+    p_pin_hash: pinHash ?? null,
+    p_emergency: payload.emergency,
+    p_extras: payload.extras,
+    p_conditions: payload.conditions
+  });
 
   function gatherAssistive() {
     const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=> {
@@ -347,21 +340,84 @@
       : (conditions.length ? conditions : [{ medications:[{name:'',frequency:''}] }]);
 
     initialConds.forEach(c=> list.appendChild(condBlock(c)));
-
     el('addCond').onclick = ()=> {
       if (noConditions) setNoConditionsUI(false);
       list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
     };
   }
 
+  function bindPinUI() {
+    if (pinHandlersBound) return;
+    pinHandlersBound = true;
+
+    const pinCard  = el('pinCard');
+    const pinInput = el('pinInput');
+    const pinMsg   = el('pinMsg');
+    const logoutBtn = el('logoutBtn');
+
+    el('pinUseBtn').onclick = async () => {
+      const p = pinInput.value.trim();
+      if (p.length < 4) { pinMsg.textContent='PIN must be 4+ digits'; return; }
+      const h = await sha256Hex(p);
+      const r = await rpcGet(h);
+      if (r.error) { pinMsg.textContent = r.error.message || 'Wrong PIN'; return; }
+      currentPin = p;
+      currentPinHash = h;
+      try { localStorage.setItem('ec_pin_'+token, p); } catch(_) {}
+      pinCard.style.display='none';
+      el('gateCard').style.display='none';
+      render(r.data);
+      logoutBtn.style.display='';
+    };
+
+    el('pinSetBtn').onclick = async () => {
+      const p = pinInput.value.trim();
+      if (p.length < 4) { pinMsg.textContent='PIN must be 4+ digits'; return; }
+      const h = await sha256Hex(p);
+      const r = await rpcSetPin(h);
+      if (r.error) { pinMsg.textContent = r.error.message || 'Failed to set PIN'; return; }
+      currentPin = p;
+      currentPinHash = h;
+      try { localStorage.setItem('ec_pin_'+token, p); } catch(_) {}
+      const g = await rpcGet(h);
+      pinCard.style.display='none';
+      el('gateCard').style.display='none';
+      render(g.data);
+      el('logoutBtn').style.display='';
+    };
+  }
+
+  async function ensurePinThen(cb) {
+    if (currentPinHash) {
+      await cb(currentPinHash);
+      return;
+    }
+    el('pinCard').style.display = '';
+    el('status').textContent = 'This link is protected by a PIN.';
+    const int = setInterval(async () => {
+      if (currentPinHash) {
+        clearInterval(int);
+        await cb(currentPinHash);
+      }
+    }, 300);
+  }
+
   (async function boot(){
     const status = el('status');
     const logoutBtn = el('logoutBtn');
-    const pinCard = el('pinCard');
 
     if (!token) { status.textContent='Missing token'; return; }
 
-    // 1) Gate: check disabled/revoked state
+    bindPinUI();
+
+    try {
+      const stored = localStorage.getItem('ec_pin_'+token) || '';
+      if (stored && stored.length >= 4) {
+        currentPin = stored;
+        currentPinHash = await sha256Hex(stored);
+      }
+    } catch(_) {}
+
     status.textContent='Checking access…';
     const { data: gateData, error: gateErr } = await rpcGate();
     if (gateErr) {
@@ -370,69 +426,29 @@
     }
     const gate = Array.isArray(gateData) ? gateData[0] : gateData;
     if (!gate?.allowed || gate?.disabled) {
-      // show a clear banner and stop
       const msg = gate?.disabled_message || 'This portal link is disabled.';
       el('gateCard').innerHTML = `<div class="banner">${msg}</div>`;
       return;
     }
 
-    // 2) Proceed with PIN flow + data fetch
     status.textContent='Loading…';
-
-    let pin = localStorage.getItem('ec_pin_'+token) || '';
-    let pinHash = pin ? await sha256Hex(pin) : '';
-
-    const { data, error } = await rpcGet(pinHash);
-
-    // if server demands PIN
-    if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-      status.textContent='This link is protected by a PIN.';
-      pinCard.style.display='';
-      const pinInput = el('pinInput');
-      const pinMsg   = el('pinMsg');
-
-      el('pinUseBtn').onclick = async () => {
-        const p = pinInput.value.trim();
-        if (p.length < 4) { pinMsg.textContent='PIN must be 4+ digits'; return; }
-        const h = await sha256Hex(p);
-        const r = await rpcGet(h);
-        if (r.error) { pinMsg.textContent = r.error.message || 'Wrong PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        pinCard.style.display='none';
-        el('gateCard').style.display='none';
-        render(r.data);
-        logoutBtn.style.display='';
-      };
-
-      el('pinSetBtn').onclick = async () => {
-        const p = pinInput.value.trim();
-        if (p.length < 4) { pinMsg.textContent='PIN must be 4+ digits'; return; }
-        const h = await sha256Hex(p);
-        const r = await rpcSetPin(h);
-        if (r.error) { pinMsg.textContent = r.error.message || 'Failed to set PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        const g = await rpcGet(h);
-        pinCard.style.display='none';
-        el('gateCard').style.display='none';
-        render(g.data);
-        logoutBtn.style.display='';
-      };
-
-      return;
-    }
+    const { data, error } = await rpcGet(currentPinHash);
 
     if (error) {
       const msg = String(error.message || '');
+      if (/invalid pin|pin required/i.test(msg)) {
+        status.textContent='This link is protected by a PIN.';
+        el('pinCard').style.display='';
+        return; 
+      }
       if (msg.toLowerCase().startsWith('disabled')) {
         el('gateCard').innerHTML = `<div class="banner">${gate.disabled_message || 'This portal link is disabled.'}</div>`;
         return;
       }
-      if (/invalid pin|pin required/i.test(msg)) {
-      } else {
-        status.textContent = msg || 'Failed to load';
-      }
+      status.textContent = msg || 'Failed to load';
       return;
     }
+
     status.textContent='';
     el('gateCard').style.display='none';
     render(data);
@@ -442,7 +458,6 @@
       el('saveMsg').textContent='Saving…';
 
       const list = [...document.querySelectorAll('#conds > .card')];
-
       let conditions;
       if (noConditions || list.length===0) {
         conditions = [ { ...NIL_COND } ];
@@ -468,15 +483,32 @@
         conditions
       };
 
-      const storedPin = localStorage.getItem('ec_pin_'+token) || '';
-      const h = await sha256Hex(storedPin || '');
-      const { error: e } = await rpcSave(h, payload);
-      el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+      const attemptSave = async (hashToUse) => {
+        const { error: e } = await rpcSave(hashToUse, payload);
+        if (e) {
+          const m = String(e.message || '');
+          if (/invalid pin|pin required/i.test(m)) {
+            // Prompt for PIN, then retry once
+            await ensurePinThen(async (newHash) => {
+              const r2 = await rpcSave(newHash, payload);
+              el('saveMsg').textContent = r2.error ? ('Failed: ' + (r2.error.message || '')) : 'Saved!';
+            });
+            return;
+          }
+          el('saveMsg').textContent = 'Failed: ' + (e.message || '');
+          return;
+        }
+        el('saveMsg').textContent = 'Saved!';
+      };
+
+      await attemptSave(currentPinHash);
     };
 
-    // Logout button: clear stored PIN and return to PIN entry
     logoutBtn.onclick = () => {
       try { localStorage.removeItem('ec_pin_'+token); } catch(e) {}
+      currentPin = '';
+      currentPinHash = null;
+
       el('main').style.display = 'none';
       el('gateCard').style.display='';
       el('pinCard').style.display='';
