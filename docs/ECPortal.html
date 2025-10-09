@@ -349,11 +349,6 @@
       : (conditions.length ? conditions : [{ medications:[{name:'',frequency:''}] }]);
 
     initialConds.forEach(c=> list.appendChild(condBlock(c)));
-
-    el('addCond').onclick = ()=> {
-      if (noConditions) setNoConditionsUI(false);
-      list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
-    };
   }
 
   (async function boot(){
