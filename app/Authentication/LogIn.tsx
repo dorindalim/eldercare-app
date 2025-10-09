@@ -25,7 +25,6 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState("");
 
-  // store language setting to make sure language is changed for whole app
   const setLanguage = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
@@ -125,6 +124,14 @@ export default function Login() {
             >
               <Pressable>
                 <Text style={s.link}>{t("auth.login.signup")}</Text>
+              </Pressable>
+            </Link>
+          </View>
+
+          <View style={{ marginTop: 12, alignItems: "center" }}>
+            <Link href="/Authentication/Restore" asChild>
+              <Pressable>
+                <Text style={s.link}>{t("auth.login.restoreCode")}</Text>
               </Pressable>
             </Link>
           </View>

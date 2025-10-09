@@ -74,7 +74,6 @@ export const useAuth = () => useContext(Ctx);
 
 const SESSION_KEY = "auth_session_v1";
 
-// mock OTP flow state
 let pendingPhone: string | null = null;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -117,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (!user) return false;
 
-    pendingPhone = normalized; // pretend we sent OTP
+    pendingPhone = normalized; 
     return true;
   };
 
@@ -152,7 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // 2) Sign-up (phone + password)
   const registerWithPhone = async (phone: string, password: string) => {
     const normalized = phone.trim();
-    if (!normalized || password.length < 6) return false;
+    if (!normalized || password.length < 8) return false;
 
     const { data: existing, error: checkErr } = await supabase
       .from("users")

@@ -7,11 +7,17 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   AppState,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
+  Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -69,6 +75,16 @@ export default function ElderlyProfile() {
   const [publicNote, setPublicNote] = useState<string>("");
   const [conditions, setConditions] = useState<ConditionItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  // Delete account UI state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [mockOtp, setMockOtp] = useState("");
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [deletionReason, setDeletionReason] = useState("");
+  const [deleteProcessing, setDeleteProcessing] = useState(false);
+  const [scheduledDeletion, setScheduledDeletion] = useState<string | null>(null);
+  const [restoreToken, setRestoreToken] = useState<string | null>(null);
 
   const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
@@ -149,6 +165,163 @@ export default function ElderlyProfile() {
     loadData();
     refreshCheckins();
   }, [loadData, refreshCheckins]);
+
+  const genOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+
+  const sendDeletionVerification = async () => {
+    if (!session?.userId) {
+      Alert.alert(t('auth.notLoggedInTitle'), t('auth.notLoggedInBody'));
+      return;
+    }
+
+    const otp = genOtp();
+    const now = new Date();
+    const otpExpires = new Date(now.getTime() + 10 * 60 * 1000);
+    const scheduled = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); 
+
+    setMockOtp(otp);
+    setOtpSent(true);
+    setScheduledDeletion(scheduled.toISOString());
+
+    Alert.alert(
+      t('delete.verificationSentTitle'),
+      t('delete.verificationSentBody', { code: otp, minutes: 10 })
+    );
+
+    setDeleteProcessing(true);
+    try {
+      const payload = {
+        user_id: session.userId,
+        requested_at: now.toISOString(),
+        otp: otp, 
+        otp_expires_at: otpExpires.toISOString(),
+        scheduled_for: scheduled.toISOString(),
+        reason: deletionReason || null,
+        status: "pending",
+      } as any;
+
+      const { data, error } = await supabase
+        .from("account_deletion_requests")
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) {
+        console.warn("account deletion insert error:", error.message);
+        setMockOtp("");
+        setOtpSent(false);
+        setScheduledDeletion(null);
+        Alert.alert(t('common.error'), error.message || t('delete.failedInsert'));
+        return;
+      }
+
+    } catch (e: any) {
+      console.warn("account deletion insert exception:", e?.message ?? e);
+      setMockOtp("");
+      setOtpSent(false);
+      setScheduledDeletion(null);
+      Alert.alert(t('common.error'), t('delete.failedInsert'));
+    } finally {
+      setDeleteProcessing(false);
+    }
+  };
+
+  const verifyDeletionOtp = async () => {
+    setOtpError("");
+    if (!otpInput.trim()) {
+      setOtpError(t('delete.enterCodeRequired'));
+      return;
+    }
+    if (otpInput.trim() !== mockOtp) {
+      setOtpError(t('delete.incorrectCode'));
+      return;
+    }
+
+    setDeleteProcessing(true);
+    try {
+      const restore = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+      const { error } = await supabase
+        .from("account_deletion_requests")
+        .update({ status: "verified", verified_at: new Date().toISOString(), restore_token: restore })
+        .eq("user_id", session?.userId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        Alert.alert(t('common.error'), error.message || t('delete.failedVerify'));
+        return;
+      }
+
+      setRestoreToken(restore);
+      Alert.alert(
+        t('delete.verifiedTitle'),
+        t('delete.verifiedWithTokenBody', { token: restore })
+      );
+    } finally {
+      setDeleteProcessing(false);
+    }
+  };
+
+  const confirmScheduleDeletion = async () => {
+    setDeleteProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("account_deletion_requests")
+        .update({ status: "scheduled" })
+        .eq("user_id", session?.userId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        Alert.alert(t('common.error'), error.message || t('delete.failedSchedule'));
+        return;
+      }
+
+      setShowDeleteModal(false);
+      Alert.alert(
+        t('delete.scheduledAlertTitle'),
+        t('delete.scheduledAlertBody', {
+          date: new Date(scheduledDeletion || new Date().toISOString()).toLocaleString(),
+          token: restoreToken ?? '',
+        })
+      );
+
+      try {
+        await logout();
+        router.replace("/Authentication/LogIn");
+      } catch (e) {
+      }
+    } finally {
+      setDeleteProcessing(false);
+    }
+  };
+
+  const cancelDeletionRequest = async () => {
+    setDeleteProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("account_deletion_requests")
+        .update({ status: "cancelled" })
+        .eq("user_id", session?.userId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        Alert.alert(t('common.error'), error.message || t('delete.failedCancel'));
+        return;
+      }
+
+      setShowDeleteModal(false);
+      setOtpSent(false);
+      setMockOtp("");
+      setOtpInput("");
+      setRestoreToken(null);
+      Alert.alert(t('delete.cancelledTitle'), t('delete.cancelledBody'));
+    } finally {
+      setDeleteProcessing(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -235,7 +408,7 @@ export default function ElderlyProfile() {
   // Share EC Portal link
   const onShareEcPortal = useCallback(async () => {
     if (!session?.userId) {
-      Alert.alert("Not logged in", "Please log in again.");
+      Alert.alert(t('common.notLoggedIn'), t('common.pleaseLoginAgain'));
       return;
     }
 
@@ -388,7 +561,7 @@ export default function ElderlyProfile() {
           {/* Share EC Portal link button */}
           <Pressable style={s.btn} onPress={onShareEcPortal}>
             <AppText variant="button" weight="800" color="#FFF">
-              Share EC Portal link
+              {t('profile.sharePortal')}
             </AppText>
           </Pressable>
         </View>
@@ -508,6 +681,160 @@ export default function ElderlyProfile() {
         </View>
 
         <View style={{ height: 24 }} />
+
+        {/* Delete modal */}
+        <Modal visible={showDeleteModal} animationType="slide" transparent>
+          <Pressable style={s.modalOverlay} onPress={() => { Keyboard.dismiss(); setShowDeleteModal(false); }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={s.modalFlex}
+            >
+              <ScrollView
+                contentContainerStyle={s.modalScrollContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={s.modalCard} onStartShouldSetResponder={() => true}>
+              <AppText variant="h2" weight="800">
+                {t("profile.delete.modalTitle")}
+              </AppText>
+              <AppText variant="label" weight="700" color="#374151" style={{ marginTop: 8 }}>
+                {t("profile.delete.modalExplain")}
+              </AppText>
+
+              <AppText variant="caption" color="#000000" style={{ marginTop: 8 }}>
+                {t("profile.delete.optionalReason")}
+              </AppText>
+
+              <TextInput
+                style={[s.input, { color: "#000000" }]}
+                placeholder={t("profile.delete.reasonPH_modal")}
+                value={deletionReason}
+                onChangeText={setDeletionReason}
+                multiline
+              />
+              {!(otpSent || (mockOtp && __DEV__)) ? (
+                <View style={{ marginTop: 8 }}>
+                  <AppText variant="label" weight="700">{t("profile.delete.step1Title")}</AppText>
+                  <AppText variant="caption" color="#6B7280">{t("profile.delete.step1Body")}</AppText>
+                  <Pressable style={[s.btn, { marginTop: 10 }]} onPress={sendDeletionVerification}>
+                    <AppText variant="button" weight="800" color="#FFF">
+                      {t("profile.delete.sendVerification")}
+                    </AppText>
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={{ marginTop: 8 }}>
+                  <AppText variant="label" weight="700">{t("profile.delete.step2Title")}</AppText>
+                  <TextInput
+                    style={[s.input, { color: "#000" }]}
+                    placeholder={t("profile.delete.enterCodePH")}
+                    value={otpInput}
+                    onChangeText={(v) => { setOtpInput(v); setOtpError(""); }}
+                    keyboardType="numeric"
+                    autoFocus={true}
+                    accessible
+                    accessibilityLabel={t("profile.delete.enterCodePH")}
+                  />
+
+                  {__DEV__ && mockOtp ? (
+                    <AppText variant="caption" color="#6B7280" style={{ marginTop: 8 }}>
+                      {`Test code: ${mockOtp}`}
+                    </AppText>
+                  ) : null}
+
+                  {!!otpError && <Text style={s.errorText}>{otpError}</Text>}
+
+                  <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                    <Pressable style={s.btn} onPress={verifyDeletionOtp}>
+                      <AppText variant="button" weight="800" color="#FFF">{t("profile.delete.verifyBtn")}</AppText>
+                    </Pressable>
+                    <Pressable style={[s.btn, s.btnSecondary]} onPress={cancelDeletionRequest}>
+                      <AppText variant="button" weight="800" color="#111827">{t("profile.delete.cancelRequest")}</AppText>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+
+                  {restoreToken ? (
+                    <View style={{ marginTop: 10 }}>
+                      <AppText variant="label" weight="700">{t("profile.delete.verifiedTitle")}</AppText>
+                      <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+                        {t("profile.delete.verifiedWithTokenBody", { token: restoreToken })}
+                      </AppText>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+                        <TextInput
+                          value={restoreToken}
+                          editable={false}
+                          selectTextOnFocus={true}
+                          style={[s.input, { flex: 1, color: "#000" }]}
+                        />
+                        <Pressable
+                          style={[s.btn, { paddingVertical: 8, paddingHorizontal: 12 }]}
+                          onPress={async () => {
+                            try {
+                              if (typeof navigator !== "undefined" && (navigator as any).clipboard?.writeText) {
+                                await (navigator as any).clipboard.writeText(restoreToken);
+                              } else {
+                                try {
+                                  const cb = await import("expo-clipboard");
+                                  await cb.setStringAsync(restoreToken);
+                                } catch (err) {
+                                  Alert.alert(t("profile.delete.copy"), t("profile.delete.copyUnavailable"));
+                                  return;
+                                }
+                              }
+                              router.replace("/Authentication/LogIn");
+                            } catch (e) {
+                              Alert.alert(t("common.error"), String(e));
+                            }
+                          }}
+                        >
+                          <Ionicons name="clipboard-outline" size={18} color="#FFF" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  <View style={{ height: 12 }} />
+
+              <AppText variant="caption" color="#6B7280">{t("profile.delete.afterVerificationNote")}</AppText>
+
+              <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
+                <Pressable style={[s.btn, s.btnSecondary]} onPress={() => setShowDeleteModal(false)}>
+                  <AppText variant="button" weight="800" color="#111827">{t("profile.delete.close")}</AppText>
+                </Pressable>
+                <Pressable style={[s.btn, { backgroundColor: "#DC2626" }]} onPress={confirmScheduleDeletion}>
+                  <AppText variant="button" weight="800" color="#FFF">{t("profile.delete.confirmSchedule")}</AppText>
+                </Pressable>
+              </View>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </Pressable>
+        </Modal>
+        {/* Delete Account Section */}
+        <View style={s.card}>
+          <AppText variant="h2" weight="800">
+            {t("profile.delete.title")}
+          </AppText>
+
+          <AppText variant="label" weight="700" color="#000000" style={{ marginTop: 6 }}>
+            {t("profile.delete.modalExplain")}
+          </AppText>
+
+          <AppText variant="caption" color="#6B7280" style={{ marginTop: 8 }}>
+            {t("profile.delete.scheduledBody")}
+          </AppText>
+
+          <Pressable
+            style={[s.btn, { backgroundColor: "#DC2626", marginTop: 12 }]}
+            onPress={() => setShowDeleteModal(true)}
+          >
+            <AppText variant="button" weight="800" color="#FFF">
+              {t("profile.delete.button")}
+            </AppText>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -556,5 +883,11 @@ const s = StyleSheet.create({
   },
 
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(2,6,23,0.45)", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalCard: { backgroundColor: "#FFF", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "#E5E7EB", width: "100%", maxWidth: 560 },
+  modalFlex: { flex: 1, width: "100%", justifyContent: "center" },
+  modalScrollContent: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 20 },
+  input: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, padding: 10, marginTop: 8, backgroundColor: "#FBFDFF" },
+  errorText: { color: "#DC2626", marginTop: 6 },
+  btnSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#E5E7EB" },
 });
-
