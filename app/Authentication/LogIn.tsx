@@ -18,14 +18,15 @@ import Screen from "../../src/components/Screen";
 
 export default function Login() {
   const router = useRouter();
-  const { startPhoneSignIn, confirmPhoneCode } = useAuth();
+  const { startPhoneSignIn, confirmPhoneCode, recoverAccount } = useAuth();
   const { t, i18n } = useTranslation();
 
   const [phone, setPhone] = useState("+65 ");
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState("");
+  const [softDeleted, setSoftDeleted] = useState(false);
+  const [purgeAt, setPurgeAt] = useState<string | null>(null);
 
-  // store language setting to make sure language is changed for whole app
   const setLanguage = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
@@ -34,8 +35,8 @@ export default function Login() {
   const goHome = () => router.replace("/tabs/HomePage");
 
   const onSendCode = async () => {
-    const exists = await startPhoneSignIn(phone);
-    if (!exists) {
+    const probe = await startPhoneSignIn(phone);
+    if (!probe?.ok) {
       return Alert.alert(
         t("alerts.noAccountTitle"),
         t("alerts.noAccountBody"),
@@ -51,6 +52,8 @@ export default function Login() {
         ]
       );
     }
+    setSoftDeleted(probe.softDeleted);
+    setPurgeAt(probe.purgeAt ?? null);
     setOtpSent(true);
     Alert.alert(t("alerts.codeSentTitle"), t("alerts.codeSentBody"));
   };
@@ -63,6 +66,38 @@ export default function Login() {
         t("alerts.invalidCodeBody")
       );
     }
+
+    if (softDeleted) {
+      Alert.alert(
+        t("recover.title"),
+        t("recover.body", {
+          date: purgeAt
+            ? new Date(purgeAt).toLocaleDateString()
+            : "—",
+        }),
+        [
+          { text: t("common.cancel") },
+          {
+            text: t("recover.restore"),
+            onPress: async () => {
+              const res = await recoverAccount();
+              if (res.success) {
+                Alert.alert(t("recover.successTitle"), t("recover.successBody"), [
+                  { text: t("common.ok"), onPress: goHome },
+                ]);
+              } else {
+                Alert.alert(
+                  t("alerts.genericFailTitle"),
+                  res.error ?? t("alerts.genericFailBody")
+                );
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
     goHome();
   };
 

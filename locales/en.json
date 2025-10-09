@@ -1,4 +1,33 @@
 {
+  "common": {
+    "on": "On",
+    "off": "Off",
+    "ok": "OK",
+    "save": "Save",
+    "cancel": "Cancel",
+    "notLoggedIn": "Not logged in",
+    "pleaseLoginAgain": "Please log in again."
+  },
+  "alerts": {
+    "codeSentTitle": "Code sent",
+    "codeSentBody": "Use 123456 for now (mock).",
+    "sendFailedTitle": "Oops",
+    "sendFailedBody": "Account is not registered.",
+    "invalidCodeTitle": "Invalid code",
+    "invalidCodeBody": "Please check and try again.",
+    "signupInvalidTitle": "Check details",
+    "signupInvalidBody": "Phone and password are required. Password must be at least 6 characters.",
+    "passwordMismatchTitle": "Passwords don’t match",
+    "passwordMismatchBody": "Please re-enter your password.",
+    "signupFailedTitle": "Sign up failed",
+    "signupFailedBody": "That phone may already be registered.",
+    "noAccountTitle": "No account found",
+    "noAccountBody": "You’ll be redirected to sign up.",
+    "inputMismatchTitle": "Confirmation mismatch",
+    "inputMismatchBody": "Please type DELETE exactly to continue.",
+    "genericFailTitle": "Something went wrong",
+    "genericFailBody": "Please try again."
+  },
   "auth": {
     "login": {
       "title": "Welcome back",
@@ -26,21 +55,12 @@
       "login": "Log in"
     }
   },
-  "alerts": {
-    "codeSentTitle": "Code sent",
-    "codeSentBody": "Use 123456 for now (mock).",
-    "sendFailedTitle": "Oops",
-    "sendFailedBody": "Account is not registered.",
-    "invalidCodeTitle": "Invalid code",
-    "invalidCodeBody": "Please check and try again.",
-    "signupInvalidTitle": "Check details",
-    "signupInvalidBody": "Phone and password are required. Password must be at least 6 characters.",
-    "passwordMismatchTitle": "Passwords don’t match",
-    "passwordMismatchBody": "Please re-enter your password.",
-    "signupFailedTitle": "Sign up failed",
-    "signupFailedBody": "That phone may already be registered.",
-    "noAccountTitle": "No account found",
-    "noAccountBody": "You’ll be redirected to sign up."
+  "recover": {
+    "title": "Recover your account?",
+    "body": "This account was scheduled for deletion. You can restore it until {{date}}. Do you want to restore now?",
+    "restore": "Restore Account",
+    "successTitle": "Account restored",
+    "successBody": "Your account and EC Portal are active again."
   },
   "elderlyOnboarding": {
     "title": "Onboarding",
@@ -111,6 +131,7 @@
   "profile": {
     "title": "Profile",
     "basicInfo": "Basic Information",
+    "name": "Name",
     "editBasic": "Edit basic details",
     "healthCard": "Emergency Health Card",
     "emergencyContacts": "Emergency Contacts",
@@ -138,7 +159,22 @@
     "community": "Community",
     "ccActivities": "Show nearby community activities",
     "viewActivities": "View activities",
-    "open": "Open profile"
+    "open": "Open profile",
+    "noPortalTitle": "No portal link yet",
+    "noPortalBody": "Your profile may be incomplete, or a link hasn’t been created.",
+    "sharePortal": "Share EC Portal link",
+    "delete": {
+      "title": "Delete Account",
+      "explain": "Delete will disable your EC Portal now and schedule your account for deletion. You can recover within 14 days.",
+      "button": "Delete my account",
+      "confirmTitle": "Type DELETE to continue",
+      "confirmBody": "This will immediately disable your EC Portal and schedule deletion after 14 days.",
+      "typeDelete": "Type DELETE (in capitals)",
+      "reasonPH": "Optional: tell us why you’re leaving",
+      "continue": "Confirm delete",
+      "scheduledTitle": "Deletion scheduled",
+      "scheduledBody": "Your account is scheduled for deletion in 14 days. You can restore it by logging in again before then."
+    }
   },
   "rewards": {
     "title": "Rewards",
@@ -245,29 +281,15 @@
       "custom": "{{categories}} · {{timing}} · {{distance}}"
     }
   },
-  "clinic": {
-    "title": "Clinic"
-  },
-  "walkingRoutes": {
-    "title": "Walking Routes"
-  },
-  "navigation": {
-    "title": "Navigation"
-  },
+  "clinic": { "title": "Clinic" },
+  "walkingRoutes": { "title": "Walking Routes" },
+  "navigation": { "title": "Navigation" },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "hint": "Open app settings and language",
     "switchTo": "Switch language to",
     "logout": "Log out"
-  },
-  "common": {
-    "on": "On",
-    "off": "Off",
-    "ok": "OK",
-    "save": "Save",
-    "cancel": "Cancel",
-    "notLoggedIn": "Not logged in",
-    "pleaseLoginAgain": "Please log in again."
   }
 }
+
