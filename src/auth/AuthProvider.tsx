@@ -144,8 +144,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       onboardingCompleted: user.onboarding_completed,
     };
 
-    // If this user has a pending scheduled deletion on their elderly_profiles row,
-    // treat the login as a restore: clear scheduled_for and restore_token and notify.
     try {
     const { data: prof } = await supabase
       .from('elderly_profiles')
@@ -159,7 +157,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const now = new Date();
       const needsRestore = (scheduledDate && scheduledDate > now) || profAny.deletion_status === 'deletion_scheduled';
       if (needsRestore) {
-        // cancel the scheduled deletion and clear status
         await supabase
           .from('elderly_profiles')
           .update({ scheduled_for: null, deletion_reason: null, deletion_requested_at: null, deletion_status: null })
@@ -169,7 +166,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
     } catch (e) {
-      // ignore restore errors, continue sign in
       console.warn("restore-on-login check failed:", e);
     }
 
@@ -246,7 +242,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<SaveResult> => {
     if (!session) return { success: false, error: "No session" };
 
-    // Guard YOB
     const yobNum = Number(profile.year_of_birth);
     const year_of_birth =
       Number.isFinite(yobNum) && yobNum > 1900 && yobNum < 3000 ? yobNum : null;

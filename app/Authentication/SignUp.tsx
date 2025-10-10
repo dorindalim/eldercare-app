@@ -23,6 +23,9 @@ export default function Signup() {
   const { registerWithPhone } = useAuth();
   const { t, i18n } = useTranslation();
 
+  const MIN_PWD = 8;
+  const getDigits = (s: string) => s.replace(/\D/g, "");
+
   const [phone, setPhone] = useState("+65 ");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -38,29 +41,49 @@ export default function Signup() {
     await AsyncStorage.setItem("lang", code);
   };
 
+  const phoneDigits = useMemo(() => getDigits(phone), [phone]);
+
   const canSubmit = useMemo(
     () =>
-      phone.trim().length > 6 && password.length >= 6 && password === confirm,
-    [phone, password, confirm]
+      phoneDigits.length === 9 &&
+      password.length >= MIN_PWD &&
+      password === confirm,
+    [phoneDigits.length, password, confirm]
   );
 
   const onSubmit = async () => {
-    if (!canSubmit) {
+    if (phoneDigits.length !== 9) {
       return Alert.alert(
         t("alerts.signupInvalidTitle"),
-        t("alerts.signupInvalidBody")
+        t("auth.signup.phoneInvalidLength")
       );
     }
 
-    // 1) Create the user
-    const ok = await registerWithPhone(phone.trim(), password);
+    if (password.length < MIN_PWD) {
+      return Alert.alert(
+        t("alerts.signupInvalidTitle"),
+        t("auth.signup.passwordTooShort", { min: MIN_PWD })
+      );
+    }
+
+    if (password !== confirm) {
+      return Alert.alert(
+        t("alerts.signupInvalidTitle"),
+        t("auth.signup.passwordMismatch")
+      );
+    }
+
+    const normalizedForInsert =
+      phone.trim().startsWith("+") ? phone.trim() : `+65 ${phoneDigits}`;
+
+    const ok = await registerWithPhone(normalizedForInsert, password);
     if (!ok) {
       return Alert.alert(
         t("alerts.signupFailedTitle"),
         t("alerts.signupFailedBody")
       );
     }
-    // 2) Create the profile
+
     router.replace("/Onboarding/ElderlyForm");
   };
 
@@ -100,6 +123,9 @@ export default function Signup() {
             onChangeText={setPassword}
             style={s.input}
           />
+          <Text style={s.hint}>
+            {t("auth.signup.passwordHint")}
+          </Text>
 
           <Text style={s.label}>{t("auth.signup.confirmLabel")}</Text>
           <TextInput
@@ -145,8 +171,9 @@ const s = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#FFF",
     color: "#111827",
-    marginBottom: 12,
+    marginBottom: 4,
   },
+  hint: { color: "#6B7280", fontSize: 12, marginBottom: 8 },
   btn: {
     backgroundColor: "#111827",
     paddingVertical: 14,

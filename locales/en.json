@@ -55,14 +55,18 @@
       "confirmPH": "Re-enter password",
       "button": "Sign up",
       "haveAccount": "Already have an account?",
-      "login": "Log in"
+      "login": "Log In",
+      "phoneInvalidLength": "Phone number must be exactly {{digits}} digits.",
+      "passwordTooShort": "Password must be at least {{min}} characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "phoneHintExact": "Enter exactly {{digits}} digits (we’ll format the rest).",
+      "passwordHint": "At least {{min}} characters"
     },
     "restore": {
       "restoredTitle": "Account restored",
       "restoredBody": "Your account and EC Portal are active again."
     }
   },
-
   "elderlyOnboarding": {
     "title": "Onboarding",
     "namePH": "Full Name",
@@ -318,46 +322,5 @@
     "hint": "Open app settings and language",
     "switchTo": "Switch language to",
     "logout": "Log out"
-  },
-  "delete": {
-    "title": "Delete Account",
-    "explain": "Portal disabled. Account scheduled for deletion in 14 days.",
-    "button": "Delete my account",
-    "confirmTitle": "Type DELETE to continue",
-    "confirmBody": "Portal disabled; deletion in 14 days.",
-    "typeDelete": "Type DELETE (in capitals)",
-    "continue": "Confirm delete",
-    "cardExplain": "If you no longer wish to use the ElderCare app, you can delete your account.",
-    "scheduledTitle": "Deletion scheduled",
-    "scheduledBody": "Account will be deleted in 14 days. Log in to restore.",
-    "modalTitle": "Confirm account deletion",
-    "modalExplain": "Will delete account after 14 days.",
-    "optionalReason": "Optional: reason",
-    "reasonPH_modal": "Reason (optional)",
-    "step1Title": "Verify",
-    "step1Body": "We'll send a code to verify.",
-    "sendVerification": "Send verification code",
-    "step2Title": "Enter code",
-    "enterCodePH": "Enter code",
-    "verifyBtn": "Verify code",
-    "cancelRequest": "Cancel request",
-    "afterVerificationNote": "After verify, confirm. Restore within 14 days.",
-    "close": "Close",
-    "confirmSchedule": "Confirm schedule deletion",
-    "verificationSentTitle": "Verification sent",
-    "verificationSentBody": "A verification code (mock) was generated: {{code}}. Enter it to verify your request. This code expires in {{minutes}} minutes.",
-    "incorrectCode": "Incorrect code",
-    "enterCodeRequired": "Enter the verification code",
-    "verifiedTitle": "Verified",
-    "verifiedBody": "Code accepted. Confirm to schedule deletion (14-day hold).",
-    "verifiedWithTokenBody": "Code accepted. Your restore code: {{token}}. You can restore within 14 days.",
-    "scheduledAlertTitle": "Account scheduled for deletion",
-    "scheduledAlertBody": "Your account and associated data are scheduled for deletion on {{date}}. You can restore within 14 days using the restore code: {{token}}",
-    "cancelledTitle": "Cancelled",
-    "cancelledBody": "Your deletion request has been cancelled.",
-    "failedInsert": "Failed to request deletion",
-    "failedVerify": "Failed to verify",
-    "failedSchedule": "Failed to schedule deletion",
-    "failedCancel": "Failed to cancel"
   }
 }
