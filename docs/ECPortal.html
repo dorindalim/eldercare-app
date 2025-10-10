@@ -283,33 +283,31 @@
     };
   }
 
-  // ---- RPC wrappers (match your signatures exactly) ----
   async function rpcGet(pinHash) {
     const { data, error } = await supabase.rpc('ec_get_portal', {
-      p_token: String(token),
-      p_pin_hash: String(pinHash ?? '')
+      p_token: token,
+      p_pin_hash: pinHash ?? null   // <— NULL when missing
     });
     return { data, error };
   }
 
   async function rpcSave(pinHash, payload) {
     const { data, error } = await supabase.rpc('ec_save_portal', {
-      p_token: String(token),
-      p_pin_hash: String(pinHash ?? ''),
+      p_token: token,
+      p_pin_hash: pinHash ?? null,  // <— NULL when missing
       p_emergency: payload.emergency,
       p_extras: payload.extras,
       p_conditions: payload.conditions
     });
-    // returns void (204) => data will be null; only check error
-    return { data, error };
+    return { data, error }; // returns void (204) on success
   }
 
   async function rpcSetPin(pinHash) {
     const { data, error } = await supabase.rpc('ec_set_pin', {
-      p_token: String(token),
-      p_pin_hash: String(pinHash || '')
+      p_token: token,
+      p_pin_hash: pinHash            // <— always a string here
     });
-    return { data, error }; // boolean or null on error
+    return { data, error };
   }
 
   function showPinUI(msg='This link is protected by a PIN.') {
@@ -406,7 +404,7 @@
 
     // If cached pin didn’t work, try without pin to detect if the link is open
     if (data === null) {
-      const res2 = await rpcGet('');
+      const res2 = await rpcGet(null);
       data = res2.data;
       error = res2.error;
       if (error && !/invalid pin|pin required|invalid token/i.test(error?.message || '')) {
@@ -503,7 +501,7 @@
       if (!cachedPin) {
         try { cachedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch {}
       }
-      const h = cachedPin ? await sha256Hex(cachedPin) : '';
+      const h = cachedPin ? await sha256Hex(cachedPin) : null;
 
       const { error: e } = await rpcSave(h, payload);
       if (e) {
