@@ -366,6 +366,9 @@
     if (!token) { el('status').textContent='Missing token'; return; }
 
     let { data, error } = await rpcGet('');
+    if (error) {
+      console.error('rpcGet error:', error);
+    }
     if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
       showPinUI('This link is protected by a PIN.');
       el('pinUseBtn').onclick = async () => {
@@ -397,7 +400,14 @@
     } else if (error && /invalid token/i.test(error.message || String(error))) {
       el('status').textContent = 'This link is invalid or has been revoked.'; return;
     } else if (error) {
-      el('status').textContent = error.message || 'Failed to load'; return;
+      // show more detailed diagnostics in the portal UI to help debugging 400 responses
+      try {
+        const msg = error.message || JSON.stringify(error);
+        el('status').textContent = 'Failed to load: ' + msg;
+      } catch (e) {
+        el('status').textContent = 'Failed to load (unknown error)';
+      }
+      return;
     }
 
     try {
