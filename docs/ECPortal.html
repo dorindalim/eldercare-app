@@ -275,18 +275,27 @@
   }
 
   async function rpcGet(pinHash) {
-    const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
+    const params = { p_token: token };
+    if (pinHash) params.p_pin_hash = pinHash;   // <-- omit when falsy
+    const { data, error } = await supabase.rpc('ec_get_portal', params);
     return { data, error };
   }
-  async function rpcSetPin(pinHash) {
-    const { data, error } = await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
-    return { data, error };
-  }
+
   async function rpcSave(pinHash, payload) {
-    const { data, error } = await supabase.rpc('ec_save_portal', {
-      p_token: token, p_pin_hash: pinHash,
-      p_emergency: payload.emergency, p_extras: payload.extras, p_conditions: payload.conditions
-    });
+    const params = {
+      p_token: token,
+      p_emergency: payload.emergency,
+      p_extras: payload.extras,
+      p_conditions: payload.conditions,
+    };
+    if (pinHash) params.p_pin_hash = pinHash;   // <-- omit when falsy
+    const { data, error } = await supabase.rpc('ec_save_portal', params);
+    return { data, error };
+  }
+
+  async function rpcSetPin(pinHash) {
+    const params = { p_token: token, p_pin_hash: pinHash };
+    const { data, error } = await supabase.rpc('ec_set_pin', params);
     return { data, error };
   }
 
