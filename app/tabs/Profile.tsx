@@ -176,7 +176,12 @@ export default function ElderlyProfile() {
 
       const { error } = await supabase
         .from('elderly_profiles')
-        .update({ scheduled_for: scheduled.toISOString(), deletion_reason: deletionReason || null })
+        .update({
+          scheduled_for: scheduled.toISOString(),
+          deletion_reason: deletionReason || null,
+          deletion_requested_at: new Date().toISOString(),
+          deletion_status: 'deletion_scheduled',
+        })
         .eq('user_id', session.userId);
 
       if (error) {
@@ -281,6 +286,30 @@ export default function ElderlyProfile() {
     if (!session?.userId) {
       Alert.alert(t('common.notLoggedIn'), t('common.pleaseLoginAgain'));
       return;
+    }
+
+    // Check profile deletion status first — if account is scheduled for deletion,
+    // the portal should not be shareable.
+    const { data: profileRow } = await supabase
+      .from("elderly_profiles")
+      .select("scheduled_for, deletion_status")
+      .eq("user_id", session.userId)
+      .maybeSingle();
+
+    if (profileRow) {
+      const { scheduled_for, deletion_status } = profileRow as any;
+      const scheduledDate = scheduled_for ? new Date(scheduled_for) : null;
+      const now = new Date();
+      const pendingDeletion =
+        deletion_status === "deletion_scheduled" || (scheduledDate && scheduledDate > now);
+      if (pendingDeletion) {
+        Alert.alert(
+          t("profile.delete.title"),
+          // fallback text if translation missing
+          t("profile.delete.explain") || "Portal disabled while account pending deletion."
+        );
+        return;
+      }
     }
 
     const { data: linkRow } = await supabase
@@ -614,7 +643,7 @@ export default function ElderlyProfile() {
                     <AppText variant="button" weight="800" color="#111827">{t('common.cancel')}</AppText>
                   </Pressable>
                 </View>
-                
+
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
                   <Pressable
                     onPress={() => setConfirmChecked(!confirmChecked)}

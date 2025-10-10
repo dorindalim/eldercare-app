@@ -153,14 +153,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (prof?.scheduled_for) {
-      const scheduledDate = new Date(prof.scheduled_for);
+    const profAny: any = prof;
+    if (profAny?.scheduled_for || profAny?.deletion_status === 'deletion_scheduled') {
+      const scheduledDate = profAny?.scheduled_for ? new Date(profAny.scheduled_for) : null;
       const now = new Date();
-      if (scheduledDate > now) {
-        // cancel the scheduled deletion
+      const needsRestore = (scheduledDate && scheduledDate > now) || profAny.deletion_status === 'deletion_scheduled';
+      if (needsRestore) {
+        // cancel the scheduled deletion and clear status
         await supabase
           .from('elderly_profiles')
-          .update({ scheduled_for: null, deletion_reason: null, deletion_requested_at: null })
+          .update({ scheduled_for: null, deletion_reason: null, deletion_requested_at: null, deletion_status: null })
           .eq('user_id', user.id);
 
         Alert.alert(t('auth.restore.restoredTitle'), t('auth.restore.restoredBody'));

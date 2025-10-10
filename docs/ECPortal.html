@@ -400,6 +400,24 @@
       el('status').textContent = error.message || 'Failed to load'; return;
     }
 
+    try {
+      const payloadCheck = Array.isArray(data) ? (data[0] || {}) : (data || {});
+      const profileCheck = payloadCheck.profile || {};
+      const scheduled_for = profileCheck.scheduled_for || null;
+      const deletion_status = profileCheck.deletion_status || null;
+      const scheduledDate = scheduled_for ? new Date(scheduled_for) : null;
+      const now = new Date();
+      const pendingDeletion = deletion_status === 'deletion_scheduled' || (scheduledDate && scheduledDate > now);
+      if (pendingDeletion) {
+        el('status').textContent = 'This account is scheduled for deletion. The portal is disabled.';
+        el('pinBlock').style.display = 'none';
+        el('main').style.display = 'none';
+        return;
+      }
+    } catch (e) {
+      console.warn('deletion check failed', e);
+    }
+
     showMainUI();
     render(data);
 
