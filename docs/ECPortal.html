@@ -143,13 +143,7 @@
 
   // ---- Diagnostics helper ----
   function showRpcError(where, err) {
-    const m = [
-      `[${where}] RPC error`,
-      `code=${err?.code ?? '—'}`,
-      `message=${err?.message ?? '—'}`,
-      `details=${err?.details ?? '—'}`,
-      `hint=${err?.hint ?? '—'}`
-    ].join(' | ');
+    const m = `[${where}] code=${err?.code ?? '—'} | message=${err?.message ?? '—'} | details=${err?.details ?? '—'} | hint=${err?.hint ?? '—'}`;
     console.error(m, err);
     const s = el('status'); if (s) s.textContent = m;
   }
@@ -289,23 +283,24 @@
     };
   }
 
-  // ---- RPC wrappers (keep TEXT types concrete by using '') ----
+  // ---- RPC wrappers (match your signatures exactly) ----
   async function rpcGet(pinHash) {
     const { data, error } = await supabase.rpc('ec_get_portal', {
-      p_pin_hash: (pinHash ?? ''),   // TEXT
-      p_token: String(token),        // TEXT
+      p_token: String(token),
+      p_pin_hash: String(pinHash ?? '')
     });
     return { data, error };
   }
 
   async function rpcSave(pinHash, payload) {
     const { data, error } = await supabase.rpc('ec_save_portal', {
-      p_pin_hash: (pinHash ?? ''),    // TEXT
-      p_token: String(token),         // TEXT
-      p_emergency: payload.emergency, // JSONB
-      p_extras: payload.extras,       // JSONB
-      p_conditions: payload.conditions// JSONB[]
+      p_token: String(token),
+      p_pin_hash: String(pinHash ?? ''),
+      p_emergency: payload.emergency,
+      p_extras: payload.extras,
+      p_conditions: payload.conditions
     });
+    // returns void (204) => data will be null; only check error
     return { data, error };
   }
 
@@ -314,7 +309,7 @@
       p_token: String(token),
       p_pin_hash: String(pinHash || '')
     });
-    return { data, error };
+    return { data, error }; // boolean or null on error
   }
 
   function showPinUI(msg='This link is protected by a PIN.') {
@@ -509,6 +504,7 @@
         try { cachedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch {}
       }
       const h = cachedPin ? await sha256Hex(cachedPin) : '';
+
       const { error: e } = await rpcSave(h, payload);
       if (e) {
         showRpcError('rpcSave', e);
