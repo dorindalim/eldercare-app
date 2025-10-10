@@ -164,6 +164,7 @@
       "explain": "Portal disabled. Account scheduled for deletion in 14 days.",
       "button": "Delete My Account",
       "continue": "Confirm delete",
+      "cardExplain": "If you no longer wish to use ElderCare, you can delete your account.",
       "scheduledTitle": "Deletion scheduled",
       "scheduledBody": "You can restore within 14 days by logging back in.",
       "modalTitle": "Confirm account deletion",

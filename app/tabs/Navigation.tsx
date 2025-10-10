@@ -1,10 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import polyline from "@mapbox/polyline";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Speech from "expo-speech";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -16,20 +17,36 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, {
+  Callout,
+  Marker,
+  Polyline,
+  PROVIDER_GOOGLE
+} from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
+
+import CLINIC_GEOJSON from "../../assets/data/CHASClinics.json";
+import CC_GEOJSON from "../../assets/data/CommunityClubs.json";
+import PARK_GEOJSON from "../../assets/data/Parks.json";
 
 const GOOGLE_WEB_API_KEY = "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGs";
 
 type LatLng = { latitude: number; longitude: number };
 
+type POI = {
+  id: string;
+  name: string;
+  coords: LatLng;
+};
+
 export default function NavigationScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
-  const setLang = async (code: string) => {
+
+  const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
   };
@@ -47,6 +64,11 @@ export default function NavigationScreen() {
   const [navigating, setNavigating] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
 
+  const [category, setCategory] = useState<"search" | "cc" | "clinics" | "parks">("search");
+  const [ccPOIs, setCcPOIs] = useState<POI[]>([]);
+  const [clinicPOIs, setClinicPOIs] = useState<POI[]>([]);
+  const [parkPOIs, setParkPOIs] = useState<POI[]>([]);
+
   const mapRef = useRef<MapView | null>(null);
 
   const isExpoGo = Constants.appOwnership === "expo";
@@ -54,10 +76,8 @@ export default function NavigationScreen() {
 
   const params = useLocalSearchParams();
   const presetQuery = params.presetQuery as string | undefined;
-
   const autoRanRef = useRef(false);
 
-  /* Permission + Location */
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -71,7 +91,6 @@ export default function NavigationScreen() {
     })();
   }, []);
 
-  /* Live Location */
   useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
     if (navigating) {
@@ -101,7 +120,151 @@ export default function NavigationScreen() {
     }
   }, [presetQuery]);
 
-  /* Helpers */
+  function extractFromDescription(desc?: string, key?: string) {
+    if (!desc || !key) return undefined;
+    const re = new RegExp(`<th>\\s*${key}\\s*<\\/th>\\s*<td>(.*?)<\\/td>`, "i");
+    const m = desc.match(re);
+    return m?.[1]?.replace(/<[^>]+>/g, "").trim();
+  }
+
+  function parseGeoJSONPoints(
+    geojson: any,
+    defaultName: string,
+    kind: "clinic" | "cc" | "park"
+  ): POI[] {
+    if (!geojson || !Array.isArray(geojson.features)) return [];
+    return geojson.features
+      .map((f: any, idx: number) => {
+        const geom = f?.geometry;
+        const props = f?.properties ?? {};
+        const desc = props.Description as string | undefined;
+
+        let name: string | undefined;
+        if (kind === "clinic") {
+          name =
+            extractFromDescription(desc, "HCI_NAME") ||
+            props.HCI_NAME ||
+            props.hci_name;
+        } else if (kind === "cc") {
+          name =
+            extractFromDescription(desc, "NAME") ||
+            props.CC_NAME ||
+            props.cc_name;
+        } else {
+          name = props.NAME || props.Name || props.name;
+        }
+        if (!name) name = defaultName;
+
+        if (!geom) return null;
+
+        if (geom.type === "Point" && Array.isArray(geom.coordinates)) {
+          const [lng, lat] = geom.coordinates;
+          return {
+            id: f.id?.toString?.() ?? `${kind}-${idx}`,
+            name,
+            coords: { latitude: lat, longitude: lng },
+          } as POI;
+        }
+
+        if (geom.type === "MultiPoint" && Array.isArray(geom.coordinates)) {
+          return geom.coordinates.map(([lng, lat]: number[], j: number) => ({
+            id: f.id?.toString?.() ?? `${kind}-${idx}-${j}`,
+            name,
+            coords: { latitude: lat, longitude: lng },
+          })) as POI[];
+        }
+
+        return null;
+      })
+      .flat()
+      .filter(Boolean) as POI[];
+  }
+
+  useEffect(() => {
+    try {
+      setCcPOIs(parseGeoJSONPoints(CC_GEOJSON, "Community Club", "cc"));
+    } catch (e) {
+      console.warn("Parse CC geojson failed:", e);
+    }
+    try {
+      setClinicPOIs(parseGeoJSONPoints(CLINIC_GEOJSON, "Clinic", "clinic"));
+    } catch (e) {
+      console.warn("Parse Clinics geojson failed:", e);
+    }
+    try {
+      setParkPOIs(parseGeoJSONPoints(PARK_GEOJSON, "Park", "park"));
+    } catch (e) {
+      console.warn("Parse Parks geojson failed:", e);
+    }
+  }, []);
+
+  const activePOIs: POI[] = useMemo(() => {
+    switch (category) {
+      case "cc":
+        return ccPOIs;
+      case "clinics":
+        return clinicPOIs;
+      case "parks":
+        return parkPOIs;
+      default:
+        return [];
+    }
+  }, [category, ccPOIs, clinicPOIs, parkPOIs]);
+
+  const activeColor = useMemo(() => {
+    switch (category) {
+      case "cc":
+        return "#8B5CF6";
+      case "clinics":
+        return "#10B981";
+      case "parks":
+        return "#F59E0B";
+      default:
+        return "#007AFF";
+    }
+  }, [category]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (activePOIs.length === 0) return;
+
+    const latitudes = activePOIs.map((p) => p.coords.latitude);
+    const longitudes = activePOIs.map((p) => p.coords.longitude);
+    const minLat = Math.min(...latitudes);
+    const maxLat = Math.max(...latitudes);
+    const minLng = Math.min(...longitudes);
+    const maxLng = Math.max(...longitudes);
+
+    const pad = 0.02;
+    const region = {
+      latitude: (minLat + maxLat) / 2,
+      longitude: (minLng + maxLng) / 2,
+      latitudeDelta: Math.max(0.01, (maxLat - minLat) + pad),
+      longitudeDelta: Math.max(0.01, (maxLng - minLng) + pad),
+    };
+
+    mapRef.current.animateToRegion(region, 500);
+  }, [category, activePOIs]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (!location) return;
+    if (navigating) return;
+    try {
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        600
+      );
+    } catch (e) {
+      // ignore
+    }
+  }, [location, navigating]);
+
   const searchDestination = async (override?: string) => {
     const q = (override ?? query).trim();
     if (!q) return Alert.alert("Enter a destination");
@@ -114,14 +277,7 @@ export default function NavigationScreen() {
       if (!data.results?.length) return Alert.alert("Not found", "Try a more specific place name.");
       const loc = data.results[0].geometry.location;
       const dest = { latitude: loc.lat, longitude: loc.lng };
-      setDestination(dest);
-
-      if (location && mapRef.current) {
-        mapRef.current.fitToCoordinates([location, dest], {
-          edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
-          animated: true,
-        });
-      }
+      setDestinationOnly(dest);
     } catch (e) {
       Alert.alert("Search error", String(e));
     }
@@ -187,6 +343,36 @@ export default function NavigationScreen() {
 
   const stripHtml = (html: string) => html?.replace(/<[^>]+>/g, "") || "";
 
+  const setDestinationOnly = (dest: LatLng) => {
+    setDestination(dest);
+    setCurrentStepIndex(0);
+
+    setRouteCoords([]);
+    setSteps([]);
+    setEta(null);
+
+    if (mapRef.current) {
+      if (location) {
+        mapRef.current.fitToCoordinates([location, dest], {
+          edgePadding: { top: 80, right: 40, bottom: 200, left: 40 },
+          animated: true,
+        });
+      } else {
+        mapRef.current.animateToRegion(
+          {
+            latitude: dest.latitude,
+            longitude: dest.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          500
+        );
+      }
+    }
+
+    setCategory("search");
+  };
+
   const startNavigation = () => {
     if (!location || !destination) return Alert.alert("Pick a destination first");
     setNavigating(true);
@@ -230,6 +416,25 @@ export default function NavigationScreen() {
           </View>
 
           <View style={s.modeRow}>
+            {([
+              ["search", "Search"],
+              ["cc", "CC"],
+              ["clinics", "Clinics"],
+              ["parks", "Parks"],
+            ] as const).map(([key, label]) => (
+              <TouchableOpacity
+                key={key}
+                style={[s.modeBtn, category === key && s.modeBtnActive]}
+                onPress={() => setCategory(key)}
+              >
+                <Text style={category === key ? s.modeTextActive : s.modeText}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={[s.modeRow, { marginTop: 8 }]}>
             {(["driving", "walking", "bicycling", "transit"] as const).map((m) => (
               <TouchableOpacity
                 key={m}
@@ -247,7 +452,7 @@ export default function NavigationScreen() {
 
       {/* Map */}
       <MapView
-        provider="google"
+        provider={providerProp}
         ref={mapRef}
         style={s.map}
         showsUserLocation={permissionGranted}
@@ -259,19 +464,76 @@ export default function NavigationScreen() {
           longitudeDelta: 0.05,
         }}
       >
-        {destination && <Marker coordinate={destination} title="Destination" />}
+        {/* Destination marker (from search or tap) */}
+        {destination && category === "search" && (
+          <Marker coordinate={destination} title="Destination" pinColor="#007AFF" />
+        )}
+
+        {/* Category markers */}
+        {activePOIs.map((p) => (
+          <Marker
+            key={p.id}
+            coordinate={p.coords}
+            title={p.name}
+            pinColor={activeColor}
+            onCalloutPress={() => setDestinationOnly(p.coords)} 
+          >
+            <Callout tooltip={false}>
+                <View style={s.calloutCard}>
+                  <Text
+                    style={s.calloutTitle}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                  >
+                    {p.name}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setDestinationOnly(p.coords)}
+                    style={s.calloutBtn}
+                  >
+                    <Text style={s.calloutBtnText}>Set Destination</Text>
+                  </TouchableOpacity>
+                </View>
+              </Callout>
+          </Marker>
+        ))}
+
+        {/* Route polyline */}
         {routeCoords.length > 0 && (
           <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#007AFF" />
         )}
       </MapView>
 
-      {/* Start/Stop */}
+      {/* Start/Stop bottom bar */}
       {destination && !navigating && (
         <View style={s.bottomBar}>
+          <Text style={{ marginBottom: 8, fontWeight: "700" }}>Destination set</Text>
           <TouchableOpacity style={s.startBtn} onPress={startNavigation}>
             <Text style={s.startText}>Start Navigation</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {/* Recenter floating button */}
+      {location && (
+        <TouchableOpacity
+          style={s.recenterBtn}
+          onPress={() => {
+            try {
+              mapRef.current?.animateToRegion(
+                {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                },
+                500
+              );
+            } catch (e) {}
+          }}
+        >
+          <Ionicons name="locate" size={22} color="#007AFF" />
+        </TouchableOpacity>
       )}
 
       {navigating && eta && (
@@ -322,7 +584,7 @@ const s = StyleSheet.create({
 
   searchWrap: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 56 + 8 : 56, 
+    top: Platform.OS === "ios" ? 56 + 8 : 56,
     left: 12,
     right: 12,
     zIndex: 10,
@@ -365,10 +627,8 @@ const s = StyleSheet.create({
   modeText: { color: "#333" },
   modeTextActive: { color: "#FFF", fontWeight: "700" },
 
-  // Map
   map: { flex: 1 },
 
-  // Bottom bar
   bottomBar: {
     position: "absolute",
     bottom: 20,
@@ -409,5 +669,67 @@ const s = StyleSheet.create({
     position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
     alignItems: "center", justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.85)",
+  },
+
+  recenterBtn: {
+    position: 'absolute',
+    right: 16,
+    bottom: 34,
+    backgroundColor: '#FFF',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    zIndex: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  recenterText: { fontSize: 20, color: '#007AFF', fontWeight: '800' },
+
+  // inner icon styles removed; using Ionicons locate icon instead
+
+  calloutCard: {
+    minWidth: 200,
+    maxWidth: 300,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255,255,255,0.98)',
+    borderRadius: 10,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  calloutTitle: {
+    fontWeight: "800",
+    fontSize: 15,
+    lineHeight: 20,
+    color: "#111",
+    marginBottom: 10,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+  },
+  calloutSubtitle: {
+    color: "#555",
+    fontSize: 13,
+    marginTop: -4,
+    marginBottom: 10,
+  },
+  calloutBtn: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginTop: 6,
+    alignSelf: "flex-start",
+    alignItems: "center",
+  },
+  calloutBtnText: {
+    color: "#FFF",
+    fontWeight: "700",
   },
 });

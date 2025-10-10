@@ -669,7 +669,7 @@ export default function ElderlyProfile() {
           </AppText>
 
           <AppText variant="label" weight="700" color="#000000" style={{ marginTop: 6 }}>
-            {t("delete.cardExplain")}
+            {t("profile.delete.cardExplain")}
           </AppText>
 
           <AppText variant="caption" color="#6B7280" style={{ marginTop: 8 }}>

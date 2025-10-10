@@ -166,6 +166,7 @@
       "continue": "确认删除",
       "scheduledTitle": "已安排删除",
       "scheduledBody": "您可在 14 天内重新登录以恢复。",
+      "cardExplain": "如果您不再希望使用 ElderCare，您可以删除您的账户。",
       "modalTitle": "确认删除账户",
       "modalExplain": "确定要删除账户吗？此操作无法撤销。",
       "optionalReason": "可选：帮助我们改进的原因",
