@@ -365,9 +365,35 @@
 
     if (!token) { el('status').textContent='Missing token'; return; }
 
-    let { data, error } = await rpcGet('');
-    if (error) {
-      console.error('rpcGet error:', error);
+    // Try a locally saved PIN first (remember device). This avoids an initial
+    // "invalid pin" error being logged when the token requires a PIN.
+    let data = null;
+    let error = null;
+    let storedPin = '';
+    try { storedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch (e) { /* ignore */ }
+
+    if (storedPin) {
+      const h = await sha256Hex(storedPin);
+      const res = await rpcGet(h);
+      if (!res.error) {
+        data = res.data;
+        cachedPin = storedPin;
+      } else {
+        // only log unexpected errors; handle expected 'invalid pin' below
+        if (!/invalid pin|pin required/i.test(res.error.message || String(res.error))) {
+          console.error('rpcGet (cached pin) error:', res.error);
+        }
+      }
+    }
+
+    // If cached pin didn't unlock, try without PIN to detect if the link is open
+    if (data === null) {
+      const res2 = await rpcGet('');
+      data = res2.data;
+      error = res2.error;
+      if (error && !/invalid pin|pin required|invalid token/i.test(error.message || String(error))) {
+        console.error('rpcGet error:', error);
+      }
     }
     if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
       showPinUI('This link is protected by a PIN.');
