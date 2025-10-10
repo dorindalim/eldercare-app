@@ -28,7 +28,7 @@ type LatLng = { latitude: number; longitude: number };
 export default function NavigationScreen() {
   const router = useRouter();
   const { logout } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
@@ -205,7 +205,7 @@ export default function NavigationScreen() {
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
-        title="Navigation"
+        title={t("navigation.title")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

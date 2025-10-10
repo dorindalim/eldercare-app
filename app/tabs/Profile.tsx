@@ -568,7 +568,14 @@ export default function ElderlyProfile() {
               <AppText variant="h2" weight="800">
                 {t("profile.delete.modalTitle")}
               </AppText>
-              <AppText variant="label" weight="700" color="#374151" style={{ marginTop: 8 }}>
+              <AppText
+                variant="label"
+                weight="700"
+                color="#374151"
+                style={{ marginTop: 8 }}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
                 {t("profile.delete.modalExplain")}
               </AppText>
 
@@ -586,7 +593,6 @@ export default function ElderlyProfile() {
               {/* Simplified single-step deletion flow */}
               <View style={{ marginTop: 8 }}>
                 <AppText variant="label" weight="700">{t("profile.delete.confirmStepTitle")}</AppText>
-
                 <AppText variant="caption" color="#6B7280" style={{ marginTop: 10 }}>{t("profile.delete.typeToConfirm", { phrase: 'DELETE MY ACCOUNT' })}</AppText>
                 <TextInput
                   style={[s.input, { color: "#000" }]}
@@ -608,8 +614,7 @@ export default function ElderlyProfile() {
                     <AppText variant="button" weight="800" color="#111827">{t('common.cancel')}</AppText>
                   </Pressable>
                 </View>
-
-                {/* Moved checkbox to bottom: user must check this after reading everything */}
+                
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
                   <Pressable
                     onPress={() => setConfirmChecked(!confirmChecked)}
@@ -622,9 +627,6 @@ export default function ElderlyProfile() {
               </View>
                   <View style={{ height: 12 }} />
 
-              <AppText variant="caption" color="#6B7280">{t("profile.delete.afterVerificationNote")}</AppText>
-
-              {/* bottom controls removed - actions moved into the step content */}
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
@@ -637,7 +639,7 @@ export default function ElderlyProfile() {
           </AppText>
 
           <AppText variant="label" weight="700" color="#000000" style={{ marginTop: 6 }}>
-            {t("profile.delete.modalExplain")}
+            {t("delete.cardExplain")}
           </AppText>
 
           <AppText variant="caption" color="#6B7280" style={{ marginTop: 8 }}>

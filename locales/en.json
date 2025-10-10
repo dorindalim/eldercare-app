@@ -56,15 +56,13 @@
       "button": "Sign up",
       "haveAccount": "Already have an account?",
       "login": "Log in"
+    },
+    "restore": {
+      "restoredTitle": "Account restored",
+      "restoredBody": "Your account and EC Portal are active again."
     }
   },
-  "recover": {
-    "title": "Recover your account?",
-    "body": "This account was scheduled for deletion. You can restore it until {{date}}. Do you want to restore now?",
-    "restore": "Restore Account",
-    "successTitle": "Account restored",
-    "successBody": "Your account and EC Portal are active again."
-  },
+
   "elderlyOnboarding": {
     "title": "Onboarding",
     "namePH": "Full Name",
@@ -163,7 +161,7 @@
       "button": "Delete My Account",
       "continue": "Confirm delete",
       "scheduledTitle": "Deletion scheduled",
-      "scheduledBody": "Scheduled in 14 days. Log in to restore.",
+      "scheduledBody": "You can restore within 14 days by logging back in.",
       "modalTitle": "Confirm account deletion",
       "modalExplain": "Are you sure you want to delete your account? This action cannot be undone.",
       "optionalReason": "Optional: Reason to help us improve",
@@ -329,8 +327,9 @@
     "confirmBody": "Portal disabled; deletion in 14 days.",
     "typeDelete": "Type DELETE (in capitals)",
     "continue": "Confirm delete",
+    "cardExplain": "If you no longer wish to use the ElderCare app, you can delete your account.",
     "scheduledTitle": "Deletion scheduled",
-    "scheduledBody": "Scheduled in 14 days. Log in to restore.",
+    "scheduledBody": "Account will be deleted in 14 days. Log in to restore.",
     "modalTitle": "Confirm account deletion",
     "modalExplain": "Will delete account after 14 days.",
     "optionalReason": "Optional: reason",
