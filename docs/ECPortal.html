@@ -275,20 +275,21 @@
   }
 
   async function rpcGet(pinHash) {
-    const params = { p_token: token };
-    if (pinHash) params.p_pin_hash = pinHash;   // <-- omit when falsy
+    // Always provide p_pin_hash (use null when missing) so PostgREST can
+    // resolve the function overload that expects (p_pin_hash, p_token).
+    const params = { p_pin_hash: pinHash || null, p_token: token };
     const { data, error } = await supabase.rpc('ec_get_portal', params);
     return { data, error };
   }
 
   async function rpcSave(pinHash, payload) {
     const params = {
+      p_pin_hash: pinHash || null,
       p_token: token,
       p_emergency: payload.emergency,
       p_extras: payload.extras,
       p_conditions: payload.conditions,
     };
-    if (pinHash) params.p_pin_hash = pinHash;   // <-- omit when falsy
     const { data, error } = await supabase.rpc('ec_save_portal', params);
     return { data, error };
   }
