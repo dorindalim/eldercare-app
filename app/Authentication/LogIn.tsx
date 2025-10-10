@@ -127,14 +127,6 @@ export default function Login() {
               </Pressable>
             </Link>
           </View>
-
-          <View style={{ marginTop: 12, alignItems: "center" }}>
-            <Link href="/Authentication/Restore" asChild>
-              <Pressable>
-                <Text style={s.link}>{t("auth.login.restoreCode")}</Text>
-              </Pressable>
-            </Link>
-          </View>
         </View>
       </KeyboardAvoidingView>
     </Screen>

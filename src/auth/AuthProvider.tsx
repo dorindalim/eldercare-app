@@ -6,6 +6,8 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
+import { Alert } from "react-native";
 import { supabase } from "../lib/supabase";
 
 export type Session = {
@@ -77,6 +79,7 @@ const SESSION_KEY = "auth_session_v1";
 let pendingPhone: string | null = null;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useTranslation();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -140,6 +143,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       phone: user.phone,
       onboardingCompleted: user.onboarding_completed,
     };
+
+    // If this user has a pending scheduled deletion on their elderly_profiles row,
+    // treat the login as a restore: clear scheduled_for and restore_token and notify.
+    try {
+    const { data: prof } = await supabase
+      .from('elderly_profiles')
+      .select('scheduled_for')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (prof?.scheduled_for) {
+      const scheduledDate = new Date(prof.scheduled_for);
+      const now = new Date();
+      if (scheduledDate > now) {
+        // cancel the scheduled deletion
+        await supabase
+          .from('elderly_profiles')
+          .update({ scheduled_for: null, deletion_reason: null, deletion_requested_at: null })
+          .eq('user_id', user.id);
+
+        Alert.alert(t('auth.restore.restoredTitle'), t('auth.restore.restoredBody'));
+      }
+    }
+    } catch (e) {
+      // ignore restore errors, continue sign in
+      console.warn("restore-on-login check failed:", e);
+    }
 
     setSession(next);
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
