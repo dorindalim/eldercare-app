@@ -63,8 +63,8 @@
   </div>
 
   <div class="card">
-    <p class="muted" id="status">Loading…</p>
-    <div id="pinBlock" style="display:none">
+    <p class="muted" id="status">Please unlock with your PIN.</p>
+    <div id="pinBlock">
       <div class="pin-row">
         <div class="pin-wrap">
           <input id="pinInput" placeholder="Enter 4+ digit PIN" type="password" inputmode="numeric" autocomplete="off" />
@@ -73,8 +73,8 @@
             <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" style="display:none"><path d="M12 5c-2.61 0-4.822.7-6.65 1.76L3.4 4.81 2 6.22l18 18 1.41-1.41-3.04-3.04C21.036 17.76 23 12 23 12s-3.367-7-11-7zm-2.08 2.08A8.88 8.88 0 0112 7c5.4 0 8.41 3.86 9.39 5-.383.47-1.012 1.16-1.91 1.93l-2.83-2.83A5 5 0 009.92 7.08zM4.52 9.11C3.62 9.88 2.99 10.57 2.61 11.04c.39.47 1.02 1.16 1.91 1.93.84.7 1.87 1.42 3.08 1.98l-1.5 1.5C3.06 14.78 1 12 1 12s1.97-2.81 5.51-4.89z"/></svg>
           </button>
         </div>
-        <button id="pinSetBtn" class="btn">Set PIN</button>
-        <button id="pinUseBtn" class="btn secondary">Unlock</button>
+        <button id="pinUseBtn" class="btn">Unlock</button>
+        <button id="pinSetBtn" class="btn secondary" title="Use this if no PIN has been set yet">Set PIN</button>
       </div>
       <label class="remember"><input type="checkbox" id="rememberPin" /> Remember this device</label>
       <p id="pinMsg" class="muted"></p>
@@ -274,41 +274,32 @@
     };
   }
 
-  // ---------- RPC HELPERS (always pass both named args; use null for "no pin") ----------
+  // RPC helpers – must always pass both named args; PIN hash is required by backend
   async function rpcGet(pinHash) {
     const { data, error } = await supabase.rpc('ec_get_portal', {
       p_token: token,
-      p_pin_hash: pinHash ?? null,
+      p_pin_hash: pinHash, // backend requires a value; do not send null
     });
     return { data, error };
   }
-
   async function rpcSave(pinHash, payload) {
     const { data, error } = await supabase.rpc('ec_save_portal', {
       p_token: token,
-      p_pin_hash: pinHash ?? null,
+      p_pin_hash: pinHash,
       p_emergency: payload.emergency,
       p_extras: payload.extras,
       p_conditions: payload.conditions,
     });
     return { data, error };
   }
-
   async function rpcSetPin(pinHash) {
     const { data, error } = await supabase.rpc('ec_set_pin', {
       p_token: token,
-      p_pin_hash: pinHash, // required
+      p_pin_hash: pinHash,
     });
     return { data, error };
   }
-  // --------------------------------------------------------------------------------------
 
-  function showPinUI(msg='This link is protected by a PIN.') {
-    el('status').textContent = msg;
-    el('pinBlock').style.display = '';
-    el('main').style.display = 'none';
-    el('pinMsg').textContent = '';
-  }
   function showMainUI() {
     el('status').textContent = '';
     el('pinBlock').style.display = 'none';
@@ -322,7 +313,10 @@
     });
     const conds = el('conds'); if (conds) conds.innerHTML='';
     setNoConditionsUI(false);
-    showPinUI('Locked. Please enter PIN to continue.');
+    el('main').style.display='none';
+    el('pinBlock').style.display='';
+    el('status').textContent='Locked. Please enter PIN to continue.';
+    el('pinMsg').textContent='';
   }
 
   function render(resp) {
@@ -371,102 +365,66 @@
   }
 
   (async function boot(){
-    el('logoutBtn').onclick = logout;
-    const addBtn = el('addCond'); if (addBtn) addBtn.addEventListener('click', addCondition);
-    el('noCondsChip').onclick = ()=> setNoConditionsUI(!noConditions);
-    wirePinEye();
-
     if (!token) { el('status').textContent='Missing token'; return; }
 
-    // Try remembered PIN first (if any)
-    let data = null;
-    let error = null;
-    let storedPin = '';
-    try { storedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch (e) {}
+    wirePinEye();
+    el('logoutBtn').onclick = logout;
 
-    if (storedPin) {
-      const h = await sha256Hex(storedPin);
-      const res = await rpcGet(h);
-      if (!res.error) {
-        data = res.data;
-        cachedPin = storedPin;
-      } else {
-        if (!/invalid pin|pin required/i.test(res.error.message || String(res.error))) {
-          console.error('rpcGet (cached pin) error:', res.error);
-        }
-      }
-    }
-
-    // If cached pin didn't unlock, probe without PIN (null)
-    if (data === null) {
-      const res2 = await rpcGet(null);
-      data = res2.data;
-      error = res2.error;
-      if (error && !/invalid pin|pin required|invalid token/i.test(error.message || String(error))) {
-        console.error('rpcGet error:', error);
-      }
-    }
-
-    if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-      showPinUI('This link is protected by a PIN.');
-      el('pinUseBtn').onclick = async () => {
-        const p = (el('pinInput').value||'').trim();
-        if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
-        const h = await sha256Hex(p);
-        const r = await rpcGet(h);
-        if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
-        cachedPin = p;
-        if (el('rememberPin').checked) {
-          try { localStorage.setItem('ec_pin_'+token, p); } catch {}
-        }
-        showMainUI(); render(r.data);
-      };
-      el('pinSetBtn').onclick = async () => {
-        const p = (el('pinInput').value||'').trim();
-        if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
-        const h = await sha256Hex(p);
-        const r = await rpcSetPin(h);
-        if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to set PIN'; return; }
-        cachedPin = p;
-        if (el('rememberPin').checked) {
-          try { localStorage.setItem('ec_pin_'+token, p); } catch {}
-        }
-        const g = await rpcGet(h);
-        showMainUI(); render(g.data);
-      };
-      return;
-    } else if (error && /invalid token/i.test(error.message || String(error))) {
-      el('status').textContent = 'This link is invalid or has been revoked.'; return;
-    } else if (error) {
-      const msg = error.message || JSON.stringify(error);
-      el('status').textContent = 'Failed to load: ' + msg;
-      return;
-    }
-
-    // Optional deletion guard (if your function returns these fields)
+    // If remembered
     try {
-      const payloadCheck = Array.isArray(data) ? (data[0] || {}) : (data || {});
-      const profileCheck = payloadCheck.profile || {};
-      const scheduled_for = profileCheck.scheduled_for || null;
-      const deletion_status = profileCheck.deletion_status || null;
-      const scheduledDate = scheduled_for ? new Date(scheduled_for) : null;
-      const now = new Date();
-      const pendingDeletion = deletion_status === 'deletion_scheduled' || (scheduledDate && scheduledDate > now);
-      if (pendingDeletion) {
-        el('status').textContent = 'This account is scheduled for deletion. The portal is disabled.';
-        el('pinBlock').style.display = 'none';
-        el('main').style.display = 'none';
-        return;
+      const remembered = localStorage.getItem('ec_pin_'+token) || '';
+      if (remembered) {
+        cachedPin = remembered;
+        const h = await sha256Hex(remembered);
+        const r = await rpcGet(h);
+        if (!r.error) {
+          showMainUI(); render(r.data);
+        }
       }
-    } catch (e) {
-      console.warn('deletion check failed', e);
-    }
+    } catch {}
 
-    showMainUI();
-    render(data);
+    // Unlock with existing PIN
+    el('pinUseBtn').onclick = async () => {
+      el('pinMsg').textContent = '';
+      const p = (el('pinInput').value||'').trim();
+      if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
+      const h = await sha256Hex(p);
+      const r = await rpcGet(h);
+      if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
+      cachedPin = p;
+      if (el('rememberPin').checked) {
+        try { localStorage.setItem('ec_pin_'+token, p); } catch {}
+      }
+      showMainUI(); render(r.data);
+    };
 
+    // Set a new PIN (for tokens that don’t have one yet)
+    el('pinSetBtn').onclick = async () => {
+      el('pinMsg').textContent = '';
+      const p = (el('pinInput').value||'').trim();
+      if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
+      const h = await sha256Hex(p);
+      const s = await rpcSetPin(h);
+      if (s.error) { el('pinMsg').textContent = s.error.message || 'Failed to set PIN'; return; }
+      // Immediately fetch
+      const r = await rpcGet(h);
+      if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to unlock after setting PIN'; return; }
+      cachedPin = p;
+      if (el('rememberPin').checked) {
+        try { localStorage.setItem('ec_pin_'+token, p); } catch {}
+      }
+      showMainUI(); render(r.data);
+    };
+
+    // UI interactions
+    const addBtn = el('addCond'); if (addBtn) addBtn.addEventListener('click', addCondition);
+    el('noCondsChip').onclick = ()=> setNoConditionsUI(!noConditions);
+
+    // Save
     el('saveBtn').onclick = async () => {
       el('saveMsg').textContent='Saving…';
+      if (!cachedPin) { el('saveMsg').textContent='Unlock first.'; return; }
+
       const list = [...document.querySelectorAll('#conds > .card')];
       let conditions;
       if (noConditions || list.length===0) {
@@ -493,12 +451,9 @@
         conditions
       };
 
-      if (!cachedPin) {
-        try { cachedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch {}
-      }
-      const h = cachedPin ? await sha256Hex(cachedPin) : null;
-      const { error: e } = await rpcSave(h, payload);
-      el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+      const h = await sha256Hex(cachedPin);
+      const { error } = await rpcSave(h, payload);
+      el('saveMsg').textContent = error ? ('Failed: ' + (error.message || '')) : 'Saved!';
     };
   })();
 
