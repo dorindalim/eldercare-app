@@ -6,56 +6,44 @@
   <title>Emergency Contact Portal</title>
   <style>
     :root{
-      --bg:#F8FAFC;
-      --card:#FFFFFF;
-      --muted:#6B7280;
-      --border:#E5E7EB;
-      --accent:#111827;
-      --accent-weak:#374151;
-      --pill:#F3F4F6;
-      --radius:14px;
+      --bg:#F8FAFC; --card:#FFFFFF; --muted:#6B7280; --border:#E5E7EB;
+      --accent:#111827; --accent-weak:#374151; --pill:#F3F4F6; --radius:14px;
     }
-
     html,body{height:100%;}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); margin:0; color:var(--accent)}
-    .wrap{max-width:980px; margin:28px auto; padding:20px}
-
-    /* Header */
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);margin:0;color:var(--accent)}
+    .wrap{max-width:980px;margin:28px auto;padding:20px}
     .portal-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
     .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#EFF6FF,#F8FAFC);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.06)}
     .logo svg{width:34px;height:34px;fill:var(--accent)}
-    .hdr-title{display:flex;flex-direction:column}
+    .hdr-title{display:flex;flex-direction:column;flex:1}
     .hdr-title h1{font-size:20px;margin:0;font-weight:800}
     .hdr-sub{font-size:13px;color:var(--muted);margin-top:4px}
-
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 18px rgba(2,6,23,0.04)}
-    h2{font-size:15px;margin:8px 0 12px;font-weight:800;color:var(--accent)}
-    label{display:block;font-weight:700;color:var(--accent-weak);margin:6px 0 6px}
-    input,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #E6E9EE;background:#fbfdff;font-size:14px;color:var(--accent);box-sizing:border-box}
-    textarea{min-height:88px}
-
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-
+    .hdr-actions{display:flex;gap:8px}
     .btn{background:var(--accent);color:#fff;font-weight:800;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;box-shadow:0 6px 14px rgba(17,24,39,0.12);transition:transform .08s ease,box-shadow .08s ease}
     .btn:active{transform:translateY(1px)}
     .btn.secondary{background:transparent;color:var(--accent);border:1px solid rgba(17,24,39,0.08);box-shadow:none}
     .btn.ghost{background:transparent;border:1px dashed rgba(17,24,39,0.08);color:var(--accent)}
-
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+    h2{font-size:15px;margin:8px 0 12px;font-weight:800;color:var(--accent)}
+    label{display:block;font-weight:700;color:var(--accent-weak);margin:6px 0 6px}
+    input,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #E6E9EE;background:#fbfdff;font-size:14px;color:var(--accent);box-sizing:border-box}
+    textarea{min-height:88px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .chip{border:1px solid #E2E8F0;padding:8px 12px;border-radius:999px;cursor:pointer;user-select:none;font-weight:800;display:inline-block;margin:4px 6px 0 0;background:transparent}
     .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
     .medrow{display:flex;gap:8px;margin-top:6px}
-    .ghost{background:transparent;border:1px dashed rgba(17,24,39,0.06);color:var(--accent)}
     .muted{color:var(--muted);font-size:13px}
-
-    /* Save area on mobile */
-    .actions{display:flex;justify-content:flex-end;gap:12px;align-items:center}
+    .pin-row{display:flex;gap:8px;align-items:center}
+    .pin-wrap{position:relative;flex:1}
+    .pin-wrap input{padding-right:44px}
+    .eye-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;padding:6px;border-radius:8px}
+    .eye-btn:hover{background:#F3F4F6}
+    .remember{display:flex;align-items:center;gap:8px;margin-top:6px;color:var(--accent-weak);font-weight:600}
     @media (max-width:640px){
       .wrap{padding:14px;margin:16px}
       .actions{position:sticky;bottom:12px;background:transparent;padding:6px 0}
       .card:last-of-type{padding-bottom:74px}
     }
-
-    /* subtle helpers */
     input::placeholder, textarea::placeholder{color:#9CA3AF}
   </style>
 </head>
@@ -67,21 +55,28 @@
     </div>
     <div class="hdr-title">
       <h1>Emergency Contact Portal</h1>
-      <div class="hdr-sub">Quickly view and update emergency contact & medical details</div>
+      <div class="hdr-sub">Quickly view and update emergency contact &amp; medical details</div>
     </div>
-    <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
-      <button id="logoutBtn" class="btn secondary" style="height:36px; display:none">Log out</button>
+    <div class="hdr-actions">
+      <button id="logoutBtn" class="btn secondary" title="Lock / Logout">Logout</button>
     </div>
   </div>
 
   <div class="card">
     <p class="muted" id="status">Loading…</p>
     <div id="pinBlock" style="display:none">
-      <div style="display:flex; gap:8px; align-items:center">
-        <input id="pinInput" placeholder="Enter 4+ digit PIN" />
+      <div class="pin-row">
+        <div class="pin-wrap">
+          <input id="pinInput" placeholder="Enter 4+ digit PIN" type="password" inputmode="numeric" autocomplete="off" />
+          <button id="togglePin" class="eye-btn" aria-label="Show/Hide PIN" title="Show/Hide PIN">
+            <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path d="M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12a5 5 0 110-10 5 5 0 010 10z"/></svg>
+            <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" style="display:none"><path d="M12 5c-2.61 0-4.822.7-6.65 1.76L3.4 4.81 2 6.22l18 18 1.41-1.41-3.04-3.04C21.036 17.76 23 12 23 12s-3.367-7-11-7zm-2.08 2.08A8.88 8.88 0 0112 7c5.4 0 8.41 3.86 9.39 5-.383.47-1.012 1.16-1.91 1.93l-2.83-2.83A5 5 0 009.92 7.08zM4.52 9.11C3.62 9.88 2.99 10.57 2.61 11.04c.39.47 1.02 1.16 1.91 1.93.84.7 1.87 1.42 3.08 1.98l-1.5 1.5C3.06 14.78 1 12 1 12s1.97-2.81 5.51-4.89z"/></svg>
+          </button>
+        </div>
         <button id="pinSetBtn" class="btn">Set PIN</button>
         <button id="pinUseBtn" class="btn secondary">Unlock</button>
       </div>
+      <label class="remember"><input type="checkbox" id="rememberPin" /> Remember this device</label>
       <p id="pinMsg" class="muted"></p>
     </div>
   </div>
@@ -107,19 +102,15 @@
     </div>
 
     <div class="card">
-      <h2>Conditions & Medications</h2>
-
+      <h2>Conditions &amp; Medications</h2>
       <div class="row" style="margin-bottom:8px">
         <span id="noCondsChip" class="chip">No conditions</span>
         <span class="muted">Tip: you can still add a condition even if this is on — the form will auto-reappear.</span>
       </div>
-
       <div id="noCondsNote" class="muted" style="display:none; margin-bottom:8px">
         You marked “No conditions”. We will save a single NIL placeholder. You can still add a condition below.
       </div>
-
       <div id="conds"></div>
-
       <button id="addCond" class="btn ghost" style="margin-top:8px">+ Add condition</button>
     </div>
 
@@ -138,14 +129,16 @@
   const supabase = createClient(PROJECT_URL, ANON_KEY);
 
   const token = new URLSearchParams(location.search).get('token') || '';
+  const el = id => document.getElementById(id);
+
   const assistiveKeys = ['walking_cane','wheelchair','hearing_aid','glasses','other'];
   const labels = { walking_cane:'Walking Cane', wheelchair:'Wheelchair', hearing_aid:'Hearing Aid', glasses:'Glasses', other:'Other' };
-  const el = id => document.getElementById(id);
 
   const NIL_MED  = { name:'NIL', frequency:'NIL' };
   const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
 
   let noConditions = false;
+  let cachedPin = ''; 
 
   function chip(parent, key, active) {
     const span = document.createElement('span');
@@ -153,8 +146,10 @@
     span.textContent = labels[key];
     span.onclick = () => {
       span.classList.toggle('active');
-      if (key==='other') document.getElementById('assistive_other_wrap').style.display =
-        span.classList.contains('active') ? '' : 'none';
+      if (key==='other') {
+        const wrap = el('assistive_other_wrap');
+        if (wrap) wrap.style.display = span.classList.contains('active') ? '' : 'none';
+      }
     };
     parent.appendChild(span);
   }
@@ -169,10 +164,8 @@
     return row;
   }
 
-  // Per-condition block
   function condBlock(c={condition:'',doctor:'',clinic:'',appointments:'', medications:[{name:'',frequency:''}]}) {
     const wrap = document.createElement('div'); wrap.className='card';
-
     const t=document.createElement('input'); t.placeholder='Condition (e.g., Diabetes)'; t.value=c.condition||'';
     const d=document.createElement('input'); d.placeholder='Doctor'; d.value=c.doctor||'';
     const cl=document.createElement('input'); cl.placeholder='Clinic/Hospital'; cl.value=c.clinic||'';
@@ -184,16 +177,16 @@
 
     const medsLabel=document.createElement('label'); medsLabel.textContent='Medications';
     const medsWrap=document.createElement('div');
-
     const addMedBtn = document.createElement('button');
     addMedBtn.className = 'btn ghost';
     addMedBtn.textContent = '+ Add medication';
     addMedBtn.style.marginTop = '6px';
     addMedBtn.onclick = () => medsWrap.appendChild(medRow({name:'',frequency:''}));
 
-    const initialNoMeds = Array.isArray(c.medications)
-      && c.medications.length===1
-      && String(c.medications[0]?.name).toUpperCase()==='NIL';
+    const initialNoMeds =
+      Array.isArray(c.medications) &&
+      c.medications.length===1 &&
+      String(c.medications[0]?.name).toUpperCase()==='NIL';
 
     if (c.medications?.length && !initialNoMeds) {
       c.medications.forEach(m=> medsWrap.appendChild(medRow(m)));
@@ -233,50 +226,17 @@
             const [n,f]=r.querySelectorAll('input');
             const name=(n.value||'').trim();
             const frequency=(f.value||'').trim();
-            return name ? { name, frequency: frequency||null } : null;
+            return name ? { name, frequency: (frequency||null) } : null;
           }).filter(Boolean)
     });
 
     return wrap;
   }
 
-  async function sha256Hex(s) {
-    const b = new TextEncoder().encode(s);
-    const h = await crypto.subtle.digest('SHA-256', b);
-    return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
-  }
-
-  async function rpcGet(pinHash) {
-    const { data, error } = await supabase.rpc('ec_get_portal', { p_token: token, p_pin_hash: pinHash });
-    return { data, error };
-  }
-  async function rpcSetPin(pinHash) {
-    const { data, error } = await supabase.rpc('ec_set_pin', { p_token: token, p_pin_hash: pinHash });
-    return { data, error };
-  }
-  async function rpcSave(pinHash, payload) {
-    const { data, error } = await supabase.rpc('ec_save_portal', {
-      p_token: token,
-      p_pin_hash: pinHash,
-      p_emergency: payload.emergency,
-      p_extras: payload.extras,
-      p_conditions: payload.conditions
-    });
-    return { data, error };
-  }
-
-  function gatherAssistive() {
-    const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=> {
-      const label = ch.textContent;
-      const key = Object.entries(labels).find(([,v])=>v===label)?.[0] || label;
-      return key;
-    });
-    if (picks.includes('other')) {
-      const other = el('assistive_other').value.trim();
-      if (other) picks.push('other:'+other);
-      return picks.filter(p=>p!=='other');
-    }
-    return picks;
+  function addCondition() {
+    if (noConditions) setNoConditionsUI(false);
+    const list = el('conds');
+    if (list) list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
   }
 
   function setNoConditionsUI(on) {
@@ -286,44 +246,99 @@
     el('noCondsChip').classList.toggle('active', on);
   }
 
+  function gatherAssistive() {
+    const picks = [...document.querySelectorAll('#assistive .chip.active')].map(ch=>{
+      const label = ch.textContent;
+      const key = Object.entries(labels).find(([,v])=>v===label)?.[0] || label;
+      return key;
+    });
+    if (picks.includes('other')) {
+      const otherEl = el('assistive_other');
+      const other = otherEl ? (otherEl.value||'').trim() : '';
+      if (other) picks.push('other:'+other);
+      return picks.filter(p=>p!=='other');
+    }
+    return picks;
+  }
+
   function getEmergency(profile = {}) {
     if (profile.emergency && typeof profile.emergency === 'object') {
       const e = profile.emergency;
-      return {
-        name:     e.name ?? '',
-        relation: e.relation ?? '',
-        phone:    e.phone ?? '',
-        email:    e.email ?? ''
-      };
+      return { name:e.name??'', relation:e.relation??'', phone:e.phone??'', email:e.email??'' };
     }
     return {
-      name:     profile.emergency_name ?? '',
+      name: profile.emergency_name ?? '',
       relation: profile.emergency_relation ?? '',
-      phone:    profile.emergency_phone ?? '',
-      email:    profile.emergency_email ?? ''
+      phone: profile.emergency_phone ?? '',
+      email: profile.emergency_email ?? ''
     };
   }
 
+  // ---------- RPC HELPERS (always pass both named args; use null for "no pin") ----------
+  async function rpcGet(pinHash) {
+    const { data, error } = await supabase.rpc('ec_get_portal', {
+      p_token: token,
+      p_pin_hash: pinHash ?? null,
+    });
+    return { data, error };
+  }
+
+  async function rpcSave(pinHash, payload) {
+    const { data, error } = await supabase.rpc('ec_save_portal', {
+      p_token: token,
+      p_pin_hash: pinHash ?? null,
+      p_emergency: payload.emergency,
+      p_extras: payload.extras,
+      p_conditions: payload.conditions,
+    });
+    return { data, error };
+  }
+
+  async function rpcSetPin(pinHash) {
+    const { data, error } = await supabase.rpc('ec_set_pin', {
+      p_token: token,
+      p_pin_hash: pinHash, // required
+    });
+    return { data, error };
+  }
+  // --------------------------------------------------------------------------------------
+
+  function showPinUI(msg='This link is protected by a PIN.') {
+    el('status').textContent = msg;
+    el('pinBlock').style.display = '';
+    el('main').style.display = 'none';
+    el('pinMsg').textContent = '';
+  }
+  function showMainUI() {
+    el('status').textContent = '';
+    el('pinBlock').style.display = 'none';
+    el('main').style.display = '';
+  }
+  function logout() {
+    try { localStorage.removeItem('ec_pin_'+token); } catch {}
+    cachedPin = '';
+    ['ec_name','ec_relation','ec_phone','ec_email','drug_allergies','public_note','assistive_other'].forEach(id=>{
+      const x=el(id); if (x) x.value = '';
+    });
+    const conds = el('conds'); if (conds) conds.innerHTML='';
+    setNoConditionsUI(false);
+    showPinUI('Locked. Please enter PIN to continue.');
+  }
+
   function render(resp) {
-    console.log('RPC payload:', resp);
-
-    el('status').textContent='';
-    el('main').style.display='';
-
     const payload    = Array.isArray(resp) ? (resp[0] || {}) : (resp || {});
     const profile    = payload.profile || {};
     const conditions = Array.isArray(payload.conditions) ? payload.conditions : [];
 
-    // Emergency contact
     const em = getEmergency(profile);
     el('ec_name').value     = em.name || '';
     el('ec_relation').value = em.relation || '';
     el('ec_phone').value    = em.phone || '';
     el('ec_email').value    = em.email || '';
 
-    // Extras
     el('drug_allergies').value = profile.drug_allergies || '';
     el('public_note').value    = profile.public_note || '';
+
     const needs = Array.isArray(profile.assistive_needs) ? profile.assistive_needs : [];
     const showOther = needs.some(v=>String(v).startsWith('other:'));
     const assistDiv = el('assistive'); assistDiv.innerHTML='';
@@ -336,68 +351,123 @@
       ? String(needs.find(v=>String(v).startsWith('other:'))).replace(/^other:/,'')
       : '';
 
-    // Conditions UI
     const list = el('conds'); list.innerHTML='';
     const isSingleNil = conditions.length===1 && String(conditions[0]?.condition).toUpperCase()==='NIL';
     setNoConditionsUI(isSingleNil);
-
-    const initialConds = isSingleNil
-      ? []
-      : (conditions.length ? conditions : [{ medications:[{name:'',frequency:''}] }]);
-
+    const initialConds = isSingleNil ? [] : (conditions.length ? conditions : [{ medications:[{name:'',frequency:''}] }]);
     initialConds.forEach(c=> list.appendChild(condBlock(c)));
+  }
 
-    el('addCond').onclick = ()=> {
-      if (noConditions) setNoConditionsUI(false);
-      list.appendChild(condBlock({ medications:[{name:'',frequency:''}] }));
+  function wirePinEye() {
+    const pin = el('pinInput');
+    const eyeOpen = document.getElementById('eyeOpen');
+    const eyeClosed = document.getElementById('eyeClosed');
+    el('togglePin').onclick = () => {
+      const showing = pin.type === 'text';
+      pin.type = showing ? 'password' : 'text';
+      eyeOpen.style.display = showing ? '' : 'none';
+      eyeClosed.style.display = showing ? 'none' : '';
     };
   }
 
   (async function boot(){
-    const noCondsChip = el('noCondsChip');
-    noCondsChip.onclick = ()=> setNoConditionsUI(!noConditions);
+    el('logoutBtn').onclick = logout;
+    const addBtn = el('addCond'); if (addBtn) addBtn.addEventListener('click', addCondition);
+    el('noCondsChip').onclick = ()=> setNoConditionsUI(!noConditions);
+    wirePinEye();
 
-  const logoutBtn = el('logoutBtn');
+    if (!token) { el('status').textContent='Missing token'; return; }
 
-  if (!token) { el('status').textContent='Missing token'; return; }
+    // Try remembered PIN first (if any)
+    let data = null;
+    let error = null;
+    let storedPin = '';
+    try { storedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch (e) {}
 
-    let pin = localStorage.getItem('ec_pin_'+token) || '';
-    let pinHash = pin ? await sha256Hex(pin) : '';
+    if (storedPin) {
+      const h = await sha256Hex(storedPin);
+      const res = await rpcGet(h);
+      if (!res.error) {
+        data = res.data;
+        cachedPin = storedPin;
+      } else {
+        if (!/invalid pin|pin required/i.test(res.error.message || String(res.error))) {
+          console.error('rpcGet (cached pin) error:', res.error);
+        }
+      }
+    }
 
-    let { data, error } = await rpcGet(pinHash);
+    // If cached pin didn't unlock, probe without PIN (null)
+    if (data === null) {
+      const res2 = await rpcGet(null);
+      data = res2.data;
+      error = res2.error;
+      if (error && !/invalid pin|pin required|invalid token/i.test(error.message || String(error))) {
+        console.error('rpcGet error:', error);
+      }
+    }
+
     if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
-      el('status').textContent='This link is protected by a PIN.';
-      el('pinBlock').style.display='';
+      showPinUI('This link is protected by a PIN.');
       el('pinUseBtn').onclick = async () => {
-        const p = el('pinInput').value.trim();
+        const p = (el('pinInput').value||'').trim();
         if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
         const h = await sha256Hex(p);
         const r = await rpcGet(h);
         if (r.error) { el('pinMsg').textContent = r.error.message || 'Wrong PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        el('pinBlock').style.display='none'; render(r.data);
+        cachedPin = p;
+        if (el('rememberPin').checked) {
+          try { localStorage.setItem('ec_pin_'+token, p); } catch {}
+        }
+        showMainUI(); render(r.data);
       };
       el('pinSetBtn').onclick = async () => {
-        const p = el('pinInput').value.trim();
+        const p = (el('pinInput').value||'').trim();
         if (p.length < 4) { el('pinMsg').textContent='PIN must be 4+ digits'; return; }
         const h = await sha256Hex(p);
         const r = await rpcSetPin(h);
         if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to set PIN'; return; }
-        pin = p; pinHash = h; localStorage.setItem('ec_pin_'+token, pin);
-        const g = await rpcGet(h); render(g.data);
-        el('pinBlock').style.display='none';
+        cachedPin = p;
+        if (el('rememberPin').checked) {
+          try { localStorage.setItem('ec_pin_'+token, p); } catch {}
+        }
+        const g = await rpcGet(h);
+        showMainUI(); render(g.data);
       };
+      return;
+    } else if (error && /invalid token/i.test(error.message || String(error))) {
+      el('status').textContent = 'This link is invalid or has been revoked.'; return;
+    } else if (error) {
+      const msg = error.message || JSON.stringify(error);
+      el('status').textContent = 'Failed to load: ' + msg;
       return;
     }
 
-    if (error) { el('status').textContent = error.message || 'Failed to load'; return; }
-    el('status').textContent=''; render(data);
+    // Optional deletion guard (if your function returns these fields)
+    try {
+      const payloadCheck = Array.isArray(data) ? (data[0] || {}) : (data || {});
+      const profileCheck = payloadCheck.profile || {};
+      const scheduled_for = profileCheck.scheduled_for || null;
+      const deletion_status = profileCheck.deletion_status || null;
+      const scheduledDate = scheduled_for ? new Date(scheduled_for) : null;
+      const now = new Date();
+      const pendingDeletion = deletion_status === 'deletion_scheduled' || (scheduledDate && scheduledDate > now);
+      if (pendingDeletion) {
+        el('status').textContent = 'This account is scheduled for deletion. The portal is disabled.';
+        el('pinBlock').style.display = 'none';
+        el('main').style.display = 'none';
+        return;
+      }
+    } catch (e) {
+      console.warn('deletion check failed', e);
+    }
+
+    showMainUI();
+    render(data);
 
     el('saveBtn').onclick = async () => {
       el('saveMsg').textContent='Saving…';
-
       const list = [...document.querySelectorAll('#conds > .card')];
-
       let conditions;
       if (noConditions || list.length===0) {
         conditions = [ { ...NIL_COND } ];
@@ -423,32 +493,24 @@
         conditions
       };
 
-      const storedPin = localStorage.getItem('ec_pin_'+token) || '';
-      const h = await sha256Hex(storedPin || '');
+      if (!cachedPin) {
+        try { cachedPin = localStorage.getItem('ec_pin_'+token) || ''; } catch {}
+      }
+      const h = cachedPin ? await sha256Hex(cachedPin) : null;
       const { error: e } = await rpcSave(h, payload);
       el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
     };
-
-    // Logout button: clear stored PIN and return to PIN entry
-    logoutBtn.onclick = () => {
-      try {
-        localStorage.removeItem('ec_pin_'+token);
-      } catch(e) { /* ignore */ }
-      el('main').style.display = 'none';
-      el('pinBlock').style.display = '';
-      el('status').textContent = 'Signed out - enter PIN to continue.';
-    };
-
-    // show logout button when main is visible, hide when pinBlock is visible
-    const updateLogoutVisibility = () => {
-      logoutBtn.style.display = (el('main').style.display === '' ? '' : 'none');
-    };
-    updateLogoutVisibility();
-
-    // ensure logout visibility updates after pin actions
-    el('pinUseBtn').addEventListener('click', () => setTimeout(updateLogoutVisibility, 50));
-    el('pinSetBtn').addEventListener('click', () => setTimeout(updateLogoutVisibility, 50));
   })();
+
+  async function sha256Hex(s) {
+    const b = new TextEncoder().encode(s);
+    const h = await crypto.subtle.digest('SHA-256', b);
+    return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  }
+
+  window.onerror = (msg, src, line, col) => {
+    const s = el('status'); if (s) s.textContent = 'Error: ' + msg + ' (' + line + ':' + col + ')';
+  };
 </script>
 </body>
 </html>
