@@ -124,6 +124,7 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+  // ---- CONFIG ----
   const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";
   const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
   const supabase = createClient(PROJECT_URL, ANON_KEY);
@@ -138,8 +139,22 @@
   const NIL_COND = { condition:'NIL', doctor:'NIL', clinic:'NIL', appointments:'NIL', medications:[{...NIL_MED}] };
 
   let noConditions = false;
-  let cachedPin = ''; 
+  let cachedPin = '';
 
+  // ---- Diagnostics helper ----
+  function showRpcError(where, err) {
+    const m = [
+      `[${where}] RPC error`,
+      `code=${err?.code ?? '—'}`,
+      `message=${err?.message ?? '—'}`,
+      `details=${err?.details ?? '—'}`,
+      `hint=${err?.hint ?? '—'}`
+    ].join(' | ');
+    console.error(m, err);
+    const s = el('status'); if (s) s.textContent = m;
+  }
+
+  // ---- UI helpers ----
   function chip(parent, key, active) {
     const span = document.createElement('span');
     span.className = 'chip' + (active ? ' active':'');
@@ -274,29 +289,31 @@
     };
   }
 
+  // ---- RPC wrappers (keep TEXT types concrete by using '') ----
   async function rpcGet(pinHash) {
-    // Always provide p_pin_hash (use null when missing) so PostgREST can
-    // resolve the function overload that expects (p_pin_hash, p_token).
-    const params = { p_pin_hash: pinHash || null, p_token: token };
-    const { data, error } = await supabase.rpc('ec_get_portal', params);
+    const { data, error } = await supabase.rpc('ec_get_portal', {
+      p_pin_hash: (pinHash ?? ''),   // TEXT
+      p_token: String(token),        // TEXT
+    });
     return { data, error };
   }
 
   async function rpcSave(pinHash, payload) {
-    const params = {
-      p_pin_hash: pinHash || null,
-      p_token: token,
-      p_emergency: payload.emergency,
-      p_extras: payload.extras,
-      p_conditions: payload.conditions,
-    };
-    const { data, error } = await supabase.rpc('ec_save_portal', params);
+    const { data, error } = await supabase.rpc('ec_save_portal', {
+      p_pin_hash: (pinHash ?? ''),    // TEXT
+      p_token: String(token),         // TEXT
+      p_emergency: payload.emergency, // JSONB
+      p_extras: payload.extras,       // JSONB
+      p_conditions: payload.conditions// JSONB[]
+    });
     return { data, error };
   }
 
   async function rpcSetPin(pinHash) {
-    const params = { p_token: token, p_pin_hash: pinHash };
-    const { data, error } = await supabase.rpc('ec_set_pin', params);
+    const { data, error } = await supabase.rpc('ec_set_pin', {
+      p_token: String(token),
+      p_pin_hash: String(pinHash || '')
+    });
     return { data, error };
   }
 
@@ -375,8 +392,7 @@
 
     if (!token) { el('status').textContent='Missing token'; return; }
 
-    // Try a locally saved PIN first (remember device). This avoids an initial
-    // "invalid pin" error being logged when the token requires a PIN.
+    // Try a remembered PIN first
     let data = null;
     let error = null;
     let storedPin = '';
@@ -388,24 +404,22 @@
       if (!res.error) {
         data = res.data;
         cachedPin = storedPin;
-      } else {
-        // only log unexpected errors; handle expected 'invalid pin' below
-        if (!/invalid pin|pin required/i.test(res.error.message || String(res.error))) {
-          console.error('rpcGet (cached pin) error:', res.error);
-        }
+      } else if (!/invalid pin|pin required/i.test(res.error?.message || '')) {
+        showRpcError('rpcGet(cached)', res.error);
       }
     }
 
-    // If cached pin didn't unlock, try without PIN to detect if the link is open
+    // If cached pin didn’t work, try without pin to detect if the link is open
     if (data === null) {
       const res2 = await rpcGet('');
       data = res2.data;
       error = res2.error;
-      if (error && !/invalid pin|pin required|invalid token/i.test(error.message || String(error))) {
-        console.error('rpcGet error:', error);
+      if (error && !/invalid pin|pin required|invalid token/i.test(error?.message || '')) {
+        showRpcError('rpcGet(open)', error);
       }
     }
-    if (error && /invalid pin|pin required/i.test(error.message || String(error))) {
+
+    if (error && /invalid pin|pin required/i.test(error.message || '')) {
       showPinUI('This link is protected by a PIN.');
       el('pinUseBtn').onclick = async () => {
         const p = (el('pinInput').value||'').trim();
@@ -430,22 +444,18 @@
           try { localStorage.setItem('ec_pin_'+token, p); } catch {}
         }
         const g = await rpcGet(h);
+        if (g.error) { showRpcError('rpcGet(after set pin)', g.error); return; }
         showMainUI(); render(g.data);
       };
       return;
-    } else if (error && /invalid token/i.test(error.message || String(error))) {
+    } else if (error && /invalid token/i.test(error.message || '')) {
       el('status').textContent = 'This link is invalid or has been revoked.'; return;
     } else if (error) {
-      // show more detailed diagnostics in the portal UI to help debugging 400 responses
-      try {
-        const msg = error.message || JSON.stringify(error);
-        el('status').textContent = 'Failed to load: ' + msg;
-      } catch (e) {
-        el('status').textContent = 'Failed to load (unknown error)';
-      }
+      showRpcError('rpcGet', error);
       return;
     }
 
+    // Optional: block if deletion scheduled
     try {
       const payloadCheck = Array.isArray(data) ? (data[0] || {}) : (data || {});
       const profileCheck = payloadCheck.profile || {};
@@ -500,7 +510,12 @@
       }
       const h = cachedPin ? await sha256Hex(cachedPin) : '';
       const { error: e } = await rpcSave(h, payload);
-      el('saveMsg').textContent = e ? ('Failed: ' + (e.message || '')) : 'Saved!';
+      if (e) {
+        showRpcError('rpcSave', e);
+        el('saveMsg').textContent = 'Failed';
+      } else {
+        el('saveMsg').textContent = 'Saved!';
+      }
     };
   })();
 
