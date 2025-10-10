@@ -238,24 +238,37 @@ export default function ElderlyConditions() {
       if (!userId) {
         console.warn("No user in session");
       } else {
-        const { data: token, error } = await supabase.rpc(
+        const { data, error } = await supabase.rpc(
           "ec_issue_link_if_ready_for",
           { p_user: userId }
         );
+
         if (error) {
           console.warn("ec_issue_link_if_ready_for error:", error.message);
-        } else if (token) {
-          const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(
-            token as string
-          )}`;
+        }
+
+        // Support both return shapes: plain string or { token: string }
+        const token =
+          typeof data === "string"
+            ? data
+            : (data && typeof data === "object" && (data as any).token) || null;
+
+        if (token) {
+          const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(token)}`;
           await Share.share({ message: CAREGIVER_MESSAGE(url) });
         } else {
-          console.log("Profile not ready yet; no token returned");
+          // Not ready — guide the user
+          Alert.alert(
+            t("profile.noPortalTitle") || "No portal link yet",
+            t("profile.noPortalBody") ||
+              "Profile incomplete or no link. Please ensure you’ve filled your Emergency Contact and saved."
+          );
         }
       }
     } catch (e: any) {
       console.warn("share link failed:", e?.message || e);
     }
+
 
     router.replace("/tabs/HomePage");
   };

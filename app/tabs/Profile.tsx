@@ -108,9 +108,7 @@ export default function ElderlyProfile() {
         phone: prof.emergency_phone,
         email: prof.emergency_email,
       });
-      setAssistiveNeeds(
-        Array.isArray(prof.assistive_needs) ? prof.assistive_needs : []
-      );
+      setAssistiveNeeds(Array.isArray(prof.assistive_needs) ? prof.assistive_needs : []);
       setDrugAllergies(prof.drug_allergies ?? "");
       setPublicNote(prof.public_note ?? "");
     } else {
@@ -135,22 +133,28 @@ export default function ElderlyProfile() {
     const { data: meds } = await supabase
       .from("elderly_medications")
       .select("condition_id, name, frequency")
-      .in("condition_id", ids);
+      .in("condition_id", ids)
+      .order("created_at", { ascending: true });
 
-    const medMap = new Map<
-      string,
-      { name: string; frequency?: string | null }[]
-    >();
+    const medMap = new Map<string, { name: string; frequency?: string | null }[]>();
+    (meds ?? []).forEach((m: any) => {
+      const arr = medMap.get(m.condition_id) ?? [];
+      arr.push({ name: m.name, frequency: m.frequency ?? null });
+      medMap.set(m.condition_id, arr);
+    });
+
     const merged: ConditionItem[] = conds.map((c: any) => ({
       id: c.id,
       condition: c.condition,
       doctor: c.doctor,
       clinic: c.clinic,
       appointments: c.appointments,
-      meds: medMap.get(c.id) || [],
+      meds: medMap.get(c.id) ?? [],
     }));
+
     setConditions(merged);
   }, [session?.userId]);
+
 
   useEffect(() => {
     loadData();
@@ -288,8 +292,6 @@ export default function ElderlyProfile() {
       return;
     }
 
-    // Check profile deletion status first — if account is scheduled for deletion,
-    // the portal should not be shareable.
     const { data: profileRow } = await supabase
       .from("elderly_profiles")
       .select("scheduled_for, deletion_status")
@@ -305,7 +307,6 @@ export default function ElderlyProfile() {
       if (pendingDeletion) {
         Alert.alert(
           t("profile.delete.title"),
-          // fallback text if translation missing
           t("profile.delete.explain") || "Portal disabled while account pending deletion."
         );
         return;
