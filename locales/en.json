@@ -1,5 +1,37 @@
 {
+  "common": {
+    "on": "On",
+    "off": "Off",
+    "ok": "OK",
+    "save": "Save",
+    "cancel": "Cancel",
+    "notLoggedIn": "Not logged in",
+    "pleaseLoginAgain": "Please log in again.",
+    "error": "Error"
+  },
+  "alerts": {
+    "codeSentTitle": "Code sent",
+    "codeSentBody": "Use 123456 for now (mock).",
+    "sendFailedTitle": "Oops",
+    "sendFailedBody": "Account is not registered.",
+    "invalidCodeTitle": "Invalid code",
+    "invalidCodeBody": "Please check and try again.",
+    "signupInvalidTitle": "Check details",
+    "signupInvalidBody": "All fields are required. Password must be at least 8 characters.",
+    "passwordMismatchTitle": "Passwords don’t match",
+    "passwordMismatchBody": "Please re-enter your password.",
+    "signupFailedTitle": "Sign up failed",
+    "signupFailedBody": "That phone may already be registered.",
+    "noAccountTitle": "No account found",
+    "noAccountBody": "You’ll be redirected to sign up.",
+    "inputMismatchTitle": "Confirmation mismatch",
+    "inputMismatchBody": "Please type DELETE exactly to continue.",
+    "genericFailTitle": "Something went wrong",
+    "genericFailBody": "Please try again."
+  },
   "auth": {
+    "notLoggedInTitle": "Not logged in",
+    "notLoggedInBody": "Please log in to request account deletion.",
     "login": {
       "title": "Welcome back",
       "subtitle": "Please enter your phone number",
@@ -23,29 +55,20 @@
       "confirmPH": "Re-enter password",
       "button": "Sign up",
       "haveAccount": "Already have an account?",
-      "login": "Log in"
+      "login": "Log In",
+      "phoneInvalidLength": "Phone number must be exactly {{digits}} digits.",
+      "passwordTooShort": "Password must be at least {{min}} characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "phoneHintExact": "Enter exactly {{digits}} digits (we’ll format the rest).",
+      "passwordHint": "At least {{min}} characters"
+    },
+    "restore": {
+      "restoredTitle": "Account restored",
+      "restoredBody": "Your account and EC Portal are active again."
     }
   },
-
-  "alerts": {
-    "codeSentTitle": "Code sent",
-    "codeSentBody": "Use 123456 for now (mock).",
-    "sendFailedTitle": "Oops",
-    "sendFailedBody": "Account is not registered.",
-    "invalidCodeTitle": "Invalid code",
-    "invalidCodeBody": "Please check and try again.",
-    "signupInvalidTitle": "Check details",
-    "signupInvalidBody": "Phone and password are required. Password must be at least 6 characters.",
-    "passwordMismatchTitle": "Passwords don’t match",
-    "passwordMismatchBody": "Please re-enter your password.",
-    "signupFailedTitle": "Sign up failed",
-    "signupFailedBody": "That phone may already be registered.",
-    "noAccountTitle": "No account found",
-    "noAccountBody": "You’ll be redirected to sign up."
-  },
-
   "elderlyOnboarding": {
-    "title": "Please fill in these fields",
+    "title": "Onboarding",
     "namePH": "Full Name",
     "yobPH": "Year of Birth (e.g. 1950)",
     "genderLabel": "Gender",
@@ -62,7 +85,6 @@
     "ecPhonePH": "Emergency Contact Phone",
     "ecEmailPH": "Emergency Contact Email (optional)"
   },
-
   "elderlyConditions": {
     "title": "Health Conditions & Medications",
     "conditionTitle": "Condition {{index}}",
@@ -91,37 +113,30 @@
     },
     "drugAllergiesPH": "Any known drug allergies?",
     "publicNotePH": "Note to public (e.g., please call this number if found disoriented)",
-
     "noConditions": "No conditions",
     "noMedicationsForThis": "No medications for this condition",
-
     "errors": {
       "invalidMed": "Medication name and frequency cannot be empty.",
       "missingConditionName": "Please enter at least one condition name (or tick 'No conditions').",
       "saveFailed": "Could not save. Please try again."
     }
   },
-
-"home": {
-  "imActive": "I’m Active",
-  "tapToCheckIn": "Tap to check in",
-  "checkedIn": "Checked in today",
-
-  "navigation": "Navigation",
-  "ccActivities": "CC Activities",
-  "profile": "Profile",
-  "walkingRoutes": "Walking Routes",
-
-  "sos": "SOS",
-
-  "nearby": "Navigation",
-  "activities": "CC Activities",
-  "appt": "Profile",
-  "meds": "Walking Routes"
-},
-
+  "home": {
+    "imActive": "I’m Active",
+    "tapToCheckIn": "Tap to check in",
+    "checkedIn": "Checked in today",
+    "navigation": "Navigation",
+    "ccActivities": "CC Activities",
+    "profile": "Profile",
+    "walkingRoutes": "Walking Routes",
+    "clinics": "Clinics",
+    "sos": "SOS"
+  },
+  "homeTab": "Home",
   "profile": {
+    "title": "Profile",
     "basicInfo": "Basic Information",
+    "name": "Name",
     "editBasic": "Edit basic details",
     "healthCard": "Emergency Health Card",
     "emergencyContacts": "Emergency Contacts",
@@ -129,30 +144,73 @@
     "conditions": "Conditions",
     "assistive": "Assistive needs",
     "publicNote": "Note for public",
-    "editCard": "Edit Card",
-    "showQr": "Show QR",
-    "lockScreenHint": "Tip: Add this card to your lock screen widget so helpers can view it without unlocking your phone.",
-    "inactivityAlerts": "Inactivity alert (hrs)",
-    "sosNotify": "SOS notifications",
     "locationShare": "Real-time location sharing",
     "accessibility": "Accessibility",
-    "tts": "Text to speech",
     "textSize": "Text size",
-    "accessibilityNote": "Large text and simple contrast help readability. You can also use the speaker button to read screens aloud.",
+    "accessibilityNote": "Use large text and clear contrast.",
     "activity": "Activity & Rewards",
     "streak": "Current streak (days)",
     "coins": "Total coins",
     "navigation": "Navigation",
     "accessibleRoutes": "Prefer accessible routes (lifts/ramps)",
     "remindEvery10": "Destination reminder every 10 mins",
-    "navigationNote": "You can change route and reminder preferences here later. Real-time clinic wait times and safe routes show in the map screen.",
-    "community": "Community",
-    "ccActivities": "Show nearby community activities",
-    "viewActivities": "View activities"
-},
-
-"rewards": {
-  "title": "Rewards",
+    "navigationNote": "Change route/reminder later. Map shows wait times.",
+    "open": "Open profile",
+    "noPortalTitle": "No portal link yet",
+    "noPortalBody": "Profile incomplete or no link.",
+    "sharePortal": "Share EC Portal link",
+    "delete": {
+      "title": "Delete Account",
+      "explain": "Portal disabled. Account scheduled for deletion in 14 days.",
+      "button": "Delete My Account",
+      "continue": "Confirm delete",
+      "cardExplain": "If you no longer wish to use ElderCare, you can delete your account.",
+      "scheduledTitle": "Deletion scheduled",
+      "scheduledBody": "You can restore within 14 days by logging back in.",
+      "modalTitle": "Confirm account deletion",
+      "modalExplain": "Are you sure you want to delete your account? This action cannot be undone.",
+      "optionalReason": "Optional: Reason to help us improve",
+      "confirmStepTitle": "Confirm",
+      "confirmStepCheckbox": "I understand this will disable my portal and delete my account after 14 days.",
+      "continueShort": "Next",
+      "confirmDeletion": "Confirm delete now",
+      "reasonPH_modal": "Reason (optional)",
+      "typeToConfirm": "Please type '{{phrase}}' to confirm deletion.",
+      "typePH": "Type confirmation phrase here",
+      "goodbyeMessage": "We will miss you — you can restore your account within 14 days by logging back in.",
+      "typeMismatch": "Type the exact confirmation phrase to continue.",
+      "step1Title": "Verify",
+      "step1Body": "We'll send a code to verify.",
+      "sendVerification": "Send verification code",
+      "step2Title": "Enter code",
+      "enterCodePH": "Enter code",
+      "verifyBtn": "Verify code",
+      "cancelRequest": "Cancel request",
+      "afterVerificationNote": "After verify, confirm. Restore within 14 days.",
+      "close": "Close",
+      "confirmSchedule": "Confirm schedule deletion",
+      "verificationSentTitle": "Verification sent",
+      "verificationSentBody": "A verification code (mock) was generated: {{code}}. Enter it to verify your request. This code expires in {{minutes}} minutes.",
+      "incorrectCode": "Incorrect code",
+      "enterCodeRequired": "Enter the verification code",
+      "verifiedTitle": "Verified",
+      "verifiedBody": "Code accepted. Confirm to schedule deletion (14-day hold).",
+      "verifiedWithTokenBody": "Code accepted. Your restore code: {{token}}. You can restore within 14 days.",
+      "scheduledAlertTitle": "Account scheduled for deletion",
+      "scheduledAlertBody": "Your account and associated data are scheduled for deletion on {{date}}. You can restore within 14 days using the restore code: {{token}}",
+      "cancelledTitle": "Cancelled",
+      "cancelledBody": "Your deletion request has been cancelled.",
+      "failedInsert": "Failed to request deletion",
+      "failedVerify": "Failed to verify",
+      "failedSchedule": "Failed to schedule deletion",
+      "failedCancel": "Failed to cancel",
+      "copy": "Copy",
+      "copySuccess": "Copied to clipboard",
+      "copyUnavailable": "Clipboard not available on this device. Please copy the code manually."
+    }
+  },
+  "rewards": {
+    "title": "Rewards",
     "balance": "Your Coins",
     "coin": "coin",
     "coins": "coins",
@@ -167,7 +225,7 @@
     "successTitle": "Redeemed!",
     "successBody": "Your voucher code is {{code}}. You can find it under “Owned”.",
     "notEnoughTitle": "Not enough coins",
-    "notEnoughBody": "You don't have enough coins to redeem this item.",
+    "notEnoughBody": "You don't have enough coins.",
     "ownedTitle": "Owned vouchers",
     "noneOwned": "You haven't redeemed anything yet.",
     "voucher": "Voucher",
@@ -198,14 +256,72 @@
       }
     }
   },
-
-  "common": {
-    "on": "On",
-    "off": "Off",
-    "ok": "OK",
-    "save": "Save",
-    "cancel": "Cancel",
-    "notLoggedIn": "Not logged in",
-    "pleaseLoginAgain": "Please log in again."
+  "community": {
+    "title": "CC Activities",
+    "searchPlaceholder": "Search by title",
+    "ui": { "search": "Search" },
+    "noEvents": "No events found.",
+    "details": "No description.",
+    "register": "Register",
+    "getDirections": "Get Directions",
+    "all": "All",
+    "filters": {
+      "title": "Filters",
+      "categories": "Categories",
+      "timing": "Timing",
+      "distance": "Distance",
+      "price": "Price",
+      "reset": "Reset",
+      "apply": "Apply"
+    },
+    "timing": {
+      "today": "Today",
+      "week": "This Week",
+      "upcoming": "Upcoming"
+    },
+    "distance": {
+      "near": "Nearest",
+      "far": "Farthest",
+      "none": "No sort"
+    },
+    "price": {
+      "all": "All",
+      "freeOnly": "Free only",
+      "paidOnly": "Paid only"
+    },
+    "priceOptions": {
+      "free": "Free",
+      "paid": "Paid"
+    },
+    "categories": {
+      "healthFitness": "Health & Fitness",
+      "artsCulture": "Arts & Culture",
+      "activeAging": "Active Aging",
+      "parentingEducation": "Parenting & Education",
+      "exhibitionFair": "Exhibition & Fair",
+      "neighbourhoodEvents": "Neighbourhood Events",
+      "celebrationFestivity": "Celebration & Festivity",
+      "kopiTalksDialogues": "Kopi Talks & Dialogues",
+      "charityVolunteerism": "Charity & Volunteerism",
+      "overseasOutingsTours": "Overseas Outings & Tours"
+    },
+    "categorySummary": {
+      "one": "There is {{count}} event under {{category}}",
+      "other": "There are {{count}} events under {{category}}"
+    },
+    "sortSummary": {
+      "default": "All categories · Upcoming · Nearest · Price: All",
+      "custom": "{{categories}} · {{timing}} · {{distance}}"
     }
+  },
+  "clinic": { "title": "Clinic" },
+  "walkingRoutes": { "title": "Walking Routes" },
+  "navigation": { "title": "Navigation" },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "hint": "Open app settings and language",
+    "switchTo": "Switch language to",
+    "logout": "Log out"
+  }
 }

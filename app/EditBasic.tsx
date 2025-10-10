@@ -126,7 +126,6 @@ export default function EditBasic() {
         language={i18n.language as LangCode}
         setLanguage={setLanguage}
         title={t("profile.editBasic")}
-        showHeart={false}
       />
 
       <KeyboardAvoidingView

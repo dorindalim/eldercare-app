@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
@@ -16,9 +17,20 @@ export default function ElderlyHome() {
   const { t, i18n } = useTranslation();
   const { session, logout } = useAuth();
 
-  const { coins, weekChecks, todayChecked, checkInToday } = useCheckins(
+  const { coins, weekChecks, todayChecked, checkInToday, refresh } = useCheckins(
     session?.userId
   );
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
@@ -33,13 +45,14 @@ export default function ElderlyHome() {
   };
 
   return (
-    <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        title="Home"
-        showHeart
-        onSpeak={() => Alert.alert("TTS", "Read screen aloud")}
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
+        title={t("homeTab")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");
@@ -49,6 +62,9 @@ export default function ElderlyHome() {
       <ScrollView
         contentContainerStyle={s.scroll}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" colors={["#111827"]} />
+        }
       >
         <CheckinCard
           titleKey="home.imActive"
@@ -86,13 +102,10 @@ export default function ElderlyHome() {
 
         {/* Row 2: Profile + Walking Routes */}
         <View style={s.row}>
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/tabs/Profile")}
-          >
-            <Ionicons name="person-circle-outline" size={28} color="#222" />
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
+            <Ionicons name="medkit-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.profile", "Profile")}
+              {t("home.clinics", "Clinics")}
             </AppText>
           </Pressable>
 

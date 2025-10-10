@@ -1,14 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useTranslation } from "react-i18next";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type LangCode = "en" | "zh" | "ms" | "ta";
 
@@ -24,60 +19,101 @@ type Props = {
   setLanguage: (code: LangCode) => void;
 
   title?: string;
-  showHeart?: boolean;
-  onSpeak?: () => void;
+  titleKey?: string;
 
-  onLogout?: () => void;
+  bgColor?: string;         
+  textColor?: string;      
+  borderColor?: string;   
+  barHeight?: number;
+  topPadding?: number;
+  bottomRadius?: number;
+
+  curveDown?: boolean;
+  curveDepth?: number; 
+  cutoutColor?: string; 
+
+  onOpenProfile?: () => void;
+  onLogout?: () => Promise<void> | void;
+  // dynamic island / notch support
+  includeTopInset?: boolean;
 };
 
 export default function TopBar({
   language,
   setLanguage,
-  title = "Home",
-  showHeart = true,
-  onSpeak,
+  title,
+  titleKey,
+  bgColor = "#FFFFFF",
+  textColor = "#111827",
+  borderColor = "#E5E7EB",
+  onOpenProfile,
   onLogout,
+  includeTopInset = false,
+  barHeight = 56,
+  topPadding = 6,
+  bottomRadius = 12,
+  curveDown = false,
+  curveDepth = 100,
+  cutoutColor = "#F8FAFC",
 }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const activeLang = useMemo(
-    () => LANGS.find((l) => language?.startsWith(l.code))?.code ?? "en",
+    () => (LANGS.find((l) => language?.startsWith(l.code))?.code ?? "en") as LangCode,
     [language]
   );
 
+  const resolvedTitle = titleKey ? t(titleKey) : (title ?? "");
+
+  const topInset = includeTopInset ? insets.top : 0;
+  const resolvedBarHeight = barHeight;
+  const resolvedTopPadding = topPadding;
+
   return (
-    <View style={s.topBar}>
-      {/* Left: Settings (opens menu) */}
+    <View
+      style={[
+        s.topBar,
+        {
+          backgroundColor: bgColor,
+          borderBottomColor: borderColor,
+          borderBottomLeftRadius: curveDown ? 0 : bottomRadius,
+          borderBottomRightRadius: curveDown ? 0 : bottomRadius,
+          overflow: curveDown ? "visible" : Platform.OS === "android" ? "hidden" : undefined,
+          height: resolvedBarHeight + topInset,
+          paddingTop: topInset + resolvedTopPadding,
+        },
+      ]}
+    >
+      {/* Left: Settings (always) */}
       <Pressable
-        accessibilityLabel="Settings"
+        accessibilityLabel={t("settings.title", "Settings")}
+        accessibilityHint={t("settings.hint", "Open app settings and language")}
         hitSlop={8}
         onPress={() => setMenuOpen(true)}
+        style={{ padding: 4 }}
       >
-        <Ionicons name="settings-outline" size={24} />
+        <Ionicons name="settings-outline" size={24} color={textColor} />
       </Pressable>
 
-      {/* Center title (optional) */}
+      {/* Center: Title (localized) */}
       <View style={s.center}>
-        {showHeart && (
-          <Ionicons
-            name="heart-outline"
-            size={18}
-            style={{ marginBottom: 2 }}
-          />
-        )}
-        {!!title && <Text style={s.title}>{title}</Text>}
+        {!!resolvedTitle && <Text style={[s.title, { color: textColor }]}>{resolvedTitle}</Text>}
       </View>
 
-      {/* Right: TTS button (optional) */}
+      {/* Right: Profile */}
       <Pressable
-        onPress={onSpeak}
-        accessibilityLabel="Read screen aloud"
+        onPress={() => {
+          if (onOpenProfile) onOpenProfile();
+          else router.push("/tabs/Profile");
+        }}
+        accessibilityLabel={t("profile.open", "Open profile")}
         hitSlop={8}
-        style={{ opacity: onSpeak ? 1 : 0.35 }}
-        disabled={!onSpeak}
+        style={{ padding: 4 }}
       >
-        <Ionicons name="volume-high-outline" size={20} />
+        <Ionicons name="person-circle-outline" size={30} color={textColor} />
       </Pressable>
 
       {/* Settings Menu (modal) */}
@@ -90,10 +126,12 @@ export default function TopBar({
         {/* Tap-outside to close */}
         <Pressable style={s.backdrop} onPress={() => setMenuOpen(false)} />
 
-        <View style={s.menu}>
-          <Text style={s.menuHeader}>Settings</Text>
+  <View style={[s.menu, { borderColor, top: resolvedBarHeight + topInset + 8 }]}>
+          <Text style={[s.menuHeader, { color: textColor }]}>
+            {t("settings.title", "Settings")}
+          </Text>
 
-          <Text style={s.menuLabel}>Language</Text>
+          <Text style={[s.menuLabel, { color: textColor }]}>{t("settings.language", "Language")}</Text>
           <View style={s.langRow}>
             {LANGS.map((l) => {
               const active = activeLang === l.code;
@@ -104,37 +142,53 @@ export default function TopBar({
                     setLanguage(l.code);
                     setMenuOpen(false);
                   }}
-                  style={[s.langChip, active && s.langChipActive]}
-                  accessibilityLabel={`Switch language to ${l.label}`}
+                  style={[s.langChip, active && { backgroundColor: "#111827", borderColor: "#111827" }]}
+                  accessibilityLabel={t("settings.switchTo", "Switch language to") + " " + l.label}
                 >
-                  <Text style={[s.langText, active && s.langTextActive]}>
-                    {l.label}
-                  </Text>
+                  <Text style={[s.langText, active && { color: "#FFFFFF" }]}>{l.label}</Text>
                 </Pressable>
               );
             })}
           </View>
 
-          <View style={s.divider} />
+          <View style={[s.divider, { backgroundColor: borderColor }]} />
 
-          <Pressable
-            onPress={async () => {
-              setMenuOpen(false);
-              if (onLogout) await onLogout();
-              router.replace("/Authentication/LogIn");
-            }}
-            style={s.rowBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Log out"
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={20}
-              color="#B91C1C"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={[s.rowBtnText, { color: "#B91C1C" }]}>Log out</Text>
-          </Pressable>
+          {!!onLogout && (
+            <Pressable
+              onPress={async () => {
+                setMenuOpen(false);
+                await onLogout();
+              }}
+              style={s.rowBtn}
+              accessibilityRole="button"
+              accessibilityLabel={t("settings.logout", "Log out")}
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color="#B91C1C"
+                style={{ marginRight: 8 }}
+              />
+
+              {/* concave cutout: render a circle of the screen background color to "cut" into the bottom of the bar */}
+              {curveDown && (
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    marginLeft: -curveDepth / 2,
+                    bottom: -curveDepth / 2,
+                    width: curveDepth,
+                    height: curveDepth,
+                    backgroundColor: cutoutColor,
+                    borderRadius: curveDepth / 2,
+                  }}
+                />
+              )}
+              <Text style={[s.rowBtnText, { color: "#B91C1C" }]}>{t("settings.logout", "Log out")}</Text>
+            </Pressable>
+          )}
         </View>
       </Modal>
     </View>
@@ -150,9 +204,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 6,
     paddingBottom: 6,
+    borderBottomWidth: Platform.OS === "ios" ? 0.5 : 1,
+    // ensure child contents are clipped to the rounded bottom corners on Android
+    overflow: Platform.OS === "android" ? "hidden" : undefined,
   },
   center: { alignItems: "center", gap: 2, flexDirection: "row" },
-  title: { fontSize: 16, fontWeight: "700", color: "#111827", marginLeft: 6 },
+  title: { fontSize: 16, fontWeight: "700" },
 
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -167,7 +224,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -177,12 +233,10 @@ const s = StyleSheet.create({
   menuHeader: {
     fontWeight: "800",
     fontSize: 16,
-    color: "#111827",
     marginBottom: 8,
   },
   menuLabel: {
     fontWeight: "700",
-    color: "#111827",
     marginTop: 6,
     marginBottom: 8,
   },
@@ -198,19 +252,10 @@ const s = StyleSheet.create({
     marginBottom: 8,
     backgroundColor: "#FFF",
   },
-  langChipActive: { backgroundColor: "#111827", borderColor: "#111827" },
   langText: { fontSize: 12, fontWeight: "700", color: "#111827" },
-  langTextActive: { color: "#FFFFFF" },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E7EB",
-    marginVertical: 10,
-  },
-  rowBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  rowBtnText: { fontSize: 14, fontWeight: "800", color: "#111827" },
+  divider: { height: 1, marginVertical: 10 },
+  rowBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+  rowBtnText: { fontSize: 14, fontWeight: "800" },
 });
+

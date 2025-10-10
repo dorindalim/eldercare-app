@@ -7,12 +7,17 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   AppState,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
-  View,
+  TextInput,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -51,7 +56,7 @@ const isNil = (v?: string | null) =>
 export default function ElderlyProfile() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
 
   const {
     coins,
@@ -69,6 +74,14 @@ export default function ElderlyProfile() {
   const [publicNote, setPublicNote] = useState<string>("");
   const [conditions, setConditions] = useState<ConditionItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletionReason, setDeletionReason] = useState("");
+  const [typedConfirm, setTypedConfirm] = useState("");
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0); 
+  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [deleteProcessing, setDeleteProcessing] = useState(false);
+  const [scheduledDeletion, setScheduledDeletion] = useState<string | null>(null);
 
   const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
@@ -95,9 +108,7 @@ export default function ElderlyProfile() {
         phone: prof.emergency_phone,
         email: prof.emergency_email,
       });
-      setAssistiveNeeds(
-        Array.isArray(prof.assistive_needs) ? prof.assistive_needs : []
-      );
+      setAssistiveNeeds(Array.isArray(prof.assistive_needs) ? prof.assistive_needs : []);
       setDrugAllergies(prof.drug_allergies ?? "");
       setPublicNote(prof.public_note ?? "");
     } else {
@@ -122,15 +133,13 @@ export default function ElderlyProfile() {
     const { data: meds } = await supabase
       .from("elderly_medications")
       .select("condition_id, name, frequency")
-      .in("condition_id", ids);
+      .in("condition_id", ids)
+      .order("created_at", { ascending: true });
 
-    const medMap = new Map<
-      string,
-      { name: string; frequency?: string | null }[]
-    >();
-    meds?.forEach((m: any) => {
-      const arr = medMap.get(m.condition_id) || [];
-      arr.push({ name: m.name, frequency: m.frequency });
+    const medMap = new Map<string, { name: string; frequency?: string | null }[]>();
+    (meds ?? []).forEach((m: any) => {
+      const arr = medMap.get(m.condition_id) ?? [];
+      arr.push({ name: m.name, frequency: m.frequency ?? null });
       medMap.set(m.condition_id, arr);
     });
 
@@ -140,15 +149,61 @@ export default function ElderlyProfile() {
       doctor: c.doctor,
       clinic: c.clinic,
       appointments: c.appointments,
-      meds: medMap.get(c.id) || [],
+      meds: medMap.get(c.id) ?? [],
     }));
+
     setConditions(merged);
   }, [session?.userId]);
+
 
   useEffect(() => {
     loadData();
     refreshCheckins();
   }, [loadData, refreshCheckins]);
+
+  const confirmTypedDeletion = async (typed: string) => {
+    if (!session?.userId) {
+      Alert.alert(t('auth.notLoggedInTitle'), t('auth.notLoggedInBody'));
+      return;
+    }
+
+    const expected = 'DELETE MY ACCOUNT';
+    if (typed.trim().toUpperCase() !== expected) {
+      Alert.alert(t('common.error'), t('delete.typeMismatch') || 'Please type the exact phrase to confirm.');
+      return;
+    }
+
+    setDeleteProcessing(true);
+    try {
+      const now = new Date();
+      const scheduled = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      const { error } = await supabase
+        .from('elderly_profiles')
+        .update({
+          scheduled_for: scheduled.toISOString(),
+          deletion_reason: deletionReason || null,
+          deletion_requested_at: new Date().toISOString(),
+          deletion_status: 'deletion_scheduled',
+        })
+        .eq('user_id', session.userId);
+
+      if (error) {
+        Alert.alert(t('common.error'), error.message || t('delete.failedSchedule'));
+        return;
+      }
+
+      Alert.alert(t('delete.scheduledAlertTitle'), t('delete.scheduledBody'));
+      setShowDeleteModal(false);
+      try {
+        await logout();
+      } catch (e) {
+      }
+      router.replace('/Authentication/LogIn');
+    } finally {
+      setDeleteProcessing(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -214,7 +269,6 @@ export default function ElderlyProfile() {
     return () => sub.remove();
   }, [loadData, refreshCheckins]);
 
-  // Pretty-print assistive codes (and localize)
   const prettifyAssistive = (code: string) => {
     if (code.startsWith("other:")) return code.replace(/^other:/, "").trim();
     const MAP: Record<string, string> = {
@@ -232,11 +286,31 @@ export default function ElderlyProfile() {
     return assistiveNeeds.map(prettifyAssistive).join(", ");
   }, [assistiveNeeds, i18n.language]);
 
-  // Share EC Portal link
   const onShareEcPortal = useCallback(async () => {
     if (!session?.userId) {
-      Alert.alert("Not logged in", "Please log in again.");
+      Alert.alert(t('common.notLoggedIn'), t('common.pleaseLoginAgain'));
       return;
+    }
+
+    const { data: profileRow } = await supabase
+      .from("elderly_profiles")
+      .select("scheduled_for, deletion_status")
+      .eq("user_id", session.userId)
+      .maybeSingle();
+
+    if (profileRow) {
+      const { scheduled_for, deletion_status } = profileRow as any;
+      const scheduledDate = scheduled_for ? new Date(scheduled_for) : null;
+      const now = new Date();
+      const pendingDeletion =
+        deletion_status === "deletion_scheduled" || (scheduledDate && scheduledDate > now);
+      if (pendingDeletion) {
+        Alert.alert(
+          t("profile.delete.title"),
+          t("profile.delete.explain") || "Portal disabled while account pending deletion."
+        );
+        return;
+      }
     }
 
     const { data: linkRow } = await supabase
@@ -272,15 +346,19 @@ export default function ElderlyProfile() {
   }, [session?.userId]);
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#F8FAFC" }}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang}
-        title="Profile"
-        showHeart={false}
+        bgColor="#D2AB80"
+        includeTopInset={true}
+        barHeight={44}
+        topPadding={2}
+        title={t("profile.title")}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
       />
 
       <ScrollView
@@ -384,7 +462,7 @@ export default function ElderlyProfile() {
           {/* Share EC Portal link button */}
           <Pressable style={s.btn} onPress={onShareEcPortal}>
             <AppText variant="button" weight="800" color="#FFF">
-              Share EC Portal link
+              {t('profile.sharePortal')}
             </AppText>
           </Pressable>
         </View>
@@ -504,6 +582,109 @@ export default function ElderlyProfile() {
         </View>
 
         <View style={{ height: 24 }} />
+
+        {/* Delete modal */}
+        <Modal visible={showDeleteModal} animationType="slide" transparent>
+          <Pressable style={s.modalOverlay} onPress={() => { Keyboard.dismiss(); }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={s.modalFlex}
+            >
+              <ScrollView
+                contentContainerStyle={s.modalScrollContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={s.modalCard} onStartShouldSetResponder={() => true}>
+              <AppText variant="h2" weight="800">
+                {t("profile.delete.modalTitle")}
+              </AppText>
+              <AppText
+                variant="label"
+                weight="700"
+                color="#374151"
+                style={{ marginTop: 8 }}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {t("profile.delete.modalExplain")}
+              </AppText>
+
+              <AppText variant="caption" color="#000000" style={{ marginTop: 8 }}>
+                {t("profile.delete.optionalReason")}
+              </AppText>
+
+              <TextInput
+                style={[s.input, { color: "#000000" }]}
+                placeholder={t("profile.delete.reasonPH_modal")}
+                value={deletionReason}
+                onChangeText={setDeletionReason}
+                multiline
+              />
+              {/* Simplified single-step deletion flow */}
+              <View style={{ marginTop: 8 }}>
+                <AppText variant="label" weight="700">{t("profile.delete.confirmStepTitle")}</AppText>
+                <AppText variant="caption" color="#6B7280" style={{ marginTop: 10 }}>{t("profile.delete.typeToConfirm", { phrase: 'DELETE MY ACCOUNT' })}</AppText>
+                <TextInput
+                  style={[s.input, { color: "#000" }]}
+                  placeholder={t('profile.delete.typePH')}
+                  value={typedConfirm}
+                  onChangeText={setTypedConfirm}
+                  autoCapitalize="characters"
+                />
+
+                <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 14 }}>
+                  <Pressable
+                    style={[s.btn, { backgroundColor: "#DC2626" }, (!confirmChecked || !typedConfirm.trim()) && { opacity: 0.5 }]}
+                    onPress={() => confirmTypedDeletion(typedConfirm)}
+                    disabled={!confirmChecked || !typedConfirm.trim() || deleteProcessing}
+                  >
+                    <AppText variant="button" weight="800" color="#FFF">{t('profile.delete.confirmDeletion')}</AppText>
+                  </Pressable>
+                  <Pressable style={[s.btn, s.btnSecondary]} onPress={() => setShowDeleteModal(false)}>
+                    <AppText variant="button" weight="800" color="#111827">{t('common.cancel')}</AppText>
+                  </Pressable>
+                </View>
+
+                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
+                  <Pressable
+                    onPress={() => setConfirmChecked(!confirmChecked)}
+                    style={{ width: 22, height: 22, borderWidth: 1, borderColor: "#D1D5DB", borderRadius: 4, alignItems: "center", justifyContent: "center", backgroundColor: confirmChecked ? "#111827" : "#FFF" }}
+                  >
+                    {confirmChecked ? <Ionicons name="checkmark" size={14} color="#FFF" /> : null}
+                  </Pressable>
+                  <AppText variant="caption" color="#6B7280" style={{ marginLeft: 8 }}>{t("profile.delete.confirmStepCheckbox")}</AppText>
+                </View>
+              </View>
+                  <View style={{ height: 12 }} />
+
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </Pressable>
+        </Modal>
+        {/* Delete Account Section */}
+        <View style={s.card}>
+          <AppText variant="h2" weight="800">
+            {t("profile.delete.title")}
+          </AppText>
+
+          <AppText variant="label" weight="700" color="#000000" style={{ marginTop: 6 }}>
+            {t("profile.delete.cardExplain")}
+          </AppText>
+
+          <AppText variant="caption" color="#6B7280" style={{ marginTop: 8 }}>
+            {t("profile.delete.scheduledBody")}
+          </AppText>
+
+          <Pressable
+            style={[s.btn, { backgroundColor: "#DC2626", marginTop: 12 }]}
+            onPress={() => setShowDeleteModal(true)}
+          >
+            <AppText variant="button" weight="800" color="#FFF">
+              {t("profile.delete.button")}
+            </AppText>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -552,4 +733,11 @@ const s = StyleSheet.create({
   },
 
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(2,6,23,0.45)", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalCard: { backgroundColor: "#FFF", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "#E5E7EB", width: "100%", maxWidth: 560 },
+  modalFlex: { flex: 1, width: "100%", justifyContent: "center" },
+  modalScrollContent: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 20 },
+  input: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, padding: 10, marginTop: 8, backgroundColor: "#FBFDFF" },
+  errorText: { color: "#DC2626", marginTop: 6 },
+  btnSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#E5E7EB" },
 });

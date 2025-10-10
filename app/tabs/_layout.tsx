@@ -1,18 +1,21 @@
-// app/tabs/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useTranslation } from "react-i18next";
 import "../../i18n";
 
 export default function ElderlyTabs() {
+  const { t, i18n } = useTranslation();
+
   return (
     <Tabs
+      key={i18n.language}
       initialRouteName="HomePage"
       screenOptions={{ headerShown: false, tabBarLabelStyle: { fontSize: 12 } }}
     >
       <Tabs.Screen
         name="Navigation"
         options={{
-          title: "Navigation",
+          title: t("home.navigation", "Navigation"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="navigate-outline" color={color} size={size} />
           ),
@@ -21,7 +24,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Walking"
         options={{
-          title: "Walking Routes",
+          title: t("home.walkingRoutes", "Walking Routes"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="walk-outline" color={color} size={size} />
           ),
@@ -30,7 +33,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="HomePage"
         options={{
-          title: "Home",
+          title: t("homeTab", "Home"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" color={color} size={size} />
           ),
@@ -39,29 +42,25 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Community"
         options={{
-          title: "CC Activities",
+          title: t("home.ccActivities", "CC Activities"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="Profile"
+        name="Clinic"
         options={{
-          title: "Profile",
+          title: t("home.clinics", "Clinics"),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle-outline" color={color} size={size} />
+            <Ionicons name="medkit-outline" color={color} size={size} />
           ),
         }}
       />
 
-      {/* Hidden tab, still navigable via router.push("/tabs/Rewards") */}
-      <Tabs.Screen
-        name="Rewards"
-        options={{
-          href: null, // ✅ hides from tab bar & deep links; still works with router.push
-        }}
-      />
+      {/* Hidden screens */}
+      <Tabs.Screen name="Profile" options={{ href: null }} />
+      <Tabs.Screen name="Rewards" options={{ href: null }} />
     </Tabs>
   );
 }
