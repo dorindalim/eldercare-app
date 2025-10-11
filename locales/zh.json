@@ -207,6 +207,23 @@
       "copy": "复制",
       "copySuccess": "已复制到剪贴板",
       "copyUnavailable": "此设备无法使用剪贴板，请手动复制。"
+    },
+    "locationAccess": {
+      "title": "位置權限",
+      "status": {
+        "granted": "已允許",
+        "denied": "已拒絕",
+        "askMe": "詢問我"
+      },
+      "servicesOff": "定位服務已關閉",
+      "turnOnServicesTitle": "開啟定位服務",
+      "turnOnServicesBody": "請在「設定」中開啟定位服務。",
+      "allowedTitle": "目前已允許位置權限",
+      "allowedBody": "若要關閉，請到「設定」更新權限。",
+      "needAccessTitle": "需要位置權限",
+      "needAccessBody": "若要啟用定位功能，請在「設定」中允許存取。",
+      "openSettings": "開啟設定",
+      "requestError": "無法請求位置權限。"
     }
   },
   "rewards": {
@@ -316,7 +333,53 @@
   },
   "clinic": { "title": "诊所" },
   "walkingRoutes": { "title": "步行路线" },
-  "navigation": { "title": "导航" },
+  "navigation": {
+    "title": "导航",
+    "actions": {
+      "viewActivities": "查看活动",
+      "setDestination": "设为目的地",
+      "viewDetails": "查看详情",
+      "setReminder": "设置提醒"
+    },
+    "search": {
+      "permissionTitle": "需要定位权限",
+      "permissionBody": "请开启定位服务以使用导航功能。",
+      "enterTitle": "请输入目的地",
+      "enterBody": "输入地址或地点名称进行搜索。",
+      "notFoundTitle": "未找到",
+      "notFoundBody": "请尝试更具体的地点名称。",
+      "destination": "目的地",
+      "destinationSet": "已设定目的地",
+      "startNav": "开始导航",
+      "stopNav": "停止导航",
+      "started": "已开始导航。",
+      "stopped": "已停止导航。",
+      "eta": "预计到达：{{duration}}（{{distance}}）",
+      "nextStep": "下一步：{{step}}",
+      "arrived": "已到达",
+      "requesting": "正在请求定位权限…",
+      "loading": "加载中…",
+      "filter": {
+        "everything": "全部",
+        "cc": "社区俱乐部",
+        "clinics": "诊所",
+        "parks": "公园"
+      },
+      "placeholder": "搜索地址或地点"
+    },
+    "reminders": {
+      "permTitle": "允许通知",
+      "permBody": "请允许通知，以便在活动前提醒您。",
+      "invalidTime": "该活动缺少开始时间。",
+      "tooSoonTitle": "无法安排提醒",
+      "tooSoonBody": "提醒时间已过。",
+      "notifTitle": "即将开始的活动",
+      "notifBody": "“{{title}}” 约 1 小时后开始。",
+      "scheduledTitle": "已设置提醒",
+      "scheduledBody": "我们会在 {{when}} 提醒您。",
+      "untitled": "未命名"
+    }
+  },
   "settings": {
     "title": "设置",
     "language": "语言",

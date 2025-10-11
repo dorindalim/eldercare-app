@@ -1,14 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
   AppState,
-  Keyboard,
-  KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -17,13 +18,13 @@ import {
   Share,
   StyleSheet,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
-import TopBar, { LangCode } from "../../src/components/TopBar";
+import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 import { useAppSettings } from "../../src/Providers/SettingsProvider";
@@ -44,8 +45,7 @@ type ConditionItem = {
   meds: { name: string; frequency?: string | null }[];
 };
 
-const PORTAL_BASE_URL =
-  "https://dorindalim.github.io/eldercare-app/ECPortal.html";
+const PORTAL_BASE_URL = "https://dorindalim.github.io/eldercare-app/ECPortal.html";
 const CAREGIVER_MESSAGE = (url: string) =>
   `Hi! This is my Emergency Contact Portal link:\n\n${url}\n\n` +
   `Please keep it safe. On first open, set a 4+ digit PIN. Use the same PIN next time to unlock. Thank you!`;
@@ -58,12 +58,7 @@ export default function ElderlyProfile() {
   const { t, i18n } = useTranslation();
   const { session, logout } = useAuth();
 
-  const {
-    coins,
-    streak,
-    refresh: refreshCheckins,
-  } = useCheckins(session?.userId);
-
+  const { coins, streak, refresh: refreshCheckins } = useCheckins(session?.userId);
   const { textScale, setTextScale } = useAppSettings();
 
   const [name, setName] = useState<string>("-");
@@ -78,10 +73,8 @@ export default function ElderlyProfile() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState("");
   const [typedConfirm, setTypedConfirm] = useState("");
-  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0); 
   const [confirmChecked, setConfirmChecked] = useState(false);
   const [deleteProcessing, setDeleteProcessing] = useState(false);
-  const [scheduledDeletion, setScheduledDeletion] = useState<string | null>(null);
 
   const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
@@ -155,119 +148,146 @@ export default function ElderlyProfile() {
     setConditions(merged);
   }, [session?.userId]);
 
+  type LocPerm = "granted" | "denied" | "undetermined";
+  const [locPerm, setLocPerm] = useState<LocPerm>("undetermined");
+  const [locServicesOn, setLocServicesOn] = useState<boolean>(true);
+
+  const refreshLocationAccess = useCallback(async () => {
+    try {
+      const perm = await Location.getForegroundPermissionsAsync();
+      setLocPerm((perm.status as LocPerm) ?? "undetermined");
+      const services = await Location.hasServicesEnabledAsync();
+      setLocServicesOn(services);
+    } catch {
+      setLocPerm("undetermined");
+      setLocServicesOn(true);
+    }
+  }, []);
+
+  const requestLocationAccess = useCallback(async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocPerm(status as LocPerm);
+      if (status !== "granted") {
+        Alert.alert(
+          t("profile.locationAccess.needAccessTitle"),
+          t("profile.locationAccess.needAccessBody"),
+          [
+            { text: t("common.cancel"), style: "cancel" },
+            { text: t("profile.locationAccess.openSettings"), onPress: () => Linking.openSettings?.() },
+          ]
+        );
+      }
+    } catch {
+      Alert.alert(t("common.error"), t("profile.locationAccess.requestError"));
+    }
+  }, [t]);
+
+  const [notifAllowed, setNotifAllowed] = useState(false);
+
+  const readNotifPermission = useCallback(async () => {
+    const cur = await Notifications.getPermissionsAsync();
+    setNotifAllowed(!!cur.granted);
+  }, []);
+
+  const ensureNotifPermission = useCallback(async () => {
+    const cur = await Notifications.getPermissionsAsync();
+    if (cur.granted) {
+      setNotifAllowed(true);
+      return true;
+    }
+    const req = await Notifications.requestPermissionsAsync();
+    const ok = !!req.granted;
+    if (ok && Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.HIGH,
+      });
+    }
+    setNotifAllowed(ok);
+    return ok;
+  }, []);
+
+  const toggleNotifications = async () => {
+    if (!notifAllowed) {
+      const ok = await ensureNotifPermission();
+      if (!ok) {
+        Alert.alert("Notifications", "Permission not granted.");
+      }
+    } else {
+      Alert.alert(
+        "Turn off notifications",
+        "To disable notifications, please use your device Settings for this app.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ]
+      );
+    }
+  };
 
   useEffect(() => {
     loadData();
     refreshCheckins();
-  }, [loadData, refreshCheckins]);
-
-  const confirmTypedDeletion = async (typed: string) => {
-    if (!session?.userId) {
-      Alert.alert(t('auth.notLoggedInTitle'), t('auth.notLoggedInBody'));
-      return;
-    }
-
-    const expected = 'DELETE MY ACCOUNT';
-    if (typed.trim().toUpperCase() !== expected) {
-      Alert.alert(t('common.error'), t('delete.typeMismatch') || 'Please type the exact phrase to confirm.');
-      return;
-    }
-
-    setDeleteProcessing(true);
-    try {
-      const now = new Date();
-      const scheduled = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-      const { error } = await supabase
-        .from('elderly_profiles')
-        .update({
-          scheduled_for: scheduled.toISOString(),
-          deletion_reason: deletionReason || null,
-          deletion_requested_at: new Date().toISOString(),
-          deletion_status: 'deletion_scheduled',
-        })
-        .eq('user_id', session.userId);
-
-      if (error) {
-        Alert.alert(t('common.error'), error.message || t('delete.failedSchedule'));
-        return;
-      }
-
-      Alert.alert(t('delete.scheduledAlertTitle'), t('delete.scheduledBody'));
-      setShowDeleteModal(false);
-      try {
-        await logout();
-      } catch (e) {
-      }
-      router.replace('/Authentication/LogIn');
-    } finally {
-      setDeleteProcessing(false);
-    }
-  };
+    refreshLocationAccess();
+    readNotifPermission();
+  }, [loadData, refreshCheckins, refreshLocationAccess, readNotifPermission]);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
       refreshCheckins();
-    }, [loadData, refreshCheckins])
+      refreshLocationAccess();
+      readNotifPermission();
+    }, [loadData, refreshCheckins, refreshLocationAccess, readNotifPermission])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([loadData(), refreshCheckins()]);
+    await Promise.all([loadData(), refreshCheckins(), refreshLocationAccess(), readNotifPermission()]);
     setRefreshing(false);
-  }, [loadData, refreshCheckins]);
+  }, [loadData, refreshCheckins, refreshLocationAccess, readNotifPermission]);
 
   useEffect(() => {
     if (!session?.userId) return;
     const handle = () => {
       loadData();
       refreshCheckins();
+      refreshLocationAccess();
+      readNotifPermission();
     };
 
     const ch = supabase
       .channel(`ec:${session.userId}`)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "elderly_profiles",
-          filter: `user_id=eq.${session.userId}`,
-        },
+        { event: "*", schema: "public", table: "elderly_profiles", filter: `user_id=eq.${session.userId}` },
         handle
       )
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "elderly_conditions",
-          filter: `user_id=eq.${session.userId}`,
-        },
+        { event: "*", schema: "public", table: "elderly_conditions", filter: `user_id=eq.${session.userId}` },
         handle
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "elderly_medications" },
-        handle
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "elderly_medications" }, handle)
       .subscribe();
 
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [session?.userId, loadData, refreshCheckins]);
+  }, [session?.userId, loadData, refreshCheckins, refreshLocationAccess, readNotifPermission]);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (s) => {
       if (s === "active") {
         loadData();
         refreshCheckins();
+        refreshLocationAccess();
+        readNotifPermission();
       }
     });
     return () => sub.remove();
-  }, [loadData, refreshCheckins]);
+  }, [loadData, refreshCheckins, refreshLocationAccess, readNotifPermission]);
 
   const prettifyAssistive = (code: string) => {
     if (code.startsWith("other:")) return code.replace(/^other:/, "").trim();
@@ -288,7 +308,7 @@ export default function ElderlyProfile() {
 
   const onShareEcPortal = useCallback(async () => {
     if (!session?.userId) {
-      Alert.alert(t('common.notLoggedIn'), t('common.pleaseLoginAgain'));
+      Alert.alert(t("common.notLoggedIn"), t("common.pleaseLoginAgain"));
       return;
     }
 
@@ -324,26 +344,63 @@ export default function ElderlyProfile() {
     let token: string | null = linkRow?.token ?? null;
 
     if (!token) {
-      const { data: rpcToken, error: rpcErr } = await supabase.rpc(
-        "ec_issue_link_if_ready_for",
-        { p_user: session.userId }
-      );
-      if (rpcErr)
-        console.warn("ec_issue_link_if_ready_for error:", rpcErr.message);
+      const { data: rpcToken } = await supabase.rpc("ec_issue_link_if_ready_for", {
+        p_user: session.userId,
+      });
       token = rpcToken ?? null;
     }
 
     if (!token) {
-      Alert.alert(
-        "No portal link yet",
-        "Your profile may be incomplete, or a link hasn’t been created."
-      );
+      Alert.alert("No portal link yet", "Your profile may be incomplete, or a link hasn’t been created.");
       return;
     }
 
     const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(token)}`;
     await Share.share({ message: CAREGIVER_MESSAGE(url) });
-  }, [session?.userId]);
+  }, [session?.userId, t]);
+
+  const confirmTypedDeletion = async (typed: string) => {
+    if (!session?.userId) {
+      Alert.alert(t("auth.notLoggedInTitle"), t("auth.notLoggedInBody"));
+      return;
+    }
+
+    const expected = "DELETE MY ACCOUNT";
+    if (typed.trim().toUpperCase() !== expected) {
+      Alert.alert(t("common.error"), t("delete.typeMismatch") || "Please type the exact phrase to confirm.");
+      return;
+    }
+
+    setDeleteProcessing(true);
+    try {
+      const now = new Date();
+      const scheduled = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      const { error } = await supabase
+        .from("elderly_profiles")
+        .update({
+          scheduled_for: scheduled.toISOString(),
+          deletion_reason: deletionReason || null,
+          deletion_requested_at: new Date().toISOString(),
+          deletion_status: "deletion_scheduled",
+        })
+        .eq("user_id", session.userId);
+
+      if (error) {
+        Alert.alert(t("common.error"), error.message || t("delete.failedSchedule"));
+        return;
+      }
+
+      Alert.alert(t("delete.scheduledAlertTitle"), t("delete.scheduledBody"));
+      setShowDeleteModal(false);
+      try {
+        await logout();
+      } catch {}
+      router.replace("/Authentication/LogIn");
+    } finally {
+      setDeleteProcessing(false);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
@@ -351,7 +408,7 @@ export default function ElderlyProfile() {
         language={i18n.language as LangCode}
         setLanguage={setLang}
         bgColor="#D2AB80"
-        includeTopInset={true}
+        includeTopInset
         barHeight={44}
         topPadding={2}
         title={t("profile.title")}
@@ -364,9 +421,7 @@ export default function ElderlyProfile() {
       <ScrollView
         contentContainerStyle={s.scroll}
         keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Basic Information */}
         <View style={s.card}>
@@ -392,10 +447,7 @@ export default function ElderlyProfile() {
             </AppText>
           </View>
 
-          <Pressable
-            onPress={() => router.push("/EditBasic")}
-            style={s.linkRow}
-          >
+          <Pressable onPress={() => router.push("/EditBasic")} style={s.linkRow}>
             <Ionicons name="create-outline" size={18} />
             <AppText variant="button" weight="800" color="#111827">
               {t("profile.editBasic")}
@@ -410,28 +462,19 @@ export default function ElderlyProfile() {
           </AppText>
 
           {!!emergency &&
-            (emergency.name ||
-              emergency.relation ||
-              emergency.phone ||
-              emergency.email) && (
+            (emergency.name || emergency.relation || emergency.phone || emergency.email) && (
               <View style={s.block}>
                 <AppText variant="label" weight="700" color="#374151">
                   {t("profile.emergencyContacts")}
                 </AppText>
                 <AppText variant="label" weight="700">
-                  {[
-                    emergency.name,
-                    emergency.relation,
-                    emergency.phone,
-                    emergency.email,
-                  ]
+                  {[emergency.name, emergency.relation, emergency.phone, emergency.email]
                     .filter(Boolean)
                     .join(" · ")}
                 </AppText>
               </View>
             )}
 
-          {/* Always show these rows */}
           <View style={s.block}>
             <AppText variant="label" weight="700" color="#374151">
               {t("profile.drugAllergy")}
@@ -459,10 +502,9 @@ export default function ElderlyProfile() {
             </AppText>
           </View>
 
-          {/* Share EC Portal link button */}
           <Pressable style={s.btn} onPress={onShareEcPortal}>
             <AppText variant="button" weight="800" color="#FFF">
-              {t('profile.sharePortal')}
+              {t("profile.sharePortal")}
             </AppText>
           </Pressable>
         </View>
@@ -473,38 +515,28 @@ export default function ElderlyProfile() {
             {t("profile.conditions")}
           </AppText>
 
-          {conditions.length === 0 ? (
-            <AppText variant="label" weight="700">
-              –
-            </AppText>
-          ) : (
-            <View style={s.block}>
-              {conditions.map((c) => {
-                const condName =
-                  !c.condition || isNil(c.condition) ? "–" : c.condition;
-
-                const medsClean = (c.meds || [])
-                  .filter((m) => m.name && !isNil(m.name))
-                  .map((m) => {
-                    const freq =
-                      m.frequency && !isNil(m.frequency)
-                        ? ` — ${m.frequency}`
-                        : "";
-                    return `${m.name}${freq}`;
-                  });
-
-                const medsPart =
-                  medsClean.length > 0 ? ` (${medsClean.join("; ")})` : "";
-
-                return (
-                  <AppText key={c.id} variant="label" weight="700">
-                    • {condName}
-                    {medsPart}
-                  </AppText>
-                );
-              })}
-            </View>
-          )}
+        {conditions.length === 0 ? (
+          <AppText variant="label" weight="700">–</AppText>
+        ) : (
+          <View style={s.block}>
+            {conditions.map((c) => {
+              const condName = !c.condition || isNil(c.condition) ? "–" : c.condition;
+              const medsClean = (c.meds || [])
+                .filter((m) => m.name && !isNil(m.name))
+                .map((m) => {
+                  const freq = m.frequency && !isNil(m.frequency) ? ` — ${m.frequency}` : "";
+                  return `${m.name}${freq}`;
+                });
+              const medsPart = medsClean.length > 0 ? ` (${medsClean.join("; ")})` : "";
+              return (
+                <AppText key={c.id} variant="label" weight="700">
+                  • {condName}
+                  {medsPart}
+                </AppText>
+              );
+            })}
+          </View>
+        )}
         </View>
 
         {/* Activity & Rewards */}
@@ -538,18 +570,13 @@ export default function ElderlyProfile() {
           </Pressable>
         </View>
 
-        {/* Accessibility (global text size) */}
+        {/* Accessibility: text size + Notifications toggle + Location toggle */}
         <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.accessibility")}
           </AppText>
 
-          <AppText
-            variant="label"
-            weight="700"
-            color="#374151"
-            style={{ marginTop: 2 }}
-          >
+          <AppText variant="label" weight="700" color="#374151" style={{ marginTop: 2 }}>
             {t("profile.textSize")}
           </AppText>
 
@@ -557,112 +584,91 @@ export default function ElderlyProfile() {
             {(["md", "lg", "xl"] as const).map((sz) => (
               <Pressable
                 key={sz}
-                onPress={(e) => {
-                  e?.stopPropagation?.();
-                  e?.preventDefault?.();
-                  setTextScale(sz);
-                }}
+                onPress={() => setTextScale(sz)}
                 accessibilityRole="button"
                 style={[s.chip, textScale === sz && s.chipActive]}
               >
-                <AppText
-                  variant="button"
-                  weight="800"
-                  color={textScale === sz ? "#FFF" : "#111827"}
-                >
+                <AppText variant="button" weight="800" color={textScale === sz ? "#FFF" : "#111827"}>
                   {sz.toUpperCase()}
                 </AppText>
               </Pressable>
             ))}
           </View>
 
-          <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
-            {t("profile.accessibilityNote")}
-          </AppText>
+          {/* Notifications toggle */}
+          <View style={[s.rowBetween, { marginTop: 14, alignItems: "center" }]}>
+            <View style={{ flexShrink: 1, paddingRight: 10 }}>
+              <AppText variant="label" weight="700" color="#374151">
+                Notifications
+              </AppText>
+              <AppText variant="caption" color="#6B7280" style={{ marginTop: 2 }}>
+                {notifAllowed ? "Allowed" : "Not allowed"}
+              </AppText>
+            </View>
+
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: notifAllowed }}
+              onPress={toggleNotifications}
+              style={[s.toggleWrap, notifAllowed ? s.toggleOn : s.toggleOff]}
+            >
+              <View style={[s.knob, notifAllowed ? s.knobOn : s.knobOff]} />
+            </Pressable>
+          </View>
+
+          {/* Location access toggle */}
+          <View style={[s.rowBetween, { marginTop: 14, alignItems: "center" }]}>
+            <View style={{ flexShrink: 1, paddingRight: 10 }}>
+              <AppText variant="label" weight="700" color="#374151">
+                {t("profile.locationAccess.title")}
+              </AppText>
+              <AppText variant="caption" color="#6B7280" style={{ marginTop: 2 }}>
+                {locServicesOn
+                  ? locPerm === "granted"
+                    ? t("profile.locationAccess.status.granted")
+                    : locPerm === "denied"
+                    ? t("profile.locationAccess.status.denied")
+                    : t("profile.locationAccess.status.askMe")
+                  : t("profile.locationAccess.servicesOff")}
+              </AppText>
+            </View>
+
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: locPerm === "granted" && locServicesOn }}
+              onPress={() => {
+                if (!locServicesOn) {
+                  Alert.alert(
+                    t("profile.locationAccess.turnOnServicesTitle"),
+                    t("profile.locationAccess.turnOnServicesBody"),
+                    [
+                      { text: t("common.cancel"), style: "cancel" },
+                      { text: t("profile.locationAccess.openSettings"), onPress: () => Linking.openSettings?.() },
+                    ]
+                  );
+                  return;
+                }
+                if (locPerm === "granted") {
+                  Alert.alert(
+                    t("profile.locationAccess.allowedTitle"),
+                    t("profile.locationAccess.allowedBody"),
+                    [
+                      { text: t("common.cancel"), style: "cancel" },
+                      { text: t("profile.locationAccess.openSettings"), onPress: () => Linking.openSettings?.() },
+                    ]
+                  );
+                } else {
+                  requestLocationAccess();
+                }
+              }}
+              style={[s.toggleWrap, locServicesOn && locPerm === "granted" ? s.toggleOn : s.toggleOff]}
+            >
+              <View style={[s.knob, locServicesOn && locPerm === "granted" ? s.knobOn : s.knobOff]} />
+            </Pressable>
+          </View>
         </View>
 
-        <View style={{ height: 24 }} />
-
-        {/* Delete modal */}
-        <Modal visible={showDeleteModal} animationType="slide" transparent>
-          <Pressable style={s.modalOverlay} onPress={() => { Keyboard.dismiss(); }}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              style={s.modalFlex}
-            >
-              <ScrollView
-                contentContainerStyle={s.modalScrollContent}
-                keyboardShouldPersistTaps="handled"
-              >
-                <View style={s.modalCard} onStartShouldSetResponder={() => true}>
-              <AppText variant="h2" weight="800">
-                {t("profile.delete.modalTitle")}
-              </AppText>
-              <AppText
-                variant="label"
-                weight="700"
-                color="#374151"
-                style={{ marginTop: 8 }}
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {t("profile.delete.modalExplain")}
-              </AppText>
-
-              <AppText variant="caption" color="#000000" style={{ marginTop: 8 }}>
-                {t("profile.delete.optionalReason")}
-              </AppText>
-
-              <TextInput
-                style={[s.input, { color: "#000000" }]}
-                placeholder={t("profile.delete.reasonPH_modal")}
-                value={deletionReason}
-                onChangeText={setDeletionReason}
-                multiline
-              />
-              {/* Simplified single-step deletion flow */}
-              <View style={{ marginTop: 8 }}>
-                <AppText variant="label" weight="700">{t("profile.delete.confirmStepTitle")}</AppText>
-                <AppText variant="caption" color="#6B7280" style={{ marginTop: 10 }}>{t("profile.delete.typeToConfirm", { phrase: 'DELETE MY ACCOUNT' })}</AppText>
-                <TextInput
-                  style={[s.input, { color: "#000" }]}
-                  placeholder={t('profile.delete.typePH')}
-                  value={typedConfirm}
-                  onChangeText={setTypedConfirm}
-                  autoCapitalize="characters"
-                />
-
-                <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 14 }}>
-                  <Pressable
-                    style={[s.btn, { backgroundColor: "#DC2626" }, (!confirmChecked || !typedConfirm.trim()) && { opacity: 0.5 }]}
-                    onPress={() => confirmTypedDeletion(typedConfirm)}
-                    disabled={!confirmChecked || !typedConfirm.trim() || deleteProcessing}
-                  >
-                    <AppText variant="button" weight="800" color="#FFF">{t('profile.delete.confirmDeletion')}</AppText>
-                  </Pressable>
-                  <Pressable style={[s.btn, s.btnSecondary]} onPress={() => setShowDeleteModal(false)}>
-                    <AppText variant="button" weight="800" color="#111827">{t('common.cancel')}</AppText>
-                  </Pressable>
-                </View>
-
-                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
-                  <Pressable
-                    onPress={() => setConfirmChecked(!confirmChecked)}
-                    style={{ width: 22, height: 22, borderWidth: 1, borderColor: "#D1D5DB", borderRadius: 4, alignItems: "center", justifyContent: "center", backgroundColor: confirmChecked ? "#111827" : "#FFF" }}
-                  >
-                    {confirmChecked ? <Ionicons name="checkmark" size={14} color="#FFF" /> : null}
-                  </Pressable>
-                  <AppText variant="caption" color="#6B7280" style={{ marginLeft: 8 }}>{t("profile.delete.confirmStepCheckbox")}</AppText>
-                </View>
-              </View>
-                  <View style={{ height: 12 }} />
-
-                </View>
-              </ScrollView>
-            </KeyboardAvoidingView>
-          </Pressable>
-        </Modal>
-        {/* Delete Account Section */}
+        {/* Delete Account */}
         <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.delete.title")}
@@ -670,10 +676,6 @@ export default function ElderlyProfile() {
 
           <AppText variant="label" weight="700" color="#000000" style={{ marginTop: 6 }}>
             {t("profile.delete.cardExplain")}
-          </AppText>
-
-          <AppText variant="caption" color="#6B7280" style={{ marginTop: 8 }}>
-            {t("profile.delete.scheduledBody")}
           </AppText>
 
           <Pressable
@@ -685,7 +687,93 @@ export default function ElderlyProfile() {
             </AppText>
           </Pressable>
         </View>
+
+        <View style={{ height: 24 }} />
       </ScrollView>
+
+      {/* Delete modal */}
+      <Modal visible={showDeleteModal} animationType="slide" transparent>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <AppText variant="h2" weight="800">
+              {t("profile.delete.modalTitle")}
+            </AppText>
+            <AppText variant="label" weight="700" color="#374151" style={{ marginTop: 8 }}>
+              {t("profile.delete.modalExplain")}
+            </AppText>
+
+            <AppText variant="caption" color="#000000" style={{ marginTop: 8 }}>
+              {t("profile.delete.optionalReason")}
+            </AppText>
+
+            <TextInput
+              style={[s.input, { color: "#000000" }]}
+              placeholder={t("profile.delete.reasonPH_modal")}
+              value={deletionReason}
+              onChangeText={setDeletionReason}
+              multiline
+            />
+
+            <View style={{ marginTop: 8 }}>
+              <AppText variant="label" weight="700">
+                {t("profile.delete.confirmStepTitle")}
+              </AppText>
+              <AppText variant="caption" color="#6B7280" style={{ marginTop: 10 }}>
+                {t("profile.delete.typeToConfirm", { phrase: "DELETE MY ACCOUNT" })}
+              </AppText>
+              <TextInput
+                style={[s.input, { color: "#000" }]}
+                placeholder={t("profile.delete.typePH")}
+                value={typedConfirm}
+                onChangeText={setTypedConfirm}
+                autoCapitalize="characters"
+              />
+
+              <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 14 }}>
+                <Pressable
+                  style={[
+                    s.btn,
+                    { backgroundColor: "#DC2626" },
+                    (!confirmChecked || !typedConfirm.trim()) && { opacity: 0.5 },
+                  ]}
+                  onPress={() => confirmTypedDeletion(typedConfirm)}
+                  disabled={!confirmChecked || !typedConfirm.trim() || deleteProcessing}
+                >
+                  <AppText variant="button" weight="800" color="#FFF">
+                    {t("profile.delete.confirmDeletion")}
+                  </AppText>
+                </Pressable>
+                <Pressable style={[s.btn, s.btnSecondary]} onPress={() => setShowDeleteModal(false)}>
+                  <AppText variant="button" weight="800" color="#111827">
+                    {t("common.cancel")}
+                  </AppText>
+                </Pressable>
+              </View>
+
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
+                <Pressable
+                  onPress={() => setConfirmChecked(!confirmChecked)}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderWidth: 1,
+                    borderColor: "#D1D5DB",
+                    borderRadius: 4,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: confirmChecked ? "#111827" : "#FFF",
+                  }}
+                >
+                  {confirmChecked ? <Ionicons name="checkmark" size={14} color="#FFF" /> : null}
+                </Pressable>
+                <AppText variant="caption" color="#6B7280" style={{ marginLeft: 8 }}>
+                  {t("profile.delete.confirmStepCheckbox")}
+                </AppText>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -718,10 +806,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  chipActive: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
-  },
+  chipActive: { backgroundColor: "#111827", borderColor: "#111827" },
 
   btn: {
     backgroundColor: "#111827",
@@ -731,13 +816,54 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
+  btnSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#E5E7EB" },
 
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(2,6,23,0.45)", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalCard: { backgroundColor: "#FFF", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "#E5E7EB", width: "100%", maxWidth: 560 },
-  modalFlex: { flex: 1, width: "100%", justifyContent: "center" },
-  modalScrollContent: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 20 },
-  input: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, padding: 10, marginTop: 8, backgroundColor: "#FBFDFF" },
-  errorText: { color: "#DC2626", marginTop: 6 },
-  btnSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#E5E7EB" },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(2,6,23,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    width: "100%",
+    maxWidth: 560,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 8,
+    backgroundColor: "#FBFDFF",
+  },
+
+  toggleWrap: {
+    width: 52,
+    height: 32,
+    borderRadius: 20,
+    padding: 3,
+    justifyContent: "center",
+  },
+  toggleOn: { backgroundColor: "#16A34A" },
+  toggleOff: { backgroundColor: "#D1D5DB" },
+  knob: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#FFF",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+  },
+  knobOn: { alignSelf: "flex-end" },
+  knobOff: { alignSelf: "flex-start" },
 });

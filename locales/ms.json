@@ -207,6 +207,23 @@
       "copy": "Salin",
       "copySuccess": "Disalin ke papan klip",
       "copyUnavailable": "Papan klip tidak tersedia pada peranti ini. Sila salin secara manual."
+    },
+    "locationAccess": {
+      "title": "Akses lokasi",
+      "status": {
+        "granted": "Diizinkan",
+        "denied": "Ditolak",
+        "askMe": "Tanya saya"
+      },
+      "servicesOff": "Layanan lokasi DIMATIKAN",
+      "turnOnServicesTitle": "Aktifkan Layanan Lokasi",
+      "turnOnServicesBody": "Silakan aktifkan Layanan Lokasi di Pengaturan.",
+      "allowedTitle": "Akses lokasi saat ini diizinkan",
+      "allowedBody": "Untuk menonaktifkan, ubah izin di Pengaturan.",
+      "needAccessTitle": "Akses lokasi diperlukan",
+      "needAccessBody": "Untuk mengaktifkan fitur lokasi, izinkan akses di Pengaturan.",
+      "openSettings": "Buka Pengaturan",
+      "requestError": "Tidak dapat meminta izin lokasi."
     }
   },
   "rewards": {
@@ -316,7 +333,38 @@
   },
   "clinic": { "title": "Klinik" },
   "walkingRoutes": { "title": "Laluan Berjalan" },
-  "navigation": { "title": "Navigasi" },
+  "navigation": { 
+    "title": "Navigasi",
+    "actions": {
+      "setDestination": "Tetapkan destinasi",
+      "viewActivities": "Lihat  aktiviti"
+    },
+    "search": {
+      "placeholder": "Masukkan destinasi",
+      "permissionTitle": "Kebenaran lokasi diperlukan",
+      "permissionBody": "Sila aktifkan perkhidmatan lokasi untuk navigasi.",
+      "enterTitle": "Masukkan destinasi",
+      "enterBody": "Taip alamat atau nama tempat.",
+      "notFoundTitle": "Tidak ditemui",
+      "notFoundBody": "Cuba nama tempat yang lebih khusus.",
+      "destination": "Destinasi",
+      "destinationSet": "Destinasi ditetapkan",
+      "startNav": "Mula Navigasi",
+      "stopNav": "Henti Navigasi",
+      "started": "Navigasi bermula.",
+      "stopped": "Navigasi dihentikan.",
+      "requesting": "Meminta akses lokasi…",
+      "eta": "ETA: {{duration}} ({{distance}})",
+      "nextStep": "Seterusnya: {{step}}",
+      "arrived": "Tiba",
+      "filter": {
+        "everything": "Semua",
+        "cc": "Kelab Komuniti",
+        "clinics": "Klinik",
+        "parks": "Taman"
+      }
+    }
+  },
   "settings": {
     "title": "Tetapan",
     "language": "Bahasa",

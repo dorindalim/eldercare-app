@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Location from "expo-location";
-import { useRouter } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
   BackHandler,
   FlatList,
+  LayoutAnimation,
   Linking,
   Modal,
   Platform,
@@ -17,6 +20,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  UIManager,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +31,7 @@ import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
 type EventRow = {
+  id?: string;
   event_id: string;
   title: string;
   description: string | null;
@@ -45,14 +50,21 @@ type EventRow = {
 type LatLng = { latitude: number; longitude: number };
 
 const PAGE_SIZE = 5;
-const ACCENT = "#007AFF";
-const APPLY = "#111827";
 const SEARCH = "#111827";
 const BG = "#F8FAFC";
 const CARD_BORDER = "#E5E7EB";
 const DARK = "#111827";
 
 const GOOGLE_WEB_API_KEY = "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGs";
+const REMINDERS_KEY = "cc:reminders";
+
+type TimeFilter = "today" | "week" | "upcoming";
+type PricingFilter = "all" | "free" | "paid";
+type DistanceFilter = "any" | "2" | "5" | "10";
+
+type ScheduledLocal =
+  | { id: string; title?: string; body?: string; when?: Date }
+  | { id: string; title?: string; body?: string; when?: undefined };
 
 const CATEGORIES = [
   "Health & Fitness",
@@ -67,7 +79,7 @@ const CATEGORIES = [
   "Overseas Outings & Tours",
 ] as const;
 
-const CATEGORY_SLUG: Record<string, string> = {
+const CAT_KEY = {
   "Health & Fitness": "healthFitness",
   "Arts & Culture": "artsCulture",
   "Active Aging": "activeAging",
@@ -78,121 +90,64 @@ const CATEGORY_SLUG: Record<string, string> = {
   "Kopi Talks & Dialogues": "kopiTalksDialogues",
   "Charity & Volunteerism": "charityVolunteerism",
   "Overseas Outings & Tours": "overseasOutingsTours",
-};
+} as const;
 
-const catLabel = (c: string, t: any) =>
-  t(`community.categories.${CATEGORY_SLUG[c] || c}`, c);
+const catLabel = (c: (typeof CATEGORIES)[number], t: (k: string, p?: any) => string) =>
+  t(`community.categories.${CAT_KEY[c as keyof typeof CAT_KEY]}`);
 
-const catListLabel = (arr: string[], t: any) => arr.map((c) => catLabel(c, t));
-
-type TimeFilter = "today" | "week" | "upcoming";
-type DistanceSort = "none" | "near" | "far";
-type PricingFilter = "all" | "free" | "paid";
-
-function Dropdown({
-  label,
-  display,
-  children,
-  open,
-  setOpen,
-}: {
-  label: string;
-  display: string;
-  children: React.ReactNode;
-  open: boolean;
-  setOpen: (v: boolean) => void;
-}) {
-  return (
-    <View style={{ marginTop: 8 }}>
-      <Pressable
-        onPress={() => setOpen(!open)}
-        style={({ pressed }) => [
-          styles.dropHeader,
-          pressed && { backgroundColor: "#F3F4F6", transform: [{ scale: 0.996 }] },
-        ]}
-        accessibilityRole="button"
-      >
-        <AppText variant="label" color="#6B7280">
-          {label}
-        </AppText>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <AppText variant="button" weight="800" numberOfLines={1} style={{ maxWidth: 210 }}>
-            {display}
-          </AppText>
-          <Ionicons
-            name={open ? "chevron-up" : "chevron-down"}
-            size={18}
-            color="#9CA3AF"
-            style={{ marginLeft: 6 }}
-          />
-        </View>
-      </Pressable>
-      {open && <View style={styles.dropBody}>{children}</View>}
-    </View>
-  );
-}
-
-function Chip({
-  active,
-  children,
-  onPress,
-}: {
-  active?: boolean;
-  children: React.ReactNode;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <AppText variant="button" weight="800" color={active ? "#FFF" : DARK}>
-        {children}
-      </AppText>
-    </Pressable>
-  );
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 export default function CommunityScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
-  const setLang = async (code: string) => {
+
+  const listRef = useRef<FlatList<any>>(null);
+
+  const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
   };
 
-  // Location
   const [myLoc, setMyLoc] = useState<LatLng | null>(null);
 
-  // Filters
   const [keyword, setKeyword] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("upcoming");
-  const [distanceSort, setDistanceSort] = useState<DistanceSort>("near");
   const [pricingFilter, setPricingFilter] = useState<PricingFilter>("all");
+  const [distanceFilter, setDistanceFilter] = useState<DistanceFilter>("any");
 
-  // Dropdown panel state
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [tmpCategories, setTmpCategories] = useState<string[]>([]);
-  const [tmpTimeFilter, setTmpTimeFilter] = useState<TimeFilter>(timeFilter);
-  const [tmpDistanceSort, setTmpDistanceSort] = useState<DistanceSort>(distanceSort);
-  const [tmpPricingFilter, setTmpPricingFilter] = useState<PricingFilter>(pricingFilter);
+  const [tmpTimeFilter, setTmpTimeFilter] = useState<TimeFilter>("upcoming");
+  const [tmpPricingFilter, setTmpPricingFilter] = useState<PricingFilter>("all");
+  const [tmpDistanceFilter, setTmpDistanceFilter] = useState<DistanceFilter>("any");
 
-  // Dropdown open states
-  const [catOpen, setCatOpen] = useState(true);
-  const [timeOpen, setTimeOpen] = useState(false);
-  const [distOpen, setDistOpen] = useState(false);
-  const [priceOpen, setPriceOpen] = useState(false);
-
-  // Data
   const [events, setEvents] = useState<(EventRow & { _distance?: number | null })[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Expanded/collapsed cards
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
 
-  // Geocode cache
+  const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const [ccReminders, setCcReminders] = useState<
+    { id?: string; title?: string | null; at?: string; cc?: string | null }[]
+  >([]);
+  const [scheduled, setScheduled] = useState<ScheduledLocal[]>([]);
+  const [notifBusy, setNotifBusy] = useState(false);
+
+  const params = useLocalSearchParams<{ openEventId?: string; openEventEventId?: string }>();
+  const hasConsumedDeepLinkRef = useRef(false);
+
   const geoCache = useRef<Map<string, LatLng>>(new Map());
+
+  const smoothLayout = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  };
 
   useEffect(() => {
     (async () => {
@@ -223,9 +178,26 @@ export default function CommunityScreen() {
 
   useEffect(() => {
     fetchEvents();
-  }, [page, keyword, categories, timeFilter, pricingFilter, i18n.language]);
+  }, [page, keyword, categories, timeFilter, pricingFilter, distanceFilter, i18n.language]);
 
-  /* Format/Calculation */
+  useFocusEffect(
+    useCallback(() => {
+      refreshNotifications();
+      return () => {};
+    }, [])
+  );
+
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [page]);
+
+  const handleScrollBegin = () => {
+    if (notifPanelOpen) {
+      smoothLayout();
+      setNotifPanelOpen(false);
+    }
+  };
+
   const formatTime = (hhmmss?: string | null) => {
     if (!hhmmss) return "";
     const [hStr, mStr] = hhmmss.split(":");
@@ -255,7 +227,7 @@ export default function CommunityScreen() {
       end.setDate(end.getDate() + 7);
       return { from, to: toISODate(end) };
     }
-    return { from: toISODate(now) }; 
+    return { from: toISODate(now) };
   };
   const distanceMeters = (a: LatLng, b: LatLng) => {
     const R = 6371e3;
@@ -270,6 +242,7 @@ export default function CommunityScreen() {
     m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`;
 
   const geocode = async (q: string): Promise<LatLng | null> => {
+    if (!q.trim()) return null;
     if (geoCache.current.has(q)) return geoCache.current.get(q)!;
     try {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -288,7 +261,64 @@ export default function CommunityScreen() {
     return null;
   };
 
-  /* Fetch events from Supabase */
+  const distanceOk = (meters?: number | null) => {
+    if (meters == null || distanceFilter === "any") return true;
+    const km = meters / 1000;
+    if (distanceFilter === "2") return km <= 2;
+    if (distanceFilter === "5") return km <= 5;
+    if (distanceFilter === "10") return km <= 10;
+    return true;
+  };
+
+  const clearOpenParams = useCallback(() => {
+    try {
+      router.replace({ pathname: "/tabs/Community" });
+    } catch {}
+  }, [router]);
+
+  const openEventByAnyId = useCallback(
+    async (idOrEventId: string | undefined | null) => {
+      if (!idOrEventId) return;
+      if (hasConsumedDeepLinkRef.current) return;
+      hasConsumedDeepLinkRef.current = true;
+
+      let ev =
+        events.find((e) => e.id === idOrEventId || e.event_id === idOrEventId) || null;
+
+      if (!ev) {
+        const { data } = await supabase
+          .from("events")
+          .select("*")
+          .or(`id.eq.${idOrEventId},event_id.eq.${idOrEventId}`)
+          .limit(1)
+          .maybeSingle();
+        if (data) ev = data as EventRow;
+      }
+
+      if (ev) {
+        setSelectedEvent(ev);
+        setDetailsOpen(true);
+        setTimeout(clearOpenParams, 0);
+      } else {
+        setTimeout(clearOpenParams, 0);
+      }
+    },
+    [events, clearOpenParams]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const anyId = params.openEventId ?? params.openEventEventId;
+      if (anyId) openEventByAnyId(anyId);
+      return () => {};
+    }, [params.openEventId, params.openEventEventId, openEventByAnyId])
+  );
+
+  useEffect(() => {
+    const anyId = params.openEventId ?? params.openEventEventId;
+    if (anyId && events.length) openEventByAnyId(anyId);
+  }, [events, params.openEventId, params.openEventEventId, openEventByAnyId]);
+
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -301,18 +331,14 @@ export default function CommunityScreen() {
         .order("start_time", { ascending: true });
 
       if (keyword.trim()) query = query.ilike("title", `%${keyword.trim()}%`);
-
-      if (categories.length > 0) {
-        query = query.in("category", categories);
-      }
-
+      if (categories.length > 0) query = query.in("category", categories);
       if (from) query = query.gte("start_date", from);
       if (to) query = query.lte("start_date", to);
 
       if (pricingFilter === "free") {
-        query = query.or("fee.is.null,fee.ilike.Free");
+        query = query.or("fee.is.null,fee.ilike.*free*");
       } else if (pricingFilter === "paid") {
-        query = query.not("fee", "is", "null").not("fee", "ilike", "Free");
+        query = query.not("fee", "is", null).not("fee", "ilike", "*free*");
       }
 
       const start = (page - 1) * PAGE_SIZE;
@@ -320,8 +346,9 @@ export default function CommunityScreen() {
       const { data, count, error } = await query.range(start, end);
       if (error) throw error;
 
-      let rows = (data || []) as EventRow[];
-      let withDist: (EventRow & { _distance?: number | null })[] = [...rows];
+      let withDist = (data || []).map((r) => ({ ...r })) as (EventRow & {
+        _distance?: number | null;
+      })[];
 
       if (myLoc) {
         await Promise.all(
@@ -337,13 +364,20 @@ export default function CommunityScreen() {
         );
       }
 
-      if (myLoc && distanceSort !== "none") {
-        withDist.sort((a, b) => {
-          const da = a._distance ?? Infinity;
-          const db = b._distance ?? Infinity;
-          return distanceSort === "near" ? da - db : db - da;
-        });
-      }
+      withDist = withDist.filter((r) => distanceOk(r._distance));
+
+      const toDateValue = (r: EventRow) => {
+        const t = r.start_time ? r.start_time : "23:59:59";
+        return new Date(`${r.start_date}T${t}`).getTime();
+      };
+      withDist.sort((a, b) => {
+        const ta = toDateValue(a);
+        const tb = toDateValue(b);
+        if (ta !== tb) return ta - tb;
+        const da = a._distance ?? Number.POSITIVE_INFINITY;
+        const db = b._distance ?? Number.POSITIVE_INFINITY;
+        return da - db;
+      });
 
       setEvents(withDist);
       setTotal(count || 0);
@@ -356,7 +390,51 @@ export default function CommunityScreen() {
     }
   };
 
-  /* Pagination */
+  const loadCcReminders = useCallback(async () => {
+    try {
+      const raw = (await AsyncStorage.getItem(REMINDERS_KEY)) || "[]";
+      const arr = JSON.parse(raw);
+      setCcReminders(Array.isArray(arr) ? arr : []);
+    } catch {
+      setCcReminders([]);
+    }
+  }, []);
+
+  const loadScheduledLocals = useCallback(async () => {
+    try {
+      const arr = await Notifications.getAllScheduledNotificationsAsync();
+    const mapped: ScheduledLocal[] = arr.map((n) => {
+        const tr: any = n.trigger;
+        const when: Date | undefined = tr?.date != null ? new Date(tr.date) : undefined;
+        return {
+          id: n.identifier,
+          title: n.content?.title,
+          body: n.content?.body,
+          when,
+        };
+      });
+      setScheduled(mapped);
+    } catch {
+      setScheduled([]);
+    }
+  }, []);
+
+  const refreshNotifications = useCallback(async () => {
+    await Promise.all([loadCcReminders(), loadScheduledLocals()]);
+  }, [loadCcReminders, loadScheduledLocals]);
+
+  const clearAllNotifications = async () => {
+    setNotifBusy(true);
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await AsyncStorage.removeItem(REMINDERS_KEY);
+      await refreshNotifications();
+      Alert.alert("Cleared", "All scheduled notifications were cancelled.");
+    } finally {
+      setNotifBusy(false);
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pageWindow = (current: number, last: number, len = 5) => {
     const half = Math.floor(len / 2);
@@ -369,79 +447,87 @@ export default function CommunityScreen() {
   };
   const pages = pageWindow(page, totalPages, 5);
 
-  const categoryNote = useMemo(() => {
-    if (categories.length === 0) return null;
-    const label =
-      categories.length <= 2
-        ? catListLabel(categories, t).join(", ")
-        : `${categories.length} ${t("community.filters.categories").toLowerCase()}`;
-    const key = total === 1 ? "community.categorySummary.one" : "community.categorySummary.other";
-    return t(key, { count: total, category: label });
-  }, [categories, total, t]);
+  const goFirst = () => setPage(1);
+  const goLast = () => setPage(totalPages);
+  const goPrev = () => setPage((p) => Math.max(1, p - 1));
+  const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
+  const goTo = (n: number) => setPage(n);
 
   const timingText = (tf: TimeFilter) =>
-    tf === "today"
-      ? t("community.timing.today")
-      : tf === "week"
-      ? t("community.timing.week")
+    tf === "today" ? t("community.timing.today")
+      : tf === "week" ? t("community.timing.week")
       : t("community.timing.upcoming");
 
-  const distanceText = (ds: DistanceSort) =>
-    ds === "near"
-      ? t("community.distance.near")
-      : ds === "far"
-      ? t("community.distance.far")
-      : t("community.distance.none");
-
   const priceText = (pf: PricingFilter) =>
-    pf === "free"
-      ? t("community.price.freeOnly")
-      : pf === "paid"
-      ? t("community.price.paidOnly")
-      : t("community.filters.price") + ": " + t("community.price.all");
+    pf === "free" ? t("community.price.freeOnly")
+      : pf === "paid" ? t("community.price.paidOnly")
+      : t("community.price.all");
+
+  const distanceLabel =
+    distanceFilter === "any"
+      ? "Any distance"
+      : distanceFilter === "2"
+        ? "≤ 2 km"
+        : distanceFilter === "5"
+          ? "≤ 5 km"
+          : "≤ 10 km";
+
+  const selectedCatsLabel =
+    categories.length > 0
+      ? categories.map((c) => catLabel(c as any, t)).join(", ")
+      : t("community.all");
+
+  const summaryText =
+    categories.length ||
+    timeFilter !== "upcoming" ||
+    pricingFilter !== "all" ||
+    distanceFilter !== "any"
+      ? `${selectedCatsLabel} · ${timingText(timeFilter)} · ${distanceLabel} · ${priceText(
+          pricingFilter
+        )}`
+      : t("community.sortSummary.default");
 
   const onRegister = async (url?: string | null) => {
-    if (!url) return Alert.alert(t("community.register"), t("community.noResults"));
+    if (!url) return Alert.alert(t("community.register"), t("community.noEvents"));
     try {
       await WebBrowser.openBrowserAsync(url);
     } catch {
       Linking.openURL(url).catch(() => {
-        Alert.alert(t("community.register"), "Please try again later.");
+        Alert.alert(t("community.register"), t("alerts.genericFailBody"));
       });
     }
   };
 
   const onDirections = (evt: EventRow) => {
+    setDetailsOpen(false);
     const q = (evt.address && evt.address.trim()) || (evt.location_name && evt.location_name.trim());
-    if (!q) return Alert.alert(t("community.getDirections"), t("community.noResults"));
+    if (!q) return Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
     router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q } });
   };
 
-  /* Card for each event */
+  const openDetails = (e: EventRow) => {
+    setSelectedEvent(e);
+    setDetailsOpen(true);
+  };
+
   const RenderCard = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
     const timePart =
-      [formatTime(item.start_time), formatTime(item.end_time)]
-        .filter(Boolean)
-        .join(" - ") || "—";
-    const feePart = item.fee?.trim() || t("community.ui.free");
+      [formatTime(item.start_time), formatTime(item.end_time)].filter(Boolean).join(" - ") || "—";
+    const feePart = item.fee?.trim() || t("community.priceOptions.free");
     const distPart = kmStr(item._distance);
-    const isOpen = expandedIds.has(item.event_id);
-
-    const toggle = () => {
-      const next = new Set(expandedIds);
-      isOpen ? next.delete(item.event_id) : next.add(item.event_id);
-      setExpandedIds(next);
-    };
 
     return (
       <View style={styles.card}>
-        {/* Header row */}
-        <Pressable onPress={toggle} style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable
+          onPress={() => openDetails(item)}
+          style={{ flexDirection: "row", alignItems: "center" }}
+        >
           <View style={{ flex: 1 }}>
             <AppText variant="title" weight="800" style={{ marginBottom: 2 }}>
               {item.title}
             </AppText>
 
+            {/* Location + distance */}
             <View style={styles.metaRow}>
               <AppText variant="label" color="#374151" weight="700">
                 {item.location_name || "—"}
@@ -452,72 +538,29 @@ export default function CommunityScreen() {
                 </AppText>
               )}
             </View>
+
+            {/* Date + time + fee */}
             <View style={styles.metaRowBetween}>
               <AppText variant="label" color="#111827" weight="700" style={{ flexShrink: 1 }}>
-                {timePart}
+                {item.start_date} · {timePart}
               </AppText>
               <AppText variant="label" weight="800" style={styles.feeTag}>
                 {feePart}
               </AppText>
             </View>
           </View>
+
           <TouchableOpacity
             hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
-            onPress={toggle}
+            onPress={() => openDetails(item)}
             style={{ marginLeft: 8, padding: 4 }}
           >
-            <Ionicons name={isOpen ? "chevron-up" : "chevron-down"} size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
         </Pressable>
-
-        {/* Expanded details */}
-        {isOpen && (
-          <View style={styles.expandBody}>
-            <AppText variant="body" color="#111827" style={{ marginBottom: 10 }}>
-              {item.description || "No description."}
-            </AppText>
-
-            <View style={styles.rowSpace}>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: DARK }]}
-                onPress={() => onRegister(item.registration_link)}
-              >
-                <AppText variant="button" weight="800" color="#FFF">
-                  {t("community.register")}
-                </AppText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#a3491d" }]}
-                onPress={() => onDirections(item)}
-              >
-                <AppText variant="button" weight="800" color="#FFF">
-                  {t("community.getDirections")}
-                </AppText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </View>
     );
   };
-
-  const summaryText =
-    categories.length || timeFilter !== "upcoming" || distanceSort !== "near" || pricingFilter !== "all"
-      ? t("community.sortSummary.custom", {
-          categories:
-            categories.length === 0
-              ? t("community.filters.categories")
-              : categories.length <= 2
-              ? catListLabel(categories, t).join(", ")
-              : `${categories.length} ${t("community.filters.categories").toLowerCase()}`,
-          timing: timingText(timeFilter),
-          distance: distanceText(distanceSort),
-        }) +
-        " · " +
-        (pricingFilter === "all"
-          ? t("community.filters.price") + ": " + t("community.price.all")
-          : priceText(pricingFilter))
-      : t("community.sortSummary.default");
 
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
@@ -535,8 +578,109 @@ export default function CommunityScreen() {
         }}
       />
 
+      {/* Notifications Panel */}
+      <View style={styles.notifWrap}>
+        <Pressable
+          style={styles.notifBar}
+          onPress={() => {
+            smoothLayout();
+            setNotifPanelOpen((v) => {
+              const next = !v;
+              if (next) refreshNotifications();
+              return next;
+            });
+          }}
+          accessibilityRole="button"
+        >
+          <AppText variant="label" weight="800">
+            Notifications & Reminders
+          </AppText>
+          <Ionicons
+            name={notifPanelOpen ? "chevron-up" : "chevron-down"}
+            size={16}
+            color="#6B7280"
+          />
+        </Pressable>
 
-      {/* Search */}
+        {notifPanelOpen && (
+          <View style={styles.notifPanel}>
+            <Pressable
+              style={[
+                styles.actionBtn,
+                {
+                  backgroundColor: "#DC2626",
+                  marginBottom: 10,
+                  opacity: notifBusy ? 0.6 : 1,
+                  minHeight: 44,
+                  justifyContent: "center",
+                },
+              ]}
+              onPress={clearAllNotifications}
+              disabled={notifBusy}
+            >
+              <AppText variant="button" weight="800" color="#FFF">
+                Clear All Notifications
+              </AppText>
+            </Pressable>
+
+            {/* In-app upcoming reminders */}
+            <View style={{ marginTop: 2 }}>
+              <AppText variant="label" weight="700" color="#374151">
+                Upcoming CC Reminders (in app)
+              </AppText>
+              {ccReminders.length === 0 ? (
+                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+                  None scheduled.
+                </AppText>
+              ) : (
+                <View style={{ marginTop: 6, gap: 6 }}>
+                  {ccReminders.map((r, idx) => (
+                    <View key={`${r.id ?? "x"}-${idx}`} style={styles.reminderRow}>
+                      <Ionicons name="notifications-outline" size={16} color="#374151" />
+                      <AppText variant="caption" weight="700" style={{ flex: 1 }}>
+                        {r.title || "Event"}
+                        {r.cc ? ` — ${r.cc}` : ""}
+                      </AppText>
+                      <AppText variant="caption" color="#6B7280">
+                        {r.at ? new Date(r.at).toLocaleString() : ""}
+                      </AppText>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* All scheduled local notifications */}
+            <View style={{ marginTop: 12 }}>
+              <AppText variant="label" weight="700" color="#374151">
+                Scheduled Local Notifications (device)
+              </AppText>
+              {scheduled.length === 0 ? (
+                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+                  None scheduled.
+                </AppText>
+              ) : (
+                <View style={{ marginTop: 6, gap: 6 }}>
+                  {scheduled.map((n) => (
+                    <View key={n.id} style={styles.reminderRow}>
+                      <Ionicons name="alarm-outline" size={16} color="#374151" />
+                      <AppText variant="caption" weight="700" style={{ flex: 1 }}>
+                        {n.title || "Reminder"}
+                        {n.body ? ` — ${n.body}` : ""}
+                      </AppText>
+                      <AppText variant="caption" color="#6B7280">
+                        {n.when ? n.when.toLocaleString() : "—"}
+                      </AppText>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Search + summary */}
       <View style={styles.controls}>
         <View style={styles.searchRow}>
           <TextInput
@@ -557,18 +701,14 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Summary chip (tap to open filters panel) */}
+        {/* Summary chip */}
         <Pressable
           style={styles.summaryRow}
           onPress={() => {
             setTmpCategories(categories);
             setTmpTimeFilter(timeFilter);
-            setTmpDistanceSort(distanceSort);
             setTmpPricingFilter(pricingFilter);
-            setCatOpen(true);
-            setTimeOpen(false);
-            setDistOpen(false);
-            setPriceOpen(false);
+            setTmpDistanceFilter(distanceFilter);
             setFiltersOpen(true);
           }}
         >
@@ -576,16 +716,11 @@ export default function CommunityScreen() {
             {summaryText} {"  ▼"}
           </AppText>
         </Pressable>
-
-        {!!categoryNote && (
-          <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
-            {categoryNote}
-          </AppText>
-        )}
       </View>
 
       {/* List */}
       <FlatList
+        ref={listRef}
         data={events}
         keyExtractor={(it) => it.event_id}
         renderItem={RenderCard}
@@ -593,18 +728,32 @@ export default function CommunityScreen() {
         ListEmptyComponent={
           <View style={{ padding: 16 }}>
             <AppText variant="label" color="#6B7280">
-              {t("community.noResults")}
+              {t("community.noEvents")}
             </AppText>
           </View>
         }
         refreshing={loading}
         onRefresh={() => fetchEvents()}
+        onScrollBeginDrag={handleScrollBegin}
         ListFooterComponent={
           totalPages > 1 ? (
             <View style={styles.paginationBar}>
+              {/* First */}
               <Pressable
                 accessibilityRole="button"
-                onPress={() => setPage((p) => Math.max(1, p - 1))}
+                onPress={goFirst}
+                disabled={page === 1}
+                style={[styles.pageIcon, page === 1 && styles.pageDisabled]}
+              >
+                <AppText variant="button" weight="800" color={page === 1 ? "#9CA3AF" : DARK}>
+                  «
+                </AppText>
+              </Pressable>
+
+              {/* Prev */}
+              <Pressable
+                accessibilityRole="button"
+                onPress={goPrev}
                 disabled={page === 1}
                 style={[styles.pageIcon, page === 1 && styles.pageDisabled]}
               >
@@ -613,24 +762,42 @@ export default function CommunityScreen() {
                 </AppText>
               </Pressable>
 
+              {/* Numbers */}
               <View style={styles.pageNums}>
                 {pages.map((n) => (
-                  <Pressable key={n} onPress={() => setPage(n)} style={styles.pageNumBtn} disabled={n === page}>
-                    <AppText variant="label" weight={n === page ? "900" : "700"} color={n === page ? DARK : "#9CA3AF"}>
+                  <Pressable key={n} onPress={() => goTo(n)} style={styles.pageNumBtn} disabled={n === page}>
+                    <AppText
+                      variant="label"
+                      weight={n === page ? "900" : "700"}
+                      color={n === page ? DARK : "#9CA3AF"}
+                    >
                       {n}
                     </AppText>
                   </Pressable>
                 ))}
               </View>
 
+              {/* Next */}
               <Pressable
                 accessibilityRole="button"
-                onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onPress={goNext}
                 disabled={page >= totalPages}
                 style={[styles.pageIcon, page >= totalPages && styles.pageDisabled]}
               >
                 <AppText variant="button" weight="800" color={page >= totalPages ? "#9CA3AF" : DARK}>
                   ›
+                </AppText>
+              </Pressable>
+
+              {/* Last */}
+              <Pressable
+                accessibilityRole="button"
+                onPress={goLast}
+                disabled={page >= totalPages}
+                style={[styles.pageIcon, page >= totalPages && styles.pageDisabled]}
+              >
+                <AppText variant="button" weight="800" color={page >= totalPages ? "#9CA3AF" : DARK}>
+                  »
                 </AppText>
               </Pressable>
             </View>
@@ -640,171 +807,236 @@ export default function CommunityScreen() {
         }
       />
 
-      {/* Filters Panel Modal */}
-      {filtersOpen && (
-        <Modal visible transparent animationType="fade" onRequestClose={() => setFiltersOpen(false)}>
-          <TouchableWithoutFeedback onPress={() => setFiltersOpen(false)}>
-            <View style={styles.overlay} />
-          </TouchableWithoutFeedback>
+      {/* Filters Bottom Sheet */}
+      <Modal
+        visible={filtersOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFiltersOpen(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setFiltersOpen(false)}>
+          <View style={styles.modalBackdrop} />
+        </TouchableWithoutFeedback>
 
-          <View style={styles.dropdownPanel}>
-            <AppText variant="title" weight="900">
-              {t("community.filters.title")}
+        <View style={styles.filtersCard}>
+          <AppText variant="title" weight="900" style={{ marginBottom: 10 }}>
+            {t("community.filters.title")}
+          </AppText>
+
+          {/* Categories chips */}
+          <AppText variant="label" color="#6B7280" style={{ marginBottom: 6 }}>
+            {t("community.filters.categories")}
+          </AppText>
+          <View style={styles.rowWrap}>
+            {CATEGORIES.map((c) => {
+              const active = tmpCategories.includes(c);
+              return (
+                <Pressable
+                  key={c}
+                  onPress={() =>
+                    setTmpCategories((prev) =>
+                      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
+                    )
+                  }
+                  style={[styles.chip, active && styles.chipActive]}
+                >
+                  <AppText variant="button" weight="800" color={active ? "#FFF" : DARK}>
+                    {catLabel(c, t)}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Timing chips */}
+          <AppText variant="label" color="#6B7280" style={{ marginTop: 12, marginBottom: 6 }}>
+            {t("community.filters.timing")}
+          </AppText>
+          <View style={styles.rowWrap}>
+            {(["today", "week", "upcoming"] as TimeFilter[]).map((opt) => {
+              const active = tmpTimeFilter === opt;
+              return (
+                <Pressable
+                  key={opt}
+                  onPress={() => setTmpTimeFilter(opt)}
+                  style={[styles.chip, active && styles.chipActive]}
+                >
+                  <AppText variant="button" weight="800" color={active ? "#FFF" : DARK}>
+                    {opt === "today"
+                      ? t("community.timing.today")
+                      : opt === "week"
+                        ? t("community.timing.week")
+                        : t("community.timing.upcoming")}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Price chips */}
+          <AppText variant="label" color="#6B7280" style={{ marginTop: 12, marginBottom: 6 }}>
+            {t("community.filters.price")}
+          </AppText>
+          <View style={styles.rowWrap}>
+            {(["all", "free", "paid"] as PricingFilter[]).map((opt) => {
+              const active = tmpPricingFilter === opt;
+              return (
+                <Pressable
+                  key={opt}
+                  onPress={() => setTmpPricingFilter(opt)}
+                  style={[styles.chip, active && styles.chipActive]}
+                >
+                  <AppText variant="button" weight="800" color={active ? "#FFF" : DARK}>
+                    {opt === "all"
+                      ? t("community.price.all")
+                      : opt === "free"
+                        ? t("community.price.freeOnly")
+                        : t("community.price.paidOnly")}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Distance chips */}
+          <AppText variant="label" color="#6B7280" style={{ marginTop: 12, marginBottom: 6 }}>
+            {t("community.filters.distance")}
+          </AppText>
+          <View style={styles.rowWrap}>
+            {([
+              { key: "any", label: "Any" },
+              { key: "2", label: "≤ 2 km" },
+              { key: "5", label: "≤ 5 km" },
+              { key: "10", label: "≤ 10 km" },
+            ] as const).map(({ key, label }) => {
+              const active = tmpDistanceFilter === key;
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => setTmpDistanceFilter(key as any)}
+                  style={[styles.chip, active && styles.chipActive]}
+                >
+                  <AppText variant="button" weight="800" color={active ? "#FFF" : DARK}>
+                    {label}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Actions */}
+          <View style={[styles.rowSpace, { marginTop: 16 }]}>
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: "#6B7280" }]}
+              onPress={() => {
+                setTmpCategories([]);
+                setTmpTimeFilter("upcoming");
+                setTmpPricingFilter("all");
+                setTmpDistanceFilter("any");
+              }}
+            >
+              <AppText variant="button" weight="800" color="#FFF">
+                {t("community.filters.reset")}
+              </AppText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: "#111827" }]}
+              onPress={() => {
+                setCategories(tmpCategories);
+                setTimeFilter(tmpTimeFilter);
+                setPricingFilter(tmpPricingFilter);
+                setDistanceFilter(tmpDistanceFilter);
+                setPage(1);
+                setFiltersOpen(false);
+              }}
+            >
+              <AppText variant="button" weight="800" color="#FFF">
+                {t("community.filters.apply")}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Details Modal */}
+      <Modal
+        visible={detailsOpen && !!selectedEvent}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDetailsOpen(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setDetailsOpen(false)}>
+          <View style={styles.modalBackdrop} />
+        </TouchableWithoutFeedback>
+
+        {selectedEvent && (
+          <View style={styles.detailsCard}>
+            <AppText variant="title" weight="900" style={{ marginBottom: 6 }}>
+              {selectedEvent.title}
             </AppText>
 
-            {/* Categories */}
-            <Dropdown
-              label={t("community.filters.categories")}
-              display={
-                tmpCategories.length
-                  ? tmpCategories.length <= 2
-                    ? catListLabel(tmpCategories, t).join(", ")
-                    : `${tmpCategories.length} ${t("community.filters.categories").toLowerCase()}`
-                  : t("community.price.all")
-              }
-              open={catOpen}
-              setOpen={(v) => {
-                setCatOpen(v);
-                if (v) {
-                  setTimeOpen(false);
-                  setDistOpen(false);
-                  setPriceOpen(false);
-                }
-              }}
-            >
-              <View style={styles.chipsWrap}>
-                {CATEGORIES.map((c) => {
-                  const active = tmpCategories.includes(c);
-                  return (
-                    <Chip
-                      key={c}
-                      active={active}
-                      onPress={() =>
-                        setTmpCategories((prev) =>
-                          prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
-                        )
-                      }
-                    >
-                      {catLabel(c, t)}
-                    </Chip>
-                  );
-                })}
-              </View>
-            </Dropdown>
+            <AppText variant="label" color="#374151" style={{ marginBottom: 6 }}>
+              {selectedEvent.location_name || "—"}
+            </AppText>
 
-            {/* Timing */}
-            <Dropdown
-              label={t("community.filters.timing")}
-              display={timingText(tmpTimeFilter)}
-              open={timeOpen}
-              setOpen={(v) => {
-                setTimeOpen(v);
-                if (v) {
-                  setCatOpen(false);
-                  setDistOpen(false);
-                  setPriceOpen(false);
-                }
-              }}
-            >
-              <View style={styles.rowSpace}>
-                {(["today", "week", "upcoming"] as TimeFilter[]).map((tOpt) => (
-                  <Chip key={tOpt} active={tmpTimeFilter === tOpt} onPress={() => setTmpTimeFilter(tOpt)}>
-                    {timingText(tOpt)}
-                  </Chip>
-                ))}
-              </View>
-            </Dropdown>
-
-            {/* Distance */}
-            <Dropdown
-              label={t("community.filters.distance")}
-              display={distanceText(tmpDistanceSort)}
-              open={distOpen}
-              setOpen={(v) => {
-                setDistOpen(v);
-                if (v) {
-                  setCatOpen(false);
-                  setTimeOpen(false);
-                  setPriceOpen(false);
-                }
-              }}
-            >
-              <View style={styles.rowSpace}>
-                {(["near", "far", "none"] as DistanceSort[]).map((d) => (
-                  <Chip key={d} active={tmpDistanceSort === d} onPress={() => setTmpDistanceSort(d)}>
-                    {distanceText(d)}
-                  </Chip>
-                ))}
-              </View>
-            </Dropdown>
-
-            {/* Pricing */}
-            <Dropdown
-              label={t("community.filters.price")}
-              display={
-                tmpPricingFilter === "free"
-                  ? t("community.price.freeOnly")
-                  : tmpPricingFilter === "paid"
-                  ? t("community.price.paidOnly")
-                  : t("community.price.all")
-              }
-              open={priceOpen}
-              setOpen={(v) => {
-                setPriceOpen(v);
-                if (v) {
-                  setCatOpen(false);
-                  setTimeOpen(false);
-                  setDistOpen(false);
-                }
-              }}
-            >
-              <View style={styles.rowSpace}>
-                <Chip active={tmpPricingFilter === "all"} onPress={() => setTmpPricingFilter("all")}>
-                  {t("community.price.all")}
-                </Chip>
-                <Chip active={tmpPricingFilter === "free"} onPress={() => setTmpPricingFilter("free")}>
-                  {t("community.price.freeOnly")}
-                </Chip>
-                <Chip active={tmpPricingFilter === "paid"} onPress={() => setTmpPricingFilter("paid")}>
-                  {t("community.price.paidOnly")}
-                </Chip>
-              </View>
-            </Dropdown>
-
-            {/* Actions */}
-            <View style={[styles.rowSpace, { marginTop: 14 }]}>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#6B7280" }]}
-                onPress={() => {
-                  setTmpCategories([]);
-                  setTmpTimeFilter("upcoming");
-                  setTmpDistanceSort("near");
-                  setTmpPricingFilter("all");
-                }}
-              >
-                <AppText variant="button" weight="800" color="#FFF">
-                  {t("community.filters.reset")}
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+              <View style={styles.pill}>
+                <AppText variant="caption" weight="800">
+                  {selectedEvent.start_date}
                 </AppText>
-              </TouchableOpacity>
+              </View>
+              {!!selectedEvent.start_time && (
+                <View style={styles.pill}>
+                  <AppText variant="caption" weight="800">
+                    {selectedEvent.start_time.slice(0, 5)}
+                  </AppText>
+                </View>
+              )}
+              {!!selectedEvent.fee && (
+                <View style={[styles.pill, { backgroundColor: "#EEF2FF" }]}>
+                  <AppText variant="caption" weight="900" color="#1D4ED8">
+                    {selectedEvent.fee}
+                  </AppText>
+                </View>
+              )}
+            </View>
+
+            <AppText variant="body" color="#111827" style={{ marginBottom: 12 }}>
+              {selectedEvent.description || t("community.details")}
+            </AppText>
+
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {!!selectedEvent.registration_link && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: DARK }]}
+                  onPress={() => onRegister(selectedEvent.registration_link)}
+                >
+                  <AppText variant="button" weight="800" color="#FFF">
+                    {t("community.register")}
+                  </AppText>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: APPLY }]}
-                onPress={() => {
-                  setCategories(tmpCategories);
-                  setTimeFilter(tmpTimeFilter);
-                  setDistanceSort(tmpDistanceSort);
-                  setPricingFilter(tmpPricingFilter);
-                  setPage(1);
-                  setFiltersOpen(false);
-                }}
+                style={[styles.actionBtn, { backgroundColor: "#a3491d" }]}
+                onPress={() => onDirections(selectedEvent)}
               >
                 <AppText variant="button" weight="800" color="#FFF">
-                  {t("community.filters.apply")}
+                  {t("community.getDirections")}
                 </AppText>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              onPress={() => setDetailsOpen(false)}
+              style={{ alignSelf: "center", marginTop: 10, padding: 8 }}
+            >
+              <AppText variant="button" color="#6B7280">
+                {t("common.cancel")}
+              </AppText>
+            </TouchableOpacity>
           </View>
-        </Modal>
-      )}
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -812,7 +1044,28 @@ export default function CommunityScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BG },
 
-  controls: { padding: 12, paddingTop: Platform.OS === "ios" ? 8 : 4 },
+  notifWrap: { paddingHorizontal: 12, paddingTop: Platform.OS === "ios" ? 8 : 4 },
+  notifBar: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  notifPanel: {
+    marginTop: 8,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    padding: 12,
+  },
+
+  controls: { padding: 12 },
 
   searchRow: {
     flexDirection: "row",
@@ -841,6 +1094,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF2FF",
   },
 
+  chip: {
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#FFF",
+  },
+  chipActive: { backgroundColor: DARK, borderColor: DARK },
+
+  rowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+
   card: {
     backgroundColor: "#FFF",
     borderRadius: 16,
@@ -864,14 +1129,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  expandBody: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: CARD_BORDER,
-    gap: 10,
-  },
-
   paginationBar: {
     marginTop: 8,
     marginBottom: 16,
@@ -885,67 +1142,65 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  pageIcon: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  pageIcon: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   pageDisabled: { opacity: 0.5 },
   pageNums: { flexDirection: "row", alignItems: "center", gap: 14 },
   pageNumBtn: { paddingHorizontal: 2, paddingVertical: 2 },
 
-  overlay: {
+  modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
-  dropdownPanel: {
+  filtersCard: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 100 : 84,
-    right: 12,
     left: 12,
+    right: 12,
+    bottom: 16,
     backgroundColor: "#FFF",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
-
-  dropHeader: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
     borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dropBody: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: CARD_BORDER,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    padding: 10,
-    backgroundColor: "#FAFAFA",
-  },
-
-  chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
-
-  chip: {
     borderWidth: 1,
     borderColor: CARD_BORDER,
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#FFF",
+    padding: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -6 },
   },
-  chipActive: { backgroundColor: DARK, borderColor: DARK },
 
-  rowSpace: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 },
+  detailsCard: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 16,
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -6 },
+  },
 
-  actionBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: "center", marginHorizontal: 4 },
+  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#F3F4F6" },
+
+  reminderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E7EB",
+  },
+
+  rowSpace: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
+
+  actionBtn: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

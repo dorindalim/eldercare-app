@@ -207,6 +207,23 @@
       "copy": "Copy",
       "copySuccess": "Copied to clipboard",
       "copyUnavailable": "Clipboard not available on this device. Please copy the code manually."
+    },
+    "locationAccess": {
+      "title": "Location access",
+      "status": {
+        "granted": "Granted",
+        "denied": "Denied",
+        "askMe": "Ask me"
+      },
+      "servicesOff": "Location services are OFF",
+      "turnOnServicesTitle": "Turn on Location Services",
+      "turnOnServicesBody": "Please enable Location Services in Settings.",
+      "allowedTitle": "Location currently allowed",
+      "allowedBody": "To turn this off, update permissions in Settings.",
+      "needAccessTitle": "Location access needed",
+      "needAccessBody": "To enable location features, allow access in Settings.",
+      "openSettings": "Open Settings",
+      "requestError": "Could not request location permission."
     }
   },
   "rewards": {
@@ -258,7 +275,7 @@
   },
   "community": {
     "title": "CC Activities",
-    "searchPlaceholder": "Search by title",
+    "searchPlaceholder": "Search by Title",
     "ui": { "search": "Search" },
     "noEvents": "No events found.",
     "details": "No description.",
@@ -316,12 +333,58 @@
   },
   "clinic": { "title": "Clinic" },
   "walkingRoutes": { "title": "Walking Routes" },
-  "navigation": { "title": "Navigation" },
+  "navigation": {
+    "title": "Navigation",
+    "actions": {
+      "viewActivities": "View Activities",
+      "setDestination": "Set Destination",
+      "viewDetails": "View Details",
+      "setReminder": "Set Reminder"
+    },
+    "search": {
+      "permissionTitle": "Location permission needed",
+      "permissionBody": "Please enable location services to navigate.",
+      "enterTitle": "Enter a destination",
+      "enterBody": "Type an address or place name to search.",
+      "notFoundTitle": "Not found",
+      "notFoundBody": "Try a more specific place name.",
+      "destination": "Destination",
+      "destinationSet": "Destination set",
+      "startNav": "Start Navigation",
+      "stopNav": "Stop Navigation",
+      "started": "Navigation started.",
+      "stopped": "Navigation stopped.",
+      "eta": "ETA: {{duration}} ({{distance}})",
+      "nextStep": "Next: {{step}}",
+      "arrived": "Arrived",
+      "requesting": "Requesting location access…",
+      "loading": "Loading…",
+      "filter": {
+        "everything": "Everything",
+        "cc": "Community Clubs",
+        "clinics": "Clinics",
+        "parks": "Parks"
+      },
+      "placeholder": "Search address or place"
+    },
+    "reminders": {
+      "permTitle": "Allow Notifications",
+      "permBody": "Please allow notifications so we can remind you before activities.",
+      "invalidTime": "This event is missing a start time.",
+      "tooSoonTitle": "Too late to schedule",
+      "tooSoonBody": "The reminder time has already passed.",
+      "notifTitle": "Upcoming activity",
+      "notifBody": "“{{title}}” starts in about 1 hour.",
+      "scheduledTitle": "Reminder Set",
+      "scheduledBody": "We'll remind you on {{when}}.",
+      "untitled": "Untitled"
+    }
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "hint": "Open app settings and language",
     "switchTo": "Switch language to",
-    "logout": "Log out"
+    "logout": "Log Out"
   }
 }

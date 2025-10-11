@@ -384,7 +384,6 @@
       }
     } catch {}
 
-    // Unlock with existing PIN
     el('pinUseBtn').onclick = async () => {
       el('pinMsg').textContent = '';
       const p = (el('pinInput').value||'').trim();
@@ -399,7 +398,6 @@
       showMainUI(); render(r.data);
     };
 
-    // Set a new PIN (for tokens that don’t have one yet)
     el('pinSetBtn').onclick = async () => {
       el('pinMsg').textContent = '';
       const p = (el('pinInput').value||'').trim();
@@ -407,7 +405,6 @@
       const h = await sha256Hex(p);
       const s = await rpcSetPin(h);
       if (s.error) { el('pinMsg').textContent = s.error.message || 'Failed to set PIN'; return; }
-      // Immediately fetch
       const r = await rpcGet(h);
       if (r.error) { el('pinMsg').textContent = r.error.message || 'Failed to unlock after setting PIN'; return; }
       cachedPin = p;
@@ -417,11 +414,9 @@
       showMainUI(); render(r.data);
     };
 
-    // UI interactions
     const addBtn = el('addCond'); if (addBtn) addBtn.addEventListener('click', addCondition);
     el('noCondsChip').onclick = ()=> setNoConditionsUI(!noConditions);
 
-    // Save
     el('saveBtn').onclick = async () => {
       el('saveMsg').textContent='Saving…';
       if (!cachedPin) { el('saveMsg').textContent='Unlock first.'; return; }
