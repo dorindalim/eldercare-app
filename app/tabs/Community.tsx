@@ -403,7 +403,7 @@ export default function CommunityScreen() {
   const loadScheduledLocals = useCallback(async () => {
     try {
       const arr = await Notifications.getAllScheduledNotificationsAsync();
-    const mapped: ScheduledLocal[] = arr.map((n) => {
+      const mapped: ScheduledLocal[] = arr.map((n) => {
         const tr: any = n.trigger;
         const when: Date | undefined = tr?.date != null ? new Date(tr.date) : undefined;
         return {
@@ -1005,10 +1005,10 @@ export default function CommunityScreen() {
               {selectedEvent.description || t("community.details")}
             </AppText>
 
-            <View style={{ flexDirection: "row", gap: 8 }}>
+            <View style={styles.actionsRow}>
               {!!selectedEvent.registration_link && (
                 <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: DARK }]}
+                  style={[styles.btnBase, styles.halfBtn, { backgroundColor: DARK, marginRight: 8 }]}
                   onPress={() => onRegister(selectedEvent.registration_link)}
                 >
                   <AppText variant="button" weight="800" color="#FFF">
@@ -1017,7 +1017,12 @@ export default function CommunityScreen() {
                 </TouchableOpacity>
               )}
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#a3491d" }]}
+                style={[
+                  styles.btnBase,
+                  styles.halfBtn,
+                  { backgroundColor: "#a3491d" },
+                  !selectedEvent.registration_link && { marginLeft: 0 },
+                ]}
                 onPress={() => onDirections(selectedEvent)}
               >
                 <AppText variant="button" weight="800" color="#FFF">
@@ -1202,5 +1207,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  btnBase: {
+    minHeight: 48,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  halfBtn: {
+    flex: 1,
   },
 });

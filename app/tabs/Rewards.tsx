@@ -397,7 +397,11 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F9FAFB",
   },
-  actionsRow: { flexDirection: "row", gap: 10, marginTop: 8 },
+  actionsRow: { flexDirection: "row", gap: 12, marginTop: 8, paddingHorizontal: 2 },
+  actionBtnWide: {
+    flex: 1,           
+    minHeight: 48,     
+  },
   linkBtn: {
     borderWidth: 1,
     borderColor: "#111827",
