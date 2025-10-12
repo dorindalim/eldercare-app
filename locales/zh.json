@@ -274,7 +274,7 @@
   "elderlyOnboarding": {
     "title": "基本信息",
     "namePH": "姓名",
-    "yobPH": "出生年份（YYYY）",
+    "yobPH": "出生年份（e.g 2000）",
     "genderLabel": "性别",
     "male": "男",
     "female": "女",

@@ -275,7 +275,7 @@
   "elderlyOnboarding": {
     "title": "Basic Information",
     "namePH": "Full name",
-    "yobPH": "Year of birth (YYYY)",
+    "yobPH": "Year of birth (e.g. 2000)",
     "genderLabel": "Gender",
     "male": "Male",
     "female": "Female",

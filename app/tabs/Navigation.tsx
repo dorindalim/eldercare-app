@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import polyline from "@mapbox/polyline";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
@@ -53,7 +53,7 @@ type CCEvent = {
   event_id: string | null;
   title: string | null;
   start_date: string | null;
-  start_time: string | null; 
+  start_time: string | null;
   end_date: string | null;
   end_time: string | null;
   fee: string | null;
@@ -157,13 +157,18 @@ export default function NavigationScreen() {
 
   const hideAllCallouts = () => {
     Object.values(markerRefs.current).forEach((m) => {
-      try { m?.hideCallout?.(); } catch {}
+      try {
+        m?.hideCallout?.();
+      } catch {}
     });
   };
 
   function extractFromDescription(desc?: string, key?: string) {
     if (!desc || !key) return undefined;
-    const re = new RegExp(`<th>\\s*${key}\\s*<\\/th>\\s*<td>(.*?)<\\/td>`, "i");
+    const re = new RegExp(
+      `<th>\\s*${key}\\s*<\\/th>\\s*<td>(.*?)<\\/td>`,
+      "i"
+    );
     const m = desc.match(re);
     return m?.[1]?.replace(/<[^>]+>/g, "").trim();
   }
@@ -183,13 +188,9 @@ export default function NavigationScreen() {
         let name: string | undefined;
         let postal: string | undefined;
         if (kind === "clinic") {
-          name =
-            extractFromDescription(desc, "HCI_NAME") ||
-            props.HCI_NAME || props.hci_name;
+          name = extractFromDescription(desc, "HCI_NAME") || props.HCI_NAME || props.hci_name;
         } else if (kind === "cc") {
-          name =
-            extractFromDescription(desc, "NAME") ||
-            props.CC_NAME || props.cc_name;
+          name = extractFromDescription(desc, "NAME") || props.CC_NAME || props.cc_name;
           postal = extractFromDescription(desc, "ADDRESSPOSTALCODE");
         } else {
           name = props.NAME || props.Name || props.name;
@@ -223,26 +224,40 @@ export default function NavigationScreen() {
   }
 
   useEffect(() => {
-    try { setCcPOIs(parseGeoJSONPoints(CC_GEOJSON, "Community Club", "cc")); } catch {}
-    try { setClinicPOIs(parseGeoJSONPoints(CLINIC_GEOJSON, "Clinic", "clinic")); } catch {}
-    try { setParkPOIs(parseGeoJSONPoints(PARK_GEOJSON, "Park", "park")); } catch {}
+    try {
+      setCcPOIs(parseGeoJSONPoints(CC_GEOJSON, "Community Club", "cc"));
+    } catch {}
+    try {
+      setClinicPOIs(parseGeoJSONPoints(CLINIC_GEOJSON, "Clinic", "clinic"));
+    } catch {}
+    try {
+      setParkPOIs(parseGeoJSONPoints(PARK_GEOJSON, "Park", "park"));
+    } catch {}
   }, []);
 
   const activePOIs: POI[] = useMemo(() => {
     switch (category) {
-      case "cc": return ccPOIs;
-      case "clinics": return clinicPOIs;
-      case "parks": return parkPOIs;
-      default: return [];
+      case "cc":
+        return ccPOIs;
+      case "clinics":
+        return clinicPOIs;
+      case "parks":
+        return parkPOIs;
+      default:
+        return [];
     }
   }, [category, ccPOIs, clinicPOIs, parkPOIs]);
 
   const activeColor = useMemo(() => {
     switch (category) {
-      case "cc": return "#8B5CF6";
-      case "clinics": return "#10B981";
-      case "parks": return "#F59E0B";
-      default: return "#007AFF";
+      case "cc":
+        return "#8B5CF6";
+      case "clinics":
+        return "#10B981";
+      case "parks":
+        return "#F59E0B";
+      default:
+        return "#007AFF";
     }
   }, [category]);
 
@@ -261,8 +276,8 @@ export default function NavigationScreen() {
     const region = {
       latitude: (minLat + maxLat) / 2,
       longitude: (minLng + maxLng) / 2,
-      latitudeDelta: Math.max(0.01, (maxLat - minLat) + pad),
-      longitudeDelta: Math.max(0.01, (maxLng - minLng) + pad),
+      latitudeDelta: Math.max(0.01, maxLat - minLat + pad),
+      longitudeDelta: Math.max(0.01, maxLng - minLng + pad),
     };
     mapRef.current.animateToRegion(region, 500);
   }, [category, activePOIs]);
@@ -286,10 +301,13 @@ export default function NavigationScreen() {
     const q = (override ?? query).trim();
     if (!q) return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
     try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${GOOGLE_WEB_API_KEY}`;
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        q
+      )}&key=${GOOGLE_WEB_API_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (!data.results?.length) return Alert.alert(t("navigation.search.notFoundTitle"), t("navigation.search.notFoundBody"));
+      if (!data.results?.length)
+        return Alert.alert(t("navigation.search.notFoundTitle"), t("navigation.search.notFoundBody"));
       const loc = data.results[0].geometry.location;
       const dest = { latitude: loc.lat, longitude: loc.lng };
       setDestinationOnly(dest);
@@ -384,7 +402,8 @@ export default function NavigationScreen() {
   };
 
   const startNavigation = () => {
-    if (!location || !destination) return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
+    if (!location || !destination)
+      return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
     setNavigating(true);
     setCurrentStepIndex(0);
     fetchDirections(location, destination, /*speak*/ true);
@@ -394,7 +413,8 @@ export default function NavigationScreen() {
   const parseEventStart = (evt: CCEvent): Date | null => {
     if (!evt.start_date) return null;
     const [y, m, d] = evt.start_date.split("-").map(Number);
-    let hh = 9, mm = 0;
+    let hh = 9,
+      mm = 0;
     if (evt.start_time) {
       const [h, min] = evt.start_time.split(":").map(Number);
       if (!isNaN(h)) hh = h;
@@ -456,8 +476,8 @@ export default function NavigationScreen() {
 
     await presentNow({
       title: evt.title,
-      body:
-        t("navigation.reminders.scheduledBody", { when: triggerDate.toLocaleString(),
+      body: t("navigation.reminders.scheduledBody", {
+        when: triggerDate.toLocaleString(),
       }),
     });
   };
@@ -497,10 +517,14 @@ export default function NavigationScreen() {
 
   const activePOILabel = (c: CategoryKey) => {
     switch (c) {
-      case "search": return t("navigation.search.filter.everything");
-      case "cc": return t("navigation.search.filter.cc");
-      case "clinics": return t("navigation.search.filter.clinics");
-      case "parks": return t("navigation.search.filter.parks");
+      case "search":
+        return t("navigation.search.filter.everything");
+      case "cc":
+        return t("navigation.search.filter.cc");
+      case "clinics":
+        return t("navigation.search.filter.clinics");
+      case "parks":
+        return t("navigation.search.filter.parks");
     }
   };
 
@@ -583,10 +607,7 @@ export default function NavigationScreen() {
                 <Ionicons name="search" size={18} color="#111827" />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={s.iconBtn}
-                onPress={() => setQuery("")}
-              >
+              <TouchableOpacity style={s.iconBtn} onPress={() => setQuery("")}>
                 <Ionicons name="close-circle" size={20} color="#111827" />
               </TouchableOpacity>
             )}
@@ -629,7 +650,11 @@ export default function NavigationScreen() {
         onRegionChangeStart={closeSheetsForMapInteraction}
       >
         {destination && category === "search" && (
-          <Marker coordinate={destination} title={t("navigation.search.destination")} pinColor="#007AFF" />
+          <Marker
+            coordinate={destination}
+            title={t("navigation.search.destination")}
+            pinColor="#007AFF"
+          />
         )}
 
         {activePOIs.map((p) => (
@@ -638,7 +663,9 @@ export default function NavigationScreen() {
             coordinate={p.coords}
             title={p.name}
             pinColor={activeColor}
-            ref={(r) => { markerRefs.current[p.id] = r as MapMarker | null; }}
+            ref={(r) => {
+              markerRefs.current[p.id] = r as MapMarker | null;
+            }}
           >
             <Callout tooltip={false} onPress={() => openPoiOptions(p)}>
               <View style={s.calloutCard}>
@@ -697,7 +724,9 @@ export default function NavigationScreen() {
           </AppText>
           <AppText variant="label" color="#007AFF" weight="800" style={{ marginBottom: 8 }}>
             {t("navigation.search.nextStep", {
-              step: steps[currentStepIndex] ? stripHtml(steps[currentStepIndex].html) : t("navigation.search.arrived")
+              step: steps[currentStepIndex]
+                ? stripHtml(steps[currentStepIndex].html)
+                : t("navigation.search.arrived"),
             })}
           </AppText>
 
@@ -705,7 +734,11 @@ export default function NavigationScreen() {
             data={steps}
             keyExtractor={(it) => it.id}
             renderItem={({ item, index }) => (
-              <AppText variant="body" weight={index === currentStepIndex ? "900" : "700"} style={index === currentStepIndex ? s.stepActive : undefined}>
+              <AppText
+                variant="body"
+                weight={index === currentStepIndex ? "900" : "700"}
+                style={index === currentStepIndex ? s.stepActive : undefined}
+              >
                 • {stripHtml(item.html)} ({item.dist})
               </AppText>
             )}
@@ -741,7 +774,9 @@ export default function NavigationScreen() {
             <View style={s.grabber} />
           </View>
           <View style={s.optionsHeader}>
-            <AppText variant="label" weight="900">{selectedPOI.name}</AppText>
+            <AppText variant="label" weight="900">
+              {selectedPOI.name}
+            </AppText>
             <TouchableOpacity onPress={() => setShowPoiOptions(false)} style={{ padding: 6 }}>
               <Ionicons name="close" size={20} color="#6B7280" />
             </TouchableOpacity>
@@ -795,9 +830,13 @@ export default function NavigationScreen() {
 
           <View style={{ marginTop: 6 }}>
             {sheetLoading ? (
-              <AppText variant="label" color="#6B7280">{t("navigation.search.loading")}</AppText>
+              <AppText variant="label" color="#6B7280">
+                {t("navigation.search.loading")}
+              </AppText>
             ) : sheetEvents.length === 0 ? (
-              <AppText variant="label" color="#6B7280">{t("community.noEvents")}</AppText>
+              <AppText variant="label" color="#6B7280">
+                {t("community.noEvents")}
+              </AppText>
             ) : (
               <FlatList
                 data={sheetEvents}
@@ -808,22 +847,51 @@ export default function NavigationScreen() {
                   const dateStr = item.start_date || "";
                   const timeStr = item.start_time ? item.start_time.slice(0, 5) : "";
                   return (
-                    <View style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 12, padding: 10, backgroundColor: "#FFF" }}>
-                      <AppText variant="label" weight="900" numberOfLines={2}>{item.title || t("navigation.reminders.untitled")}</AppText>
+                    <View
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#E5E7EB",
+                        borderRadius: 12,
+                        padding: 10,
+                        backgroundColor: "#FFF",
+                      }}
+                    >
+                      <AppText variant="label" weight="900" numberOfLines={2}>
+                        {item.title || t("navigation.reminders.untitled")}
+                      </AppText>
 
                       <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
-                        {!!dateStr && (<View style={s.pill}><AppText variant="caption" weight="800">{dateStr}</AppText></View>)}
-                        {!!timeStr && (<View style={s.pill}><AppText variant="caption" weight="800">{timeStr}</AppText></View>)}
+                        {!!dateStr && (
+                          <View style={s.pill}>
+                            <AppText variant="caption" weight="800">
+                              {dateStr}
+                            </AppText>
+                          </View>
+                        )}
+                        {!!timeStr && (
+                          <View style={s.pill}>
+                            <AppText variant="caption" weight="800">
+                              {timeStr}
+                            </AppText>
+                          </View>
+                        )}
                         {!!item.fee && (
                           <View style={[s.pill, { backgroundColor: "#EEF2FF" }]}>
-                            <AppText variant="caption" weight="900" color="#1D4ED8">{item.fee}</AppText>
+                            <AppText variant="caption" weight="900" color="#1D4ED8">
+                              {item.fee}
+                            </AppText>
                           </View>
                         )}
                       </View>
 
                       <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
                         <TouchableOpacity
-                          style={{ backgroundColor: "#111827", paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 }}
+                          style={{
+                            backgroundColor: "#111827",
+                            paddingVertical: 8,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                          }}
                           onPress={() => {
                             setSheetOpen(false);
                             router.push({
@@ -839,7 +907,12 @@ export default function NavigationScreen() {
 
                         {/* Set reminder 1h before */}
                         <TouchableOpacity
-                          style={{ backgroundColor: "#007AFF", paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 }}
+                          style={{
+                            backgroundColor: "#007AFF",
+                            paddingVertical: 8,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                          }}
                           onPress={() => scheduleReminder(item)}
                         >
                           <AppText variant="button" weight="800" color="#FFF">
@@ -961,7 +1034,9 @@ const s = StyleSheet.create({
 
   instructions: {
     position: "absolute",
-    bottom: 0, left: 0, right: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: "rgba(255,255,255,0.96)",
     padding: 14,
     borderTopLeftRadius: 16,
@@ -973,26 +1048,31 @@ const s = StyleSheet.create({
   stopBtn: { backgroundColor: "#FF3B30", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
 
   overlay: {
-    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: "center", justifyContent: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.85)",
   },
 
   recenterBtn: {
-    position: 'absolute',
+    position: "absolute",
     left: 12,
     top: TOP_OFFSET + 104,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     width: 40,
     height: 40,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 6,
     zIndex: 4,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
     shadowOpacity: 0.12,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -1003,15 +1083,17 @@ const s = StyleSheet.create({
     maxWidth: 280,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: 'rgba(255,255,255,0.98)',
+    backgroundColor: "rgba(255,255,255,0.98)",
     borderRadius: 10,
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
 
   optionsSheet: {
     position: "absolute",
-    left: 0, right: 0, bottom: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "#FFF",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -1026,7 +1108,9 @@ const s = StyleSheet.create({
   },
   activitiesSheet: {
     position: "absolute",
-    left: 0, right: 0, bottom: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "#FFF",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,

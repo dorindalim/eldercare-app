@@ -274,7 +274,7 @@
   "elderlyOnboarding": {
     "title": "Maklumat Asas",
     "namePH": "Nama penuh",
-    "yobPH": "Tahun lahir (YYYY)",
+    "yobPH": "Tahun lahir (e.g. 2000)",
     "genderLabel": "Jantina",
     "male": "Lelaki",
     "female": "Perempuan",

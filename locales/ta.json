@@ -274,7 +274,7 @@
   "elderlyOnboarding": {
     "title": "அடிப்படை தகவல்",
     "namePH": "முழு பெயர்",
-    "yobPH": "பிறந்த ஆண்டு (YYYY)",
+    "yobPH": "பிறந்த ஆண்டு (e.g. 2000)",
     "genderLabel": "பாலினம்",
     "male": "ஆண்",
     "female": "பெண்",

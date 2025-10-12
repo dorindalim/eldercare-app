@@ -15,7 +15,8 @@
         "googleMapsApiKey": "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGsY"
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app uses your location to show nearby routes and places.",
+        "NSLocationWhenInUseUsageDescription": "We use your location to provide navigation and directions.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to provide navigation and directions.",
         "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.dorindalim.eldercareapp"
