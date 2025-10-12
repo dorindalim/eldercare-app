@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useSegments } from "expo-router";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 export type LangCode = "en" | "zh" | "ms" | "ta";
@@ -14,9 +15,7 @@ export const LANGS: { code: LangCode; label: string }[] = [
 type Props = {
   language: LangCode;
   setLanguage: (code: LangCode) => void;
-
   title?: string;
-  onSpeak?: () => void;
   showBack?: boolean;
   onBack?: () => void;
 };
@@ -25,12 +24,11 @@ export default function AuthTopBar({
   language,
   setLanguage,
   title = "",
-  onSpeak,
   showBack,
   onBack,
 }: Props) {
   const router = useRouter();
-  const segments = useSegments();
+  const { t } = useTranslation();
 
   const canGoBack =
     typeof showBack === "boolean" ? showBack : router.canGoBack();
@@ -41,7 +39,7 @@ export default function AuthTopBar({
   };
 
   return (
-    <View style={s.topBar}>
+    <View style={s.topBar} accessibilityHint={t("settings.hint")}>
       {/* Left: Back */}
       <View style={{ width: 40, height: 40, justifyContent: "center" }}>
         {canGoBack && (
@@ -69,7 +67,7 @@ export default function AuthTopBar({
             <Pressable
               key={l.code}
               onPress={() => setLanguage(l.code)}
-              accessibilityLabel={`Switch language to ${l.label}`}
+              accessibilityLabel={`${t("settings.switchTo")} ${l.label}`}
               style={[s.langChip, active && s.langChipActive]}
               hitSlop={6}
             >
@@ -79,17 +77,6 @@ export default function AuthTopBar({
             </Pressable>
           );
         })}
-
-        {!!onSpeak && (
-          <Pressable
-            onPress={onSpeak}
-            accessibilityLabel="Read screen aloud"
-            hitSlop={8}
-            style={[s.iconBtn, { marginLeft: 6 }]}
-          >
-            <Ionicons name="volume-high-outline" size={18} color="#111827" />
-          </Pressable>
-        )}
       </View>
     </View>
   );

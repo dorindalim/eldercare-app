@@ -1,53 +1,40 @@
 {
   "common": {
-    "on": "开启",
-    "off": "关闭",
-    "ok": "好的",
-    "save": "保存",
+    "ok": "确定",
+    "error": "错误",
     "cancel": "取消",
     "notLoggedIn": "未登录",
     "pleaseLoginAgain": "请重新登录。",
-    "error": "错误"
+    "save": "保存"
   },
   "alerts": {
+    "noAccountTitle": "未找到账户",
+    "noAccountBody": "将为您跳转至注册。",
     "codeSentTitle": "验证码已发送",
-    "codeSentBody": "目前请使用 123456（模拟）。",
-    "sendFailedTitle": "哎呀",
-    "sendFailedBody": "账户未注册。",
+    "codeSentBody": "目前先使用 123456（模拟）。",
     "invalidCodeTitle": "验证码无效",
     "invalidCodeBody": "请检查后再试。",
     "signupInvalidTitle": "请检查信息",
-    "signupInvalidBody": "所有字段均为必填。密码至少 8 个字符。",
-    "passwordMismatchTitle": "两次密码不一致",
-    "passwordMismatchBody": "请重新输入密码。",
     "signupFailedTitle": "注册失败",
-    "signupFailedBody": "该手机号可能已被注册。",
-    "noAccountTitle": "未找到账户",
-    "noAccountBody": "将为您跳转到注册页面。",
-    "inputMismatchTitle": "确认不匹配",
-    "inputMismatchBody": "请精确输入 DELETE 以继续。",
-    "genericFailTitle": "出现问题",
-    "genericFailBody": "请重试。"
+    "signupFailedBody": "该手机号可能已被注册。"
   },
   "auth": {
-    "notLoggedInTitle": "未登录",
-    "notLoggedInBody": "请登录以申请删除账户。",
     "login": {
       "title": "欢迎回来",
-      "subtitle": "请输入您的手机号",
-      "phoneLabel": "手机号",
+      "subtitle": "请输入您的电话号码",
+      "phoneLabel": "电话号码",
       "phonePH": "+65 9123 4567",
       "getCode": "获取验证码",
       "codeLabel": "验证码",
       "codePH": "输入 6 位验证码",
       "verify": "验证并登录",
-      "noAccount": "还没有账户？",
+      "noAccount": "没有账户？",
       "signup": "注册"
     },
     "signup": {
       "title": "创建账户",
-      "subtitle": "使用您的手机号注册",
-      "phoneLabel": "手机号",
+      "subtitle": "使用手机号码注册",
+      "phoneLabel": "电话号码",
       "phonePH": "+65 9123 4567",
       "passwordLabel": "密码",
       "passwordPH": "创建密码",
@@ -56,235 +43,45 @@
       "button": "注册",
       "haveAccount": "已经有账户？",
       "login": "登录",
-      "phoneInvalidLength": "手机号必须正好为 {{digits}} 位数字。",
+      "phoneInvalidLength": "电话号码必须正好 {{digits}} 位数字。",
       "passwordTooShort": "密码至少需要 {{min}} 个字符。",
-      "passwordMismatch": "两次密码不一致。",
-      "phoneHintExact": "请输入正好 {{digits}} 位数字（其余将自动格式化）。",
+      "passwordMismatch": "两次输入的密码不一致。",
       "passwordHint": "至少 {{min}} 个字符"
     },
+    "notLoggedInTitle": "未登录",
+    "notLoggedInBody": "请重新登录。",
     "restore": {
       "restoredTitle": "账户已恢复",
-      "restoredBody": "您的账户与应急联系人门户已重新启用。"
-    }
-  },
-  "elderlyOnboarding": {
-    "title": "新手引导",
-    "namePH": "姓名",
-    "yobPH": "出生年份（例如 1950）",
-    "genderLabel": "性别",
-    "male": "男",
-    "female": "女",
-    "na": "不愿透露",
-    "finish": "完成",
-    "alertIncompleteTitle": "请填写所有字段",
-    "saveErrorTitle": "错误",
-    "saveErrorMsg": "保存资料失败。请重试。",
-    "emergencySectionTitle": "紧急联系人",
-    "ecNamePH": "紧急联系人姓名",
-    "ecRelationPH": "关系（例如：女儿、邻居）",
-    "ecPhonePH": "紧急联系人电话",
-    "ecEmailPH": "紧急联系人邮箱（可选）"
-  },
-  "elderlyConditions": {
-    "title": "健康状况与用药",
-    "conditionTitle": "病症 {{index}}",
-    "remove": "移除",
-    "conditionPH": "病症（例如：高血压）",
-    "medicationsPH": "药物（以逗号分隔）",
-    "medicationFrequencyPH": "用药频率（例如：每日两次）",
-    "doctorPH": "主治医生",
-    "clinicPH": "诊所/医院",
-    "appointmentsPH": "预约/备注",
-    "addCondition": "添加另一项病症",
-    "finish": "完成",
-    "medsLabel": "药物",
-    "medNamePH": "药名",
-    "medFreqPH": "频率",
-    "removeMed": "移除",
-    "addMed": "添加药物",
-    "assistive": {
-      "label": "辅具需求",
-      "walking_cane": "手杖",
-      "wheelchair": "轮椅",
-      "hearing_aid": "助听器",
-      "glasses": "眼镜",
-      "other": "其他（请说明）",
-      "otherPH": "请说明（例如：家中扶手）"
-    },
-    "drugAllergiesPH": "是否有已知药物过敏？",
-    "publicNotePH": "给公众的备注（例如：若迷路请拨此号）",
-    "noConditions": "无病症",
-    "noMedicationsForThis": "此病症无用药",
-    "errors": {
-      "invalidMed": "药名与频率不得为空。",
-      "missingConditionName": "请至少填写一个病症名称（或勾选“无病症”）。",
-      "saveFailed": "无法保存。请重试。"
+      "restoredBody": "我们已取消您待处理的删除并恢复访问。"
     }
   },
   "home": {
-    "imActive": "我很活跃",
-    "tapToCheckIn": "点击签到",
-    "checkedIn": "今日已签到",
     "navigation": "导航",
-    "ccActivities": "社区活动",
-    "profile": "个人资料",
     "walkingRoutes": "步行路线",
+    "homeTab": "首页",
+    "ccActivities": "社区俱乐部活动",
     "clinics": "诊所",
-    "sos": "紧急求助"
-  },
-  "homeTab": "首页",
-  "profile": {
-    "title": "个人资料",
-    "basicInfo": "基本信息",
-    "name": "姓名",
-    "editBasic": "编辑基本信息",
-    "healthCard": "紧急健康卡",
-    "emergencyContacts": "紧急联系人",
-    "drugAllergy": "药物过敏",
-    "conditions": "病症",
-    "assistive": "辅具需求",
-    "publicNote": "给公众的备注",
-    "locationShare": "实时位置共享",
-    "accessibility": "无障碍",
-    "textSize": "文字大小",
-    "accessibilityNote": "使用较大字体和清晰对比度。",
-    "activity": "活动与奖励",
-    "streak": "当前连续天数",
-    "coins": "总金币",
-    "navigation": "导航",
-    "accessibleRoutes": "优先无障碍路线（电梯/坡道）",
-    "remindEvery10": "每 10 分钟目的地提醒",
-    "navigationNote": "稍后可更改路线/提醒。地图显示等候时间。",
-    "open": "打开资料",
-    "noPortalTitle": "尚无门户链接",
-    "noPortalBody": "资料未完善或尚未创建链接。",
-    "sharePortal": "分享应急联系人门户链接",
-    "delete": {
-      "title": "删除账户",
-      "explain": "门户已停用。账户将在 14 天后删除。",
-      "button": "删除我的账户",
-      "continue": "确认删除",
-      "scheduledTitle": "已安排删除",
-      "scheduledBody": "您可在 14 天内重新登录以恢复。",
-      "cardExplain": "如果您不再希望使用 ElderCare，您可以删除您的账户。",
-      "modalTitle": "确认删除账户",
-      "modalExplain": "确定要删除账户吗？此操作无法撤销。",
-      "optionalReason": "可选：帮助我们改进的原因",
-      "confirmStepTitle": "确认",
-      "confirmStepCheckbox": "我理解此操作会停用门户，并在 14 天后删除账户。",
-      "continueShort": "下一步",
-      "confirmDeletion": "立即确认删除",
-      "reasonPH_modal": "原因（可选）",
-      "typeToConfirm": "请输入“{{phrase}}”以确认删除。",
-      "typePH": "在此输入确认文本",
-      "goodbyeMessage": "我们会想念您——在 14 天内重新登录可恢复账户。",
-      "typeMismatch": "请输入完全匹配的确认文本以继续。",
-      "step1Title": "验证",
-      "step1Body": "我们将发送验证码。",
-      "sendVerification": "发送验证码",
-      "step2Title": "输入验证码",
-      "enterCodePH": "输入验证码",
-      "verifyBtn": "验证验证码",
-      "cancelRequest": "取消申请",
-      "afterVerificationNote": "验证后确认。14 天内可恢复。",
-      "close": "关闭",
-      "confirmSchedule": "确认安排删除",
-      "verificationSentTitle": "已发送验证码",
-      "verificationSentBody": "已生成验证码（模拟）：{{code}}。请输入以完成验证。该验证码 {{minutes}} 分钟后过期。",
-      "incorrectCode": "验证码不正确",
-      "enterCodeRequired": "请输入验证码",
-      "verifiedTitle": "已验证",
-      "verifiedBody": "验证码已通过。确认后将安排 14 天的删除等待期。",
-      "verifiedWithTokenBody": "验证码已通过。您的恢复码：{{token}}。可在 14 天内恢复。",
-      "scheduledAlertTitle": "账户已安排删除",
-      "scheduledAlertBody": "您的账户和相关数据将于 {{date}} 删除。您可使用恢复码 {{token}} 在 14 天内恢复。",
-      "cancelledTitle": "已取消",
-      "cancelledBody": "您的删除申请已取消。",
-      "failedInsert": "提交删除申请失败",
-      "failedVerify": "验证失败",
-      "failedSchedule": "安排删除失败",
-      "failedCancel": "取消失败",
-      "copy": "复制",
-      "copySuccess": "已复制到剪贴板",
-      "copyUnavailable": "此设备无法使用剪贴板，请手动复制。"
-    },
-    "locationAccess": {
-      "title": "位置權限",
-      "status": {
-        "granted": "已允許",
-        "denied": "已拒絕",
-        "askMe": "詢問我"
-      },
-      "servicesOff": "定位服務已關閉",
-      "turnOnServicesTitle": "開啟定位服務",
-      "turnOnServicesBody": "請在「設定」中開啟定位服務。",
-      "allowedTitle": "目前已允許位置權限",
-      "allowedBody": "若要關閉，請到「設定」更新權限。",
-      "needAccessTitle": "需要位置權限",
-      "needAccessBody": "若要啟用定位功能，請在「設定」中允許存取。",
-      "openSettings": "開啟設定",
-      "requestError": "無法請求位置權限。"
-    }
-  },
-  "rewards": {
-    "title": "奖励",
-    "balance": "您的金币",
-    "coin": "金币",
-    "coins": "金币",
-    "catalogTitle": "可兑换物品",
-    "viewTerms": "条款与使用方法",
-    "redeem": "兑换",
-    "cost": "{{count}} 金币",
-    "confirmTitle": "确认兑换",
-    "confirmBody": "使用 {{cost}} 金币兑换 {{name}}？",
-    "cancel": "取消",
-    "confirm": "确认兑换",
-    "successTitle": "兑换成功！",
-    "successBody": "您的兑换码为 {{code}}。可在“已拥有”中查看。",
-    "notEnoughTitle": "金币不足",
-    "notEnoughBody": "您的金币不足以兑换。",
-    "ownedTitle": "已拥有的券",
-    "noneOwned": "您尚未兑换任何物品。",
-    "voucher": "券",
-    "code": "兑换码",
-    "redeemedAt": "兑换时间",
-    "howToUse": "使用方法",
-    "close": "关闭",
-    "items": {
-      "ntuc5": {
-        "title": "NTUC FairPrice 5 新元代金券",
-        "desc": "适用于参与活动的 NTUC FairPrice 门店。",
-        "terms": "• 仅限新加坡参与门店使用。\n• 结账时出示兑换码；仅限一次性使用。\n• 不可兑换现金；不找零。\n• 适用商家条款与细则；详情见店内告示。"
-      },
-      "ntuc10": {
-        "title": "NTUC FairPrice 10 新元代金券",
-        "desc": "适用于参与活动的 NTUC FairPrice 门店。",
-        "terms": "• 仅限新加坡参与门店使用。\n• 结账时出示兑换码；仅限一次性使用。\n• 不可兑换现金；不找零。\n• 适用商家条款与细则；详情见店内告示。"
-      },
-      "kopitiam5": {
-        "title": "Kopitiam 5 新元储值",
-        "desc": "适用于 Kopitiam 门店餐饮。",
-        "terms": "• 仅限新加坡参与门店使用。\n• 付款前向收银员出示兑换码。\n• 一次性使用；不找零。\n• 适用商家条款与细则。"
-      },
-      "guardian5": {
-        "title": "Guardian 5 新元代金券",
-        "desc": "适用于药房及个护商品。",
-        "terms": "• 仅限新加坡参与门店使用。\n• 不适用于门店政策规定的排除商品。\n• 一次性使用；不找零。\n• 适用商家条款与细则。"
-      }
-    }
+    "profile": "个人资料",
+    "rewards": "奖励",
+    "sos": "求助",
+    "imActive": "我在活动中",
+    "tapToCheckIn": "轻触打卡",
+    "checkedIn": "今日已打卡"
   },
   "community": {
-    "title": "社区活动",
+    "title": "社区俱乐部活动",
     "searchPlaceholder": "按标题搜索",
-    "ui": { "search": "搜索" },
+    "ui": {
+      "search": "搜索"
+    },
     "noEvents": "未找到活动。",
-    "details": "无描述。",
+    "details": "暂无描述。",
     "register": "报名",
     "getDirections": "获取路线",
     "all": "全部",
     "filters": {
       "title": "筛选",
-      "categories": "分类",
+      "categories": "类别",
       "timing": "时间",
       "distance": "距离",
       "price": "价格",
@@ -294,12 +91,7 @@
     "timing": {
       "today": "今天",
       "week": "本周",
-      "upcoming": "即将到来"
-    },
-    "distance": {
-      "near": "最近",
-      "far": "最远",
-      "none": "不排序"
+      "upcoming": "即将开始"
     },
     "price": {
       "all": "全部",
@@ -307,53 +99,61 @@
       "paidOnly": "仅付费"
     },
     "priceOptions": {
-      "free": "免费",
-      "paid": "付费"
+      "free": "免费"
     },
     "categories": {
       "healthFitness": "健康与健身",
       "artsCulture": "艺术与文化",
       "activeAging": "乐龄活动",
       "parentingEducation": "亲子与教育",
-      "exhibitionFair": "展览与市集",
-      "neighbourhoodEvents": "社区邻里活动",
+      "exhibitionFair": "展览与集市",
+      "neighbourhoodEvents": "社区活动",
       "celebrationFestivity": "庆典与节日",
-      "kopiTalksDialogues": "咖啡谈与对话",
-      "charityVolunteerism": "公益与志愿",
-      "overseasOutingsTours": "海外出游与团体"
-    },
-    "categorySummary": {
-      "one": "“{{category}}”共有 {{count}} 场活动",
-      "other": "“{{category}}”共有 {{count}} 场活动"
+      "kopiTalksDialogues": "咖啡谈/对话",
+      "charityVolunteerism": "慈善与志愿",
+      "overseasOutingsTours": "海外出游/旅行"
     },
     "sortSummary": {
-      "default": "全部分类 · 即将到来 · 最近 · 价格：全部",
-      "custom": "{{categories}} · {{timing}} · {{distance}}"
+      "default": "全部类别 · 即将开始 · 任意距离 · 价格：全部"
+    },
+    "distance": {
+      "any": "任意",
+      "le2": "≤ 2 公里",
+      "le5": "≤ 5 公里",
+      "le10": "≤ 10 公里",
+      "anyDistance": "任意距离"
+    },
+    "notifs": {
+      "panelTitle": "通知与提醒",
+      "clearAll": "清除所有通知",
+      "inAppUpcoming": "应用内即将开始提醒",
+      "deviceScheduled": "设备本地已安排的通知",
+      "noneScheduled": "暂无安排。",
+      "event": "活动",
+      "reminder": "提醒"
     }
   },
-  "clinic": { "title": "诊所" },
-  "walkingRoutes": { "title": "步行路线" },
   "navigation": {
     "title": "导航",
     "actions": {
       "viewActivities": "查看活动",
-      "setDestination": "设为目的地",
+      "setDestination": "设置目的地",
       "viewDetails": "查看详情",
       "setReminder": "设置提醒"
     },
     "search": {
       "permissionTitle": "需要定位权限",
-      "permissionBody": "请开启定位服务以使用导航功能。",
-      "enterTitle": "请输入目的地",
+      "permissionBody": "请启用定位服务以进行导航。",
+      "enterTitle": "输入目的地",
       "enterBody": "输入地址或地点名称进行搜索。",
       "notFoundTitle": "未找到",
       "notFoundBody": "请尝试更具体的地点名称。",
       "destination": "目的地",
-      "destinationSet": "已设定目的地",
+      "destinationSet": "已设置目的地",
       "startNav": "开始导航",
       "stopNav": "停止导航",
-      "started": "已开始导航。",
-      "stopped": "已停止导航。",
+      "started": "导航已开始。",
+      "stopped": "导航已停止。",
       "eta": "预计到达：{{duration}}（{{distance}}）",
       "nextStep": "下一步：{{step}}",
       "arrived": "已到达",
@@ -365,13 +165,19 @@
         "clinics": "诊所",
         "parks": "公园"
       },
+      "modes": {
+        "driving": "驾车",
+        "walking": "步行",
+        "bicycling": "骑行",
+        "transit": "公交"
+      },
       "placeholder": "搜索地址或地点"
     },
     "reminders": {
       "permTitle": "允许通知",
-      "permBody": "请允许通知，以便在活动前提醒您。",
+      "permBody": "请允许通知，以便我们在活动前提醒您。",
       "invalidTime": "该活动缺少开始时间。",
-      "tooSoonTitle": "无法安排提醒",
+      "tooSoonTitle": "无法安排",
       "tooSoonBody": "提醒时间已过。",
       "notifTitle": "即将开始的活动",
       "notifBody": "“{{title}}” 约 1 小时后开始。",
@@ -380,11 +186,188 @@
       "untitled": "未命名"
     }
   },
+  "walkingRoutes": {
+    "title": "步行路线"
+  },
+  "rewards": {
+    "title": "奖励",
+    "balance": "余额",
+    "coin": "枚硬币",
+    "coins": "枚硬币",
+    "catalogTitle": "目录",
+    "cost_one": "{{count}} 枚硬币",
+    "cost_other": "{{count}} 枚硬币",
+    "viewTerms": "查看条款",
+    "redeem": "兑换",
+    "notEnoughTitle": "硬币不足",
+    "notEnoughBody": "您的硬币不足，无法兑换该奖励。",
+    "confirmTitle": "确认兑换",
+    "confirmBody": "花费 {{cost}} 兑换“{{name}}”？",
+    "cancel": "取消",
+    "confirm": "确认",
+    "failed": "兑换失败",
+    "tryAgain": "请重试。",
+    "successTitle": "兑换成功！",
+    "successBody": "您的兑换码是 {{code}}。",
+    "ownedTitle": "我的代金券",
+    "noneOwned": "您尚未兑换任何代金券。",
+    "voucher": "代金券",
+    "code": "兑换码",
+    "redeemedAt": "兑换时间",
+    "howToUse": "使用方法",
+    "close": "关闭",
+    "items": {
+      "ntuc5": {
+        "title": "NTUC FairPrice 面值 $5 代金券",
+        "desc": "可在参与的 NTUC FairPrice 门店使用。",
+        "terms": "仅限门店内消费。一经使用不找零。不可兑换现金。自兑换起 6 个月内有效。"
+      },
+      "ntuc10": {
+        "title": "NTUC FairPrice 面值 $10 代金券",
+        "desc": "可在参与的 NTUC FairPrice 门店使用。",
+        "terms": "仅限门店内消费。一经使用不找零。不可兑换现金。自兑换起 6 个月内有效。"
+      },
+      "kopitiam5": {
+        "title": "Kopitiam $5 储值",
+        "desc": "可在参与的 Kopitiam 食阁使用。",
+        "terms": "在参与档口兑换。一次性使用。不可兑换现金。自兑换起 6 个月内有效。"
+      },
+      "guardian5": {
+        "title": "Guardian $5 代金券",
+        "desc": "可在参与的 Guardian 门店使用。",
+        "terms": "仅限门店内消费。一经使用不找零。不可兑换现金。自兑换起 6 个月内有效。"
+      }
+    }
+  },
+  "elderlyConditions": {
+    "noConditions": "我没有任何医疗状况",
+    "conditionTitle": "病症 {{index}}",
+    "remove": "移除",
+    "conditionPH": "病症名称（如：高血压）",
+    "doctorPH": "医生（可选）",
+    "clinicPH": "诊所/医院（可选）",
+    "appointmentsPH": "即将到来的预约/备注（可选）",
+    "noMedicationsForThis": "该病症无需用药",
+    "medsLabel": "药物",
+    "medNamePH": "药物名称",
+    "medFreqPH": "用药频率（例如：每日 1 片）",
+    "addMed": "添加药物",
+    "addCondition": "添加另一项病症",
+    "assistive": {
+      "label": "辅具需求",
+      "walking_cane": "手杖",
+      "wheelchair": "轮椅",
+      "hearing_aid": "助听器",
+      "glasses": "眼镜",
+      "other": "其他",
+      "otherPH": "说明其他辅具需求"
+    },
+    "drugAllergiesPH": "药物过敏（可选）",
+    "publicNotePH": "给急救人员的公共备注（可选）",
+    "finish": "保存并继续",
+    "errors": {
+      "missingConditionName": "请输入至少一个病症名称，或选择“我没有任何医疗状况”。",
+      "invalidMed": "未填写药物名称时，不能填写用药频率。",
+      "saveFailed": "无法保存您的病症信息。请重试。"
+    }
+  },
+  "elderlyOnboarding": {
+    "title": "基本信息",
+    "namePH": "姓名",
+    "yobPH": "出生年份（YYYY）",
+    "genderLabel": "性别",
+    "male": "男",
+    "female": "女",
+    "na": "不愿透露",
+    "emergencySectionTitle": "紧急联系人",
+    "ecNamePH": "联系人姓名",
+    "ecRelationPH": "关系（如：女儿）",
+    "ecPhonePH": "联系人电话",
+    "ecEmailPH": "联系人邮箱（可选）",
+    "finish": "保存并继续",
+    "alertIncompleteTitle": "请完成所有必填项。",
+    "saveErrorTitle": "无法保存",
+    "saveErrorMsg": "保存资料时出错。请重试。"
+  },
+  "profile": {
+    "title": "个人资料",
+    "basicInfo": "基本信息",
+    "editBasic": "编辑基本信息",
+    "healthCard": "紧急健康卡",
+    "emergencyContacts": "紧急联系人",
+    "drugAllergy": "药物过敏",
+    "assistive": "辅具需求",
+    "publicNote": "公共备注",
+    "sharePortal": "分享紧急联系人门户",
+    "noPortalTitle": "尚无门户链接",
+    "noPortalBody": "您的资料可能不完整或尚未创建链接。请确保已填写并保存紧急联系人。",
+    "conditions": "医疗状况",
+    "activity": "活动与奖励",
+    "streak": "连续天数",
+    "coins": "硬币",
+    "accessibility": "无障碍",
+    "textSize": "文字大小",
+    "open": "打开个人资料",
+    "locationAccess": {
+      "title": "定位权限",
+      "status": {
+        "granted": "已允许",
+        "denied": "已拒绝",
+        "askMe": "下次再询问"
+      },
+      "servicesOff": "定位服务已关闭",
+      "turnOnServicesTitle": "开启定位服务",
+      "turnOnServicesBody": "请在设备设置中启用定位服务。",
+      "openSettings": "打开设置",
+      "needAccessTitle": "需要定位权限",
+      "needAccessBody": "请允许定位权限以使用导航等功能。",
+      "requestError": "无法请求定位权限。",
+      "allowedTitle": "已允许定位",
+      "allowedBody": "如需更改，请在设备设置中管理权限。"
+    },
+    "delete": {
+      "title": "删除账户",
+      "cardExplain": "安排删除您的账户。14 天后将永久移除数据。",
+      "button": "安排删除",
+      "modalTitle": "确认删除账户",
+      "modalExplain": "这将把您的账户安排在 14 天后删除。其间可通过支持取消。",
+      "optionalReason": "（可选）告诉我们您离开的原因",
+      "reasonPH_modal": "输入简短原因（可选）",
+      "confirmStepTitle": "输入以确认",
+      "typeToConfirm": "输入“{{phrase}}”以继续。",
+      "typePH": "DELETE MY ACCOUNT",
+      "confirmDeletion": "确认删除",
+      "confirmStepCheckbox": "我理解此操作是永久性的。",
+      "explain": "账户待删除期间门户将被禁用。"
+    }
+  },
+  "delete": {
+    "typeMismatch": "确认短语不匹配。",
+    "failedSchedule": "无法安排删除。请重试。",
+    "scheduledAlertTitle": "已安排删除",
+    "scheduledBody": "您的账户已安排在 14 天后删除。"
+  },
   "settings": {
     "title": "设置",
     "language": "语言",
     "hint": "打开应用设置与语言",
     "switchTo": "切换语言为",
     "logout": "退出登录"
+  },
+  "checkins": {
+    "trackerLabel": "每周打卡进度",
+    "status": {
+      "checked": "已打卡",
+      "notChecked": "未打卡"
+    },
+    "dowShort": {
+      "0": "日",
+      "1": "一",
+      "2": "二",
+      "3": "三",
+      "4": "四",
+      "5": "五",
+      "6": "六"
+    }
   }
 }

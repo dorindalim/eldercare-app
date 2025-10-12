@@ -101,7 +101,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     })();
   }, []);
 
-  // 1) Login (mock OTP). Returns true if user exists; false otherwise.
   const startPhoneSignIn = async (phone: string) => {
     const normalized = phone.trim();
     if (!normalized) return false;

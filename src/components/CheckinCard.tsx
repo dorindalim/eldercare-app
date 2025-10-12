@@ -17,16 +17,6 @@ type Props = {
   onPressRewards?: () => void;
 };
 
-const DOW_LABEL: Record<number, string> = {
-  0: "Su",
-  1: "M",
-  2: "T",
-  3: "W",
-  4: "Th",
-  5: "F",
-  6: "Sa",
-};
-
 export default function CheckinCard({
   titleKey,
   hintKey,
@@ -38,6 +28,9 @@ export default function CheckinCard({
   onPressRewards,
 }: Props) {
   const { t } = useTranslation();
+
+  // Helper to get localized short day-of-week labels from your checkins namespace
+  const dow = (n: number) => t(`checkins.dowShort.${n}` as const);
 
   return (
     <Pressable
@@ -74,11 +67,11 @@ export default function CheckinCard({
       <View
         style={s.trackerWrap}
         accessible
-        accessibilityLabel="Weekly check-in tracker"
+        accessibilityLabel={t("checkins.trackerLabel")}
       >
         {weekChecks.map((cell) => {
           const d = new Date(`${cell.date}T00:00:00`);
-          const label = DOW_LABEL[d.getDay()];
+          const label = dow(d.getDay());
           const isDone = !!cell.checked;
 
           return (
@@ -87,7 +80,7 @@ export default function CheckinCard({
               style={[s.dayBox, isDone ? s.dayBoxDone : s.dayBoxIdle]}
               accessibilityRole="image"
               accessibilityLabel={`${label} ${
-                isDone ? "checked in" : "not checked in"
+                isDone ? t("checkins.status.checked") : t("checkins.status.notChecked")
               }`}
             >
               <Text style={[s.dayText, isDone && s.dayTextDone]}>{label}</Text>

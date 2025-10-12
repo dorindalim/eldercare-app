@@ -1,37 +1,24 @@
 {
   "common": {
-    "on": "On",
-    "off": "Off",
     "ok": "OK",
-    "save": "Save",
+    "error": "Error",
     "cancel": "Cancel",
     "notLoggedIn": "Not logged in",
     "pleaseLoginAgain": "Please log in again.",
-    "error": "Error"
+    "save": "Save"
   },
   "alerts": {
+    "noAccountTitle": "No account found",
+    "noAccountBody": "You’ll be redirected to sign up.",
     "codeSentTitle": "Code sent",
     "codeSentBody": "Use 123456 for now (mock).",
-    "sendFailedTitle": "Oops",
-    "sendFailedBody": "Account is not registered.",
     "invalidCodeTitle": "Invalid code",
     "invalidCodeBody": "Please check and try again.",
     "signupInvalidTitle": "Check details",
-    "signupInvalidBody": "All fields are required. Password must be at least 8 characters.",
-    "passwordMismatchTitle": "Passwords don’t match",
-    "passwordMismatchBody": "Please re-enter your password.",
     "signupFailedTitle": "Sign up failed",
-    "signupFailedBody": "That phone may already be registered.",
-    "noAccountTitle": "No account found",
-    "noAccountBody": "You’ll be redirected to sign up.",
-    "inputMismatchTitle": "Confirmation mismatch",
-    "inputMismatchBody": "Please type DELETE exactly to continue.",
-    "genericFailTitle": "Something went wrong",
-    "genericFailBody": "Please try again."
+    "signupFailedBody": "That phone may already be registered."
   },
   "auth": {
-    "notLoggedInTitle": "Not logged in",
-    "notLoggedInBody": "Please log in to request account deletion.",
     "login": {
       "title": "Welcome back",
       "subtitle": "Please enter your phone number",
@@ -59,224 +46,34 @@
       "phoneInvalidLength": "Phone number must be exactly {{digits}} digits.",
       "passwordTooShort": "Password must be at least {{min}} characters.",
       "passwordMismatch": "Passwords do not match.",
-      "phoneHintExact": "Enter exactly {{digits}} digits (we’ll format the rest).",
       "passwordHint": "At least {{min}} characters"
     },
+    "notLoggedInTitle": "Not logged in",
+    "notLoggedInBody": "Please log in again.",
     "restore": {
       "restoredTitle": "Account restored",
-      "restoredBody": "Your account and EC Portal are active again."
-    }
-  },
-  "elderlyOnboarding": {
-    "title": "Onboarding",
-    "namePH": "Full Name",
-    "yobPH": "Year of Birth (e.g. 1950)",
-    "genderLabel": "Gender",
-    "male": "Male",
-    "female": "Female",
-    "na": "Prefer not to say",
-    "finish": "Finish",
-    "alertIncompleteTitle": "Please complete all fields",
-    "saveErrorTitle": "Error",
-    "saveErrorMsg": "Failed to save profile. Please try again.",
-    "emergencySectionTitle": "Emergency Contact",
-    "ecNamePH": "Emergency Contact Name",
-    "ecRelationPH": "Relationship (e.g. daughter, neighbour)",
-    "ecPhonePH": "Emergency Contact Phone",
-    "ecEmailPH": "Emergency Contact Email (optional)"
-  },
-  "elderlyConditions": {
-    "title": "Health Conditions & Medications",
-    "conditionTitle": "Condition {{index}}",
-    "remove": "Remove",
-    "conditionPH": "Condition (e.g., Hypertension)",
-    "medicationsPH": "Medications (comma-separated)",
-    "medicationFrequencyPH": "Medication frequency (e.g., twice daily)",
-    "doctorPH": "Doctor",
-    "clinicPH": "Clinic/Hospital",
-    "appointmentsPH": "Appointments / Notes",
-    "addCondition": "Add another condition",
-    "finish": "Finish",
-    "medsLabel": "Medications",
-    "medNamePH": "Medication Name",
-    "medFreqPH": "Frequency",
-    "removeMed": "Remove",
-    "addMed": "Add medication",
-    "assistive": {
-      "label": "Assistive Needs",
-      "walking_cane": "Walking cane",
-      "wheelchair": "Wheelchair",
-      "hearing_aid": "Hearing aid",
-      "glasses": "Glasses",
-      "other": "Others (specify)",
-      "otherPH": "Please specify (e.g., grab bar at home)"
-    },
-    "drugAllergiesPH": "Any known drug allergies?",
-    "publicNotePH": "Note to public (e.g., please call this number if found disoriented)",
-    "noConditions": "No conditions",
-    "noMedicationsForThis": "No medications for this condition",
-    "errors": {
-      "invalidMed": "Medication name and frequency cannot be empty.",
-      "missingConditionName": "Please enter at least one condition name (or tick 'No conditions').",
-      "saveFailed": "Could not save. Please try again."
+      "restoredBody": "We cancelled your pending deletion and restored access."
     }
   },
   "home": {
-    "imActive": "I’m Active",
-    "tapToCheckIn": "Tap to check in",
-    "checkedIn": "Checked in today",
     "navigation": "Navigation",
-    "ccActivities": "CC Activities",
-    "profile": "Profile",
     "walkingRoutes": "Walking Routes",
+    "homeTab": "Home",
+    "ccActivities": "CC Activities",
     "clinics": "Clinics",
-    "sos": "SOS"
-  },
-  "homeTab": "Home",
-  "profile": {
-    "title": "Profile",
-    "basicInfo": "Basic Information",
-    "name": "Name",
-    "editBasic": "Edit basic details",
-    "healthCard": "Emergency Health Card",
-    "emergencyContacts": "Emergency Contacts",
-    "drugAllergy": "Drug Allergy",
-    "conditions": "Conditions",
-    "assistive": "Assistive needs",
-    "publicNote": "Note for public",
-    "locationShare": "Real-time location sharing",
-    "accessibility": "Accessibility",
-    "textSize": "Text size",
-    "accessibilityNote": "Use large text and clear contrast.",
-    "activity": "Activity & Rewards",
-    "streak": "Current streak (days)",
-    "coins": "Total coins",
-    "navigation": "Navigation",
-    "accessibleRoutes": "Prefer accessible routes (lifts/ramps)",
-    "remindEvery10": "Destination reminder every 10 mins",
-    "navigationNote": "Change route/reminder later. Map shows wait times.",
-    "open": "Open profile",
-    "noPortalTitle": "No portal link yet",
-    "noPortalBody": "Profile incomplete or no link.",
-    "sharePortal": "Share EC Portal link",
-    "delete": {
-      "title": "Delete Account",
-      "explain": "Portal disabled. Account scheduled for deletion in 14 days.",
-      "button": "Delete My Account",
-      "continue": "Confirm delete",
-      "cardExplain": "If you no longer wish to use ElderCare, you can delete your account.",
-      "scheduledTitle": "Deletion scheduled",
-      "scheduledBody": "You can restore within 14 days by logging back in.",
-      "modalTitle": "Confirm account deletion",
-      "modalExplain": "Are you sure you want to delete your account? This action cannot be undone.",
-      "optionalReason": "Optional: Reason to help us improve",
-      "confirmStepTitle": "Confirm",
-      "confirmStepCheckbox": "I understand this will disable my portal and delete my account after 14 days.",
-      "continueShort": "Next",
-      "confirmDeletion": "Confirm delete now",
-      "reasonPH_modal": "Reason (optional)",
-      "typeToConfirm": "Please type '{{phrase}}' to confirm deletion.",
-      "typePH": "Type confirmation phrase here",
-      "goodbyeMessage": "We will miss you — you can restore your account within 14 days by logging back in.",
-      "typeMismatch": "Type the exact confirmation phrase to continue.",
-      "step1Title": "Verify",
-      "step1Body": "We'll send a code to verify.",
-      "sendVerification": "Send verification code",
-      "step2Title": "Enter code",
-      "enterCodePH": "Enter code",
-      "verifyBtn": "Verify code",
-      "cancelRequest": "Cancel request",
-      "afterVerificationNote": "After verify, confirm. Restore within 14 days.",
-      "close": "Close",
-      "confirmSchedule": "Confirm schedule deletion",
-      "verificationSentTitle": "Verification sent",
-      "verificationSentBody": "A verification code (mock) was generated: {{code}}. Enter it to verify your request. This code expires in {{minutes}} minutes.",
-      "incorrectCode": "Incorrect code",
-      "enterCodeRequired": "Enter the verification code",
-      "verifiedTitle": "Verified",
-      "verifiedBody": "Code accepted. Confirm to schedule deletion (14-day hold).",
-      "verifiedWithTokenBody": "Code accepted. Your restore code: {{token}}. You can restore within 14 days.",
-      "scheduledAlertTitle": "Account scheduled for deletion",
-      "scheduledAlertBody": "Your account and associated data are scheduled for deletion on {{date}}. You can restore within 14 days using the restore code: {{token}}",
-      "cancelledTitle": "Cancelled",
-      "cancelledBody": "Your deletion request has been cancelled.",
-      "failedInsert": "Failed to request deletion",
-      "failedVerify": "Failed to verify",
-      "failedSchedule": "Failed to schedule deletion",
-      "failedCancel": "Failed to cancel",
-      "copy": "Copy",
-      "copySuccess": "Copied to clipboard",
-      "copyUnavailable": "Clipboard not available on this device. Please copy the code manually."
-    },
-    "locationAccess": {
-      "title": "Location access",
-      "status": {
-        "granted": "Granted",
-        "denied": "Denied",
-        "askMe": "Ask me"
-      },
-      "servicesOff": "Location services are OFF",
-      "turnOnServicesTitle": "Turn on Location Services",
-      "turnOnServicesBody": "Please enable Location Services in Settings.",
-      "allowedTitle": "Location currently allowed",
-      "allowedBody": "To turn this off, update permissions in Settings.",
-      "needAccessTitle": "Location access needed",
-      "needAccessBody": "To enable location features, allow access in Settings.",
-      "openSettings": "Open Settings",
-      "requestError": "Could not request location permission."
-    }
-  },
-  "rewards": {
-    "title": "Rewards",
-    "balance": "Your Coins",
-    "coin": "coin",
-    "coins": "coins",
-    "catalogTitle": "Redeemable Items",
-    "viewTerms": "T&Cs / How to use",
-    "redeem": "Redeem",
-    "cost": "{{count}} coins",
-    "confirmTitle": "Confirm Redemption",
-    "confirmBody": "Redeem {{name}} for {{cost}} coins?",
-    "cancel": "Cancel",
-    "confirm": "Redeem",
-    "successTitle": "Redeemed!",
-    "successBody": "Your voucher code is {{code}}. You can find it under “Owned”.",
-    "notEnoughTitle": "Not enough coins",
-    "notEnoughBody": "You don't have enough coins.",
-    "ownedTitle": "Owned vouchers",
-    "noneOwned": "You haven't redeemed anything yet.",
-    "voucher": "Voucher",
-    "code": "Code",
-    "redeemedAt": "Redeemed at",
-    "howToUse": "How to use",
-    "close": "Close",
-    "items": {
-      "ntuc5": {
-        "title": "NTUC FairPrice $5 Voucher",
-        "desc": "Use at participating NTUC FairPrice outlets.",
-        "terms": "• Valid at participating NTUC FairPrice outlets in Singapore.\n• Present code at checkout; one-time use only.\n• Not exchangeable for cash; no change will be given.\n• Merchant T&Cs apply; see in-store for details."
-      },
-      "ntuc10": {
-        "title": "NTUC FairPrice $10 Voucher",
-        "desc": "Use at participating NTUC FairPrice outlets.",
-        "terms": "• Valid at participating NTUC FairPrice outlets in Singapore.\n• Present code at checkout; one-time use only.\n• Not exchangeable for cash; no change will be given.\n• Merchant T&Cs apply; see in-store for details."
-      },
-      "kopitiam5": {
-        "title": "Kopitiam $5 Stored Value",
-        "desc": "For meals and drinks at Kopitiam outlets.",
-        "terms": "• Valid at participating Kopitiam outlets in Singapore.\n• Present code to cashier before payment.\n• One-time use; no change will be given.\n• Merchant T&Cs apply."
-      },
-      "guardian5": {
-        "title": "Guardian $5 Voucher",
-        "desc": "Valid for pharmacy and personal care items.",
-        "terms": "• Valid at participating Guardian stores in Singapore.\n• Not applicable to excluded items per store policy.\n• One-time use; no change given.\n• Merchant T&Cs apply."
-      }
-    }
+    "profile": "Profile",
+    "rewards": "Rewards",
+    "sos": "SOS",
+    "imActive": "I'm Active",
+    "tapToCheckIn": "Tap to check in",
+    "checkedIn": "You have Checked In today!"
   },
   "community": {
     "title": "CC Activities",
     "searchPlaceholder": "Search by Title",
-    "ui": { "search": "Search" },
+    "ui": {
+      "search": "Search"
+    },
     "noEvents": "No events found.",
     "details": "No description.",
     "register": "Register",
@@ -296,19 +93,13 @@
       "week": "This Week",
       "upcoming": "Upcoming"
     },
-    "distance": {
-      "near": "Nearest",
-      "far": "Farthest",
-      "none": "No sort"
-    },
     "price": {
       "all": "All",
       "freeOnly": "Free only",
       "paidOnly": "Paid only"
     },
     "priceOptions": {
-      "free": "Free",
-      "paid": "Paid"
+      "free": "Free"
     },
     "categories": {
       "healthFitness": "Health & Fitness",
@@ -322,17 +113,26 @@
       "charityVolunteerism": "Charity & Volunteerism",
       "overseasOutingsTours": "Overseas Outings & Tours"
     },
-    "categorySummary": {
-      "one": "There is {{count}} event under {{category}}",
-      "other": "There are {{count}} events under {{category}}"
-    },
     "sortSummary": {
-      "default": "All categories · Upcoming · Nearest · Price: All",
-      "custom": "{{categories}} · {{timing}} · {{distance}}"
+      "default": "All categories · Upcoming · Any distance · Price: All"
+    },
+    "distance": {
+      "any": "Any",
+      "le2": "≤ 2 km",
+      "le5": "≤ 5 km",
+      "le10": "≤ 10 km",
+      "anyDistance": "Any distance"
+    },
+    "notifs": {
+      "panelTitle": "Notifications & Reminders",
+      "clearAll": "Clear All Notifications",
+      "inAppUpcoming": "Upcoming CC Reminders (in app)",
+      "deviceScheduled": "Scheduled Local Notifications (device)",
+      "noneScheduled": "None scheduled.",
+      "event": "Event",
+      "reminder": "Reminder"
     }
   },
-  "clinic": { "title": "Clinic" },
-  "walkingRoutes": { "title": "Walking Routes" },
   "navigation": {
     "title": "Navigation",
     "actions": {
@@ -365,6 +165,12 @@
         "clinics": "Clinics",
         "parks": "Parks"
       },
+      "modes": {
+        "driving": "Driving",
+        "walking": "Walking",
+        "bicycling": "Bicycling",
+        "transit": "Transit"
+      },
       "placeholder": "Search address or place"
     },
     "reminders": {
@@ -380,11 +186,188 @@
       "untitled": "Untitled"
     }
   },
+  "walkingRoutes": {
+    "title": "Walking Routes"
+  },
+  "rewards": {
+    "title": "Rewards",
+    "balance": "Balance",
+    "coin": "coin",
+    "coins": "coins",
+    "catalogTitle": "Catalog",
+    "cost_one": "{{count}} coin",
+    "cost_other": "{{count}} coins",
+    "viewTerms": "View terms",
+    "redeem": "Redeem",
+    "notEnoughTitle": "Not enough coins",
+    "notEnoughBody": "You don’t have enough coins to redeem this reward.",
+    "confirmTitle": "Confirm redemption",
+    "confirmBody": "Spend {{cost}} to redeem “{{name}}”?",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "failed": "Redemption failed",
+    "tryAgain": "Please try again.",
+    "successTitle": "Redeemed!",
+    "successBody": "Your voucher code is {{code}}.",
+    "ownedTitle": "My Vouchers",
+    "noneOwned": "You haven’t redeemed any vouchers yet.",
+    "voucher": "Voucher",
+    "code": "Code",
+    "redeemedAt": "Redeemed on",
+    "howToUse": "How to use",
+    "close": "Close",
+    "items": {
+      "ntuc5": {
+        "title": "NTUC FairPrice $5 Voucher",
+        "desc": "Use at participating NTUC FairPrice outlets.",
+        "terms": "Valid for in-store purchases only. One-time use. No change will be given. Not exchangeable for cash. Valid for 6 months from redemption."
+      },
+      "ntuc10": {
+        "title": "NTUC FairPrice $10 Voucher",
+        "desc": "Use at participating NTUC FairPrice outlets.",
+        "terms": "Valid for in-store purchases only. One-time use. No change will be given. Not exchangeable for cash. Valid for 6 months from redemption."
+      },
+      "kopitiam5": {
+        "title": "Kopitiam $5 Stored Value",
+        "desc": "Enjoy meals at participating Kopitiam food courts.",
+        "terms": "Redeem at participating stalls. One-time use. Not exchangeable for cash. Valid for 6 months from redemption."
+      },
+      "guardian5": {
+        "title": "Guardian $5 Voucher",
+        "desc": "Use at participating Guardian stores.",
+        "terms": "Valid for in-store purchases only. One-time use. No change will be given. Not exchangeable for cash. Valid for 6 months from redemption."
+      }
+    }
+  },
+  "elderlyConditions": {
+    "noConditions": "I have no medical conditions",
+    "conditionTitle": "Condition {{index}}",
+    "remove": "Remove",
+    "conditionPH": "Condition name (e.g., Hypertension)",
+    "doctorPH": "Doctor (optional)",
+    "clinicPH": "Clinic/Hospital (optional)",
+    "appointmentsPH": "Upcoming appointments / notes (optional)",
+    "noMedicationsForThis": "No medications for this condition",
+    "medsLabel": "Medications",
+    "medNamePH": "Medication name",
+    "medFreqPH": "Frequency (e.g., 1 tablet daily)",
+    "addMed": "Add medication",
+    "addCondition": "Add another condition",
+    "assistive": {
+      "label": "Assistive needs",
+      "walking_cane": "Walking cane",
+      "wheelchair": "Wheelchair",
+      "hearing_aid": "Hearing aid",
+      "glasses": "Glasses",
+      "other": "Other",
+      "otherPH": "Describe other assistive needs"
+    },
+    "drugAllergiesPH": "Drug allergies (optional)",
+    "publicNotePH": "Public note for first responders (optional)",
+    "finish": "Save & Continue",
+    "errors": {
+      "missingConditionName": "Please enter at least one condition name, or select “I have no medical conditions.”",
+      "invalidMed": "Medication frequency cannot be filled without a medication name.",
+      "saveFailed": "Could not save your conditions. Please try again."
+    }
+  },
+  "elderlyOnboarding": {
+    "title": "Basic Information",
+    "namePH": "Full name",
+    "yobPH": "Year of birth (YYYY)",
+    "genderLabel": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "na": "Prefer not to say",
+    "emergencySectionTitle": "Emergency Contact",
+    "ecNamePH": "Contact name",
+    "ecRelationPH": "Relation (e.g., Daughter)",
+    "ecPhonePH": "Contact phone",
+    "ecEmailPH": "Contact email (optional)",
+    "finish": "Save & Continue",
+    "alertIncompleteTitle": "Please complete all required fields.",
+    "saveErrorTitle": "Couldn’t save",
+    "saveErrorMsg": "Something went wrong while saving your profile. Please try again."
+  },
+  "profile": {
+    "title": "Profile",
+    "basicInfo": "Basic Information",
+    "editBasic": "Edit basic details",
+    "healthCard": "Emergency Health Card",
+    "emergencyContacts": "Emergency contact",
+    "drugAllergy": "Drug allergies",
+    "assistive": "Assistive needs",
+    "publicNote": "Public note",
+    "sharePortal": "Share Emergency Contact Portal",
+    "noPortalTitle": "No portal link yet",
+    "noPortalBody": "Your profile may be incomplete or no link has been created. Please ensure you’ve filled in your Emergency Contact and saved.",
+    "conditions": "Medical Conditions",
+    "activity": "Activity & Rewards",
+    "streak": "Daily Streak",
+    "coins": "Coins",
+    "accessibility": "Accessibility",
+    "textSize": "Text size",
+    "open": "Open Profile",
+    "locationAccess": {
+      "title": "Location access",
+      "status": {
+        "granted": "Allowed",
+        "denied": "Denied",
+        "askMe": "Ask me next time"
+      },
+      "servicesOff": "Location services are off",
+      "turnOnServicesTitle": "Turn on Location Services",
+      "turnOnServicesBody": "Please enable Location Services in your device Settings.",
+      "openSettings": "Open Settings",
+      "needAccessTitle": "Location permission needed",
+      "needAccessBody": "Please allow location access for features like Navigation.",
+      "requestError": "Could not request location permission.",
+      "allowedTitle": "Location already allowed",
+      "allowedBody": "To change this, manage permissions in device Settings."
+    },
+    "delete": {
+      "title": "Delete Account",
+      "cardExplain": "Schedule a deletion of your account. This will permanently remove your data after 14 days.",
+      "button": "Schedule deletion",
+      "modalTitle": "Confirm account deletion",
+      "modalExplain": "This will schedule your account for deletion in 14 days. You can cancel before then from support.",
+      "optionalReason": "(Optional) Tell us why you're leaving",
+      "reasonPH_modal": "Type a short reason (optional)",
+      "confirmStepTitle": "Type to confirm",
+      "typeToConfirm": "Type \"{{phrase}}\" to continue.",
+      "typePH": "DELETE MY ACCOUNT",
+      "confirmDeletion": "Confirm deletion",
+      "confirmStepCheckbox": "I understand this action is permanent.",
+      "explain": "Portal disabled while account is pending deletion."
+    }
+  },
+  "delete": {
+    "typeMismatch": "Confirmation phrase doesn’t match.",
+    "failedSchedule": "Could not schedule deletion. Please try again.",
+    "scheduledAlertTitle": "Deletion scheduled",
+    "scheduledBody": "Your account is scheduled for deletion in 14 days."
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "hint": "Open app settings and language",
     "switchTo": "Switch language to",
     "logout": "Log Out"
+  },
+  "checkins": {
+    "trackerLabel": "Weekly check-in tracker",
+    "status": {
+      "checked": "checked in",
+      "notChecked": "not checked in"
+    },
+    "dowShort": {
+      "0": "Su",
+      "1": "M",
+      "2": "T",
+      "3": "W",
+      "4": "Th",
+      "5": "F",
+      "6": "Sa"
+    }
   }
 }

@@ -55,7 +55,7 @@ export default function Signup() {
     if (phoneDigits.length !== 9) {
       return Alert.alert(
         t("alerts.signupInvalidTitle"),
-        t("auth.signup.phoneInvalidLength")
+        t("auth.signup.phoneInvalidLength", { digits: 9 })
       );
     }
 
@@ -124,7 +124,7 @@ export default function Signup() {
             style={s.input}
           />
           <Text style={s.hint}>
-            {t("auth.signup.passwordHint")}
+            {t("auth.signup.passwordHint", { min: MIN_PWD })}
           </Text>
 
           <Text style={s.label}>{t("auth.signup.confirmLabel")}</Text>

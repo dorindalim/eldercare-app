@@ -114,7 +114,6 @@ export default function RewardsScreen() {
     []
   );
 
-  // Load owned vouchers (local list)
   useEffect(() => {
     (async () => {
       try {
@@ -135,12 +134,10 @@ export default function RewardsScreen() {
     [OWNED_KEY]
   );
 
-  // Deduct coins in elderly_profiles, then refresh
   const spendCoins = useCallback(
     async (amount: number) => {
       if (!session?.userId) return false;
 
-      // fetch latest balance from DB to avoid stale value
       const { data: row, error: e1 } = await supabase
         .from("elderly_profiles")
         .select("coins")

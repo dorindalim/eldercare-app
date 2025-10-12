@@ -86,7 +86,7 @@ export default function ClinicScreen() {
           includeTopInset={true}
           barHeight={44}
           topPadding={2}
-          title={t("clinic.title")}
+          title={t("home.clinics")}
           onLogout={async () => {
             await logout();
             router.replace("/Authentication/LogIn");
@@ -112,7 +112,7 @@ export default function ClinicScreen() {
           includeTopInset={true}
           barHeight={44}
           topPadding={2}
-          title={t("clinic.title")}
+          title={t("home.clinics")}
           onLogout={async () => {
             await logout();
             router.replace("/Authentication/LogIn");
@@ -136,7 +136,7 @@ export default function ClinicScreen() {
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
-        title={t("clinic.title")}
+        title={t("home.clinics")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");

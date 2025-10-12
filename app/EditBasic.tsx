@@ -91,7 +91,7 @@ export default function EditBasic() {
 
   const onSave = async () => {
     if (!session) {
-      return Alert.alert("Not logged in", "Please log in again.");
+      return Alert.alert(t("common.notLoggedIn"), t("common.pleaseLoginAgain"));
     }
     if (!canSubmit) {
       return Alert.alert(t("elderlyOnboarding.alertIncompleteTitle"));

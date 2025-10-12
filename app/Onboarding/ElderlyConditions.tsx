@@ -69,7 +69,6 @@ export default function ElderlyConditions() {
     const hasAnyCondition =
       noConditions || conditions.some((c) => c.condition.trim());
 
-    // For each condition: either it has noMeds OR at least one med name
     const allConditionsPassMedRule =
       noConditions ||
       conditions.every((c) => c.noMeds || c.meds.some((m) => m.name.trim()));
@@ -247,7 +246,6 @@ export default function ElderlyConditions() {
           console.warn("ec_issue_link_if_ready_for error:", error.message);
         }
 
-        // Support both return shapes: plain string or { token: string }
         const token =
           typeof data === "string"
             ? data
@@ -257,11 +255,8 @@ export default function ElderlyConditions() {
           const url = `${PORTAL_BASE_URL}?token=${encodeURIComponent(token)}`;
           await Share.share({ message: CAREGIVER_MESSAGE(url) });
         } else {
-          // Not ready — guide the user
           Alert.alert(
-            t("profile.noPortalTitle") || "No portal link yet",
-            t("profile.noPortalBody") ||
-              "Profile incomplete or no link. Please ensure you’ve filled your Emergency Contact and saved."
+            t("profile.noPortalTitle") || t("profile.noPortalBody") 
           );
         }
       }
@@ -323,7 +318,7 @@ export default function ElderlyConditions() {
             />
           </View>
 
-          {/* Conditions section (hidden when 'no conditions') */}
+          {/* Conditions section */}
           {!noConditions && (
             <>
               {conditions.map((c, idx) => (
@@ -427,7 +422,7 @@ export default function ElderlyConditions() {
                             style={[s.smallBtn, { marginLeft: 8 }]}
                           >
                             <Text style={s.smallBtnText}>
-                              {t("elderlyConditions.removeMed")}
+                              {t("elderlyConditions.remove")}
                             </Text>
                           </Pressable>
                         </View>

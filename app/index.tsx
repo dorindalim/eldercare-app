@@ -10,11 +10,9 @@ export default function Index() {
     return <Redirect href="/Authentication/LogIn" />;
   }
 
-  // Send new users to onboarding step 1
   if (!session.onboardingCompleted) {
     return <Redirect href="/Onboarding/ElderlyForm" />;
   }
 
-  // Otherwise to the elderly home tab
   return <Redirect href="/tabs/HomePage" />;
 }

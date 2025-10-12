@@ -15,7 +15,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Navigation"
         options={{
-          title: t("home.navigation", "Navigation"),
+          title: t("home.navigation"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="navigate-outline" color={color} size={size} />
           ),
@@ -24,7 +24,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Walking"
         options={{
-          title: t("home.walkingRoutes", "Walking Routes"),
+          title: t("home.walkingRoutes"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="walk-outline" color={color} size={size} />
           ),
@@ -33,7 +33,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="HomePage"
         options={{
-          title: t("homeTab", "Home"),
+          title: t("home.homeTab"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" color={color} size={size} />
           ),
@@ -42,7 +42,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Community"
         options={{
-          title: t("home.ccActivities", "CC Activities"),
+          title: t("home.ccActivities"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" color={color} size={size} />
           ),
@@ -51,7 +51,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen
         name="Clinic"
         options={{
-          title: t("home.clinics", "Clinics"),
+          title: t("home.clinics"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="medkit-outline" color={color} size={size} />
           ),

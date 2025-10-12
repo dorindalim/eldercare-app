@@ -605,7 +605,7 @@ export default function NavigationScreen() {
                 }}
               >
                 <AppText variant="button" weight="800" color={mode === m ? "#FFF" : "#333"}>
-                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                  {t(`navigation.search.modes.${m}`)}
                 </AppText>
               </TouchableOpacity>
             ))}

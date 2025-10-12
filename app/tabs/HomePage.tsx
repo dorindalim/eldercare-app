@@ -52,7 +52,7 @@ export default function ElderlyHome() {
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
-        title={t("homeTab")}
+        title={t("home.homeTab")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");
@@ -85,7 +85,7 @@ export default function ElderlyHome() {
           >
             <Ionicons name="navigate-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.navigation", "Navigation")}
+              {t("home.navigation")}
             </AppText>
           </Pressable>
 
@@ -95,7 +95,7 @@ export default function ElderlyHome() {
           >
             <Ionicons name="people-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.ccActivities", "CC Activities")}
+              {t("home.ccActivities")}
             </AppText>
           </Pressable>
         </View>
@@ -105,7 +105,7 @@ export default function ElderlyHome() {
           <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
             <Ionicons name="medkit-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.clinics", "Clinics")}
+              {t("home.clinics")}
             </AppText>
           </Pressable>
 
@@ -115,7 +115,7 @@ export default function ElderlyHome() {
           >
             <Ionicons name="walk-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.walkingRoutes", "Walking Routes")}
+              {t("home.walkingRoutes")}
             </AppText>
           </Pressable>
         </View>
@@ -124,7 +124,7 @@ export default function ElderlyHome() {
         <View style={s.sosWrap}>
           <Pressable style={s.sos}>
             <AppText variant="h1" weight="900" color="#FFF">
-              SOS
+              {t("home.sos")}
             </AppText>
           </Pressable>
         </View>

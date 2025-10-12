@@ -465,12 +465,12 @@ export default function CommunityScreen() {
 
   const distanceLabel =
     distanceFilter === "any"
-      ? "Any distance"
+      ? t("community.distance.anyDistance")
       : distanceFilter === "2"
-        ? "≤ 2 km"
+        ? t("community.distance.le2")
         : distanceFilter === "5"
-          ? "≤ 5 km"
-          : "≤ 10 km";
+          ? t("community.distance.le5")
+          : t("community.distance.le10");
 
   const selectedCatsLabel =
     categories.length > 0
@@ -593,7 +593,7 @@ export default function CommunityScreen() {
           accessibilityRole="button"
         >
           <AppText variant="label" weight="800">
-            Notifications & Reminders
+            {t("community.notifs.panelTitle")}
           </AppText>
           <Ionicons
             name={notifPanelOpen ? "chevron-up" : "chevron-down"}
@@ -619,18 +619,18 @@ export default function CommunityScreen() {
               disabled={notifBusy}
             >
               <AppText variant="button" weight="800" color="#FFF">
-                Clear All Notifications
+                {t("community.notifs.clearAll")}
               </AppText>
             </Pressable>
 
             {/* In-app upcoming reminders */}
             <View style={{ marginTop: 2 }}>
               <AppText variant="label" weight="700" color="#374151">
-                Upcoming CC Reminders (in app)
+                {t("community.notifs.inAppUpcoming")}
               </AppText>
               {ccReminders.length === 0 ? (
                 <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
-                  None scheduled.
+                  {t("community.notifs.noneScheduled")}
                 </AppText>
               ) : (
                 <View style={{ marginTop: 6, gap: 6 }}>
@@ -638,7 +638,7 @@ export default function CommunityScreen() {
                     <View key={`${r.id ?? "x"}-${idx}`} style={styles.reminderRow}>
                       <Ionicons name="notifications-outline" size={16} color="#374151" />
                       <AppText variant="caption" weight="700" style={{ flex: 1 }}>
-                        {r.title || "Event"}
+                        {r.title || t("community.notifs.event")}
                         {r.cc ? ` — ${r.cc}` : ""}
                       </AppText>
                       <AppText variant="caption" color="#6B7280">
@@ -653,11 +653,11 @@ export default function CommunityScreen() {
             {/* All scheduled local notifications */}
             <View style={{ marginTop: 12 }}>
               <AppText variant="label" weight="700" color="#374151">
-                Scheduled Local Notifications (device)
+                {t("community.notifs.deviceScheduled")}
               </AppText>
               {scheduled.length === 0 ? (
                 <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
-                  None scheduled.
+                  {t("community.notifs.noneScheduled")}
                 </AppText>
               ) : (
                 <View style={{ marginTop: 6, gap: 6 }}>
@@ -665,7 +665,7 @@ export default function CommunityScreen() {
                     <View key={n.id} style={styles.reminderRow}>
                       <Ionicons name="alarm-outline" size={16} color="#374151" />
                       <AppText variant="caption" weight="700" style={{ flex: 1 }}>
-                        {n.title || "Reminder"}
+                        {n.title || t("community.notifs.reminder")}
                         {n.body ? ` — ${n.body}` : ""}
                       </AppText>
                       <AppText variant="caption" color="#6B7280">
@@ -904,10 +904,10 @@ export default function CommunityScreen() {
           </AppText>
           <View style={styles.rowWrap}>
             {([
-              { key: "any", label: "Any" },
-              { key: "2", label: "≤ 2 km" },
-              { key: "5", label: "≤ 5 km" },
-              { key: "10", label: "≤ 10 km" },
+              { key: "any", label: t("community.distance.any") },
+              { key: "2", label: t("community.distance.le2") },
+              { key: "5", label: t("community.distance.le5") },
+              { key: "10", label: t("community.distance.le10") },
             ] as const).map(({ key, label }) => {
               const active = tmpDistanceFilter === key;
               return (
