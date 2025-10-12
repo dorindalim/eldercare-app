@@ -29,6 +29,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
+import { presentNow } from "../../src/lib/notifications";
 import { supabase } from "../../src/lib/supabase";
 
 import CLINIC_GEOJSON from "../../assets/data/CHASClinics.json";
@@ -419,24 +420,22 @@ export default function NavigationScreen() {
     if (!ok) return;
 
     const startsAt = parseEventStart(evt);
-    if (!startsAt) {
-      Alert.alert(t("common.error"), t("navigation.reminders.invalidTime"));
-      return;
-    }
+    if (!startsAt) return;
 
     const triggerDate = new Date(startsAt.getTime() - 60 * 60 * 1000);
-    if (triggerDate.getTime() <= Date.now()) {
-      Alert.alert(t("navigation.reminders.tooSoonTitle"), t("navigation.reminders.tooSoonBody"));
-      return;
-    }
+    if (triggerDate.getTime() <= Date.now()) return;
+
+    const when = `${triggerDate.toLocaleDateString()} ${triggerDate.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
 
     const notifId = await Notifications.scheduleNotificationAsync({
       content: {
-        title: t("navigation.reminders.notifTitle"),
-        body: t("navigation.reminders.notifBody", {
-          title: evt.title ?? t("navigation.reminders.untitled"),
-        }),
+        title: evt.title ?? t("navigation.reminders.untitled"),
+        body: t("navigation.reminders.fireBody"),
         data: { eventId: evt.id, startsAt: startsAt.toISOString() },
+        sound: true,
       },
       trigger: triggerDate as any,
     });
@@ -447,20 +446,20 @@ export default function NavigationScreen() {
       arr.push({
         id: evt.id,
         title: evt.title,
-        at: startsAt.toISOString(),        
-        remindAt: triggerDate.toISOString(), 
+        at: startsAt.toISOString(),
+        remindAt: triggerDate.toISOString(),
         notifId,
         cc: sheetCcName,
       });
       await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(arr));
     } catch {}
 
-    Alert.alert(
-      t("navigation.reminders.scheduledTitle"),
-      t("navigation.reminders.scheduledBody", {
-        when: triggerDate.toLocaleString(),
-      })
-    );
+    await presentNow({
+      title: evt.title,
+      body:
+        t("navigation.reminders.scheduledBody", { when: triggerDate.toLocaleString(),
+      }),
+    });
   };
 
   const fetchCcActivities = async (p: POI) => {

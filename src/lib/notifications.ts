@@ -1,41 +1,54 @@
 import * as Device from "expo-device";
+import type {
+  NotificationBehavior,
+  NotificationHandler
+} from "expo-notifications";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () =>
-    ({
+export async function initNotifications(): Promise<void> {
+  const handler: NotificationHandler = {
+    handleNotification: async (): Promise<NotificationBehavior> => ({
       shouldShowAlert: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    } as Notifications.NotificationBehavior),
-});
-
-export async function ensureNotificationPermission(): Promise<boolean> {
-  if (!Device.isDevice) return false;
-
-  const current = await Notifications.getPermissionsAsync();
-  let granted =
-    current.granted ||
-    current.ios?.status ===
-      (Notifications.IosAuthorizationStatus as any)?.PROVISIONAL;
-
-  if (!granted) {
-    const req = await Notifications.requestPermissionsAsync();
-    granted =
-      req.granted ||
-      req.ios?.status ===
-        (Notifications.IosAuthorizationStatus as any)?.PROVISIONAL;
-  }
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  };
+  Notifications.setNotificationHandler(handler);
 
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
+      name: "Default",
       importance: Notifications.AndroidImportance.DEFAULT,
+      sound: "default",
+      vibrationPattern: [250, 250],
+      lockscreenVisibility:
+        Notifications.AndroidNotificationVisibility.PUBLIC,
     });
   }
+}
 
-  return !!granted;
+export async function ensureNotificationPermission(): Promise<boolean> {
+  if (!Device.isDevice) return false;
+  const cur = await Notifications.getPermissionsAsync();
+  if (cur.granted) return true;
+  const req = await Notifications.requestPermissionsAsync();
+  return !!req.granted;
+}
+
+export async function presentNow(params: {
+  title: string;
+  body: string;
+}): Promise<void> {
+  const ok = await ensureNotificationPermission();
+  if (!ok) throw new Error("Notification permission not granted.");
+
+  await Notifications.scheduleNotificationAsync({
+    content: { title: params.title, body: params.body, sound: true },
+    trigger: { seconds: 1, repeats: false } as any,
+  });
 }
 
 export async function scheduleLocalAt(params: {
@@ -47,8 +60,8 @@ export async function scheduleLocalAt(params: {
   if (!ok) throw new Error("Notification permission not granted.");
 
   return Notifications.scheduleNotificationAsync({
-    content: { title: params.title, body: params.body },
-    trigger: { date: params.date } as Notifications.DateTriggerInput,
+    content: { title: params.title, body: params.body, sound: true },
+    trigger: params.date as any,
   });
 }
 
@@ -62,8 +75,8 @@ export async function scheduleLocalIn(params: {
 
   const seconds = Math.max(1, Math.round(params.minutes * 60));
   return Notifications.scheduleNotificationAsync({
-    content: { title: params.title, body: params.body },
-    trigger: { seconds, repeats: false } as Notifications.TimeIntervalTriggerInput,
+    content: { title: params.title, body: params.body, sound: true },
+    trigger: { seconds, repeats: false } as any,
   });
 }
 
@@ -86,11 +99,11 @@ export type ScheduledReminder = {
 export async function listScheduled(): Promise<ScheduledReminder[]> {
   const arr = await Notifications.getAllScheduledNotificationsAsync();
   return arr.map((n) => {
-    const t = n.trigger as any;
+    const t: any = n.trigger;
     return {
       id: n.identifier,
-      title: n.content.title ?? "",
-      body: n.content.body ?? "",
+      title: n.content?.title ?? "",
+      body: n.content?.body ?? "",
       date: t?.date ? new Date(t.date) : undefined,
       seconds: typeof t?.seconds === "number" ? t.seconds : undefined,
     };

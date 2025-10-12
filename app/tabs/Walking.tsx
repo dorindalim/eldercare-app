@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, FlatList, Linking, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
@@ -10,16 +10,51 @@ import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
 type ParkLocation = {
-  id: string;
   title: string;
   url: string;
+  image: string;
+  region: string;
+  hours: string;
+  activities: string[];
+  amenities: string[];
+  latitude: number | null;
+  longitude: number | null;
   scraped_at: string;
 };
+
+type FilterCategory = {
+  name: string;
+  options: string[];
+  selected: string[];
+};
+
+type LatLng = {
+  latitude: number;
+  longitude: number;
+};
+
+// Helper function to calculate distance between two coordinates using Haversine formula
+const distanceMeters = (a: LatLng, b: LatLng) => {
+  const R = 6371e3;
+  const φ1 = (a.latitude * Math.PI) / 180;
+  const φ2 = (b.latitude * Math.PI) / 180;
+  const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
+  const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
+  const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+};
+
+// Add your kmStr function
+const kmStr = (m?: number | null) =>
+  m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`;
 
 export default function WalkingScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
+  
+  // Add FlatList ref
+  const flatListRef = useRef<FlatList>(null);
   
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
@@ -27,9 +62,81 @@ export default function WalkingScreen() {
   };
 
   const [parks, setParks] = useState<ParkLocation[]>([]);
+  const [filteredParks, setFilteredParks] = useState<ParkLocation[]>([]);
   const [selectedPark, setSelectedPark] = useState<ParkLocation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTab, setCurrentTab] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [userLocation, setUserLocation] = useState<{latitude: number; longitude: number} | null>(null);
+
+  // Filter categories
+  const [filters, setFilters] = useState<FilterCategory[]>([
+    {
+      name: "activity",
+      options: ["Barbecuing", "Birdwatching", "Camping", "Contemplative landscape", "Cycling or inline skating", "Dining", "Fishing", "Fitness Studio", "Fun with children", "Fun with your dog", "Hiking", "Nature walks or tours", "Photography", "Shopping", "Therapeutic gardens", "Wellness"],
+      selected: []
+    },
+    {
+      name: "amenity",
+      options: ["Restrooms", "Parking", "Picnic Area", "Walking Trails", "Drinking Fountain", "Allotment Garden", "Art or Exhibition Space", "Bird Perch", "Community Garden", "Dining", "Fishing Facility", "Therapeutic Garden", "Venue for Booking", "Wellness Provider"],
+      selected: []
+    },
+    {
+      name: "region",
+      options: ["Central", "East", "North", "South", "West", "Offshore islands"],
+      selected: []
+    }
+  ]);
+
+  // Get user's current location
+  const getUserLocation = () => {
+    return new Promise<{latitude: number; longitude: number}>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          resolve({ latitude, longitude });
+        },
+        (error) => {
+          reject(error);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      );
+    });
+  };
+
+  // Sort parks by proximity to user location
+  const sortParksByProximity = (parks: ParkLocation[], userLat: number, userLon: number): ParkLocation[] => {
+  const parksWithLocation: ParkLocation[] = [];
+  const parksWithoutLocation: ParkLocation[] = [];
+
+  // Separate parks with and without coordinates
+  parks.forEach(park => {
+    if (park.latitude !== null && park.longitude !== null) {
+      parksWithLocation.push(park);
+    } else {
+      parksWithoutLocation.push(park);
+    }
+  });
+
+    // Sort parks with coordinates by distance using distanceMeters
+  const sortedParksWithLocation = parksWithLocation.sort((a, b) => {
+    const userLocation = { latitude: userLat, longitude: userLon };
+    const distanceA = distanceMeters(userLocation, { latitude: a.latitude!, longitude: a.longitude! });
+    const distanceB = distanceMeters(userLocation, { latitude: b.latitude!, longitude: b.longitude! });
+    return distanceA - distanceB;
+  });
+
+    // Return sorted parks with location first, then parks without location
+    return [...sortedParksWithLocation, ...parksWithoutLocation];
+  };
 
   // Fetch parks from Supabase
   const fetchParks = async () => {
@@ -37,24 +144,50 @@ export default function WalkingScreen() {
       setLoading(true);
       setError(null);
 
+      // Try to get user location first
+      let userLoc: {latitude: number; longitude: number} | null = null;
+      try {
+        userLoc = await getUserLocation();
+        setUserLocation(userLoc);
+      } catch (locationError) {
+        console.warn('Could not get user location:', locationError);
+        // Continue without user location - parks will be sorted by title
+      }
+
       const { data, error } = await supabase
-        .from('parks') // Your parks table
-        .select('*')
-        .order('title', { ascending: true }); // Order by title
+        .from('all_parks')
+        .select('*');
 
       if (error) {
         throw error;
       }
 
       if (data) {
-        // Transform Supabase data to match our ParkLocation type
         const transformedData: ParkLocation[] = data.map(item => ({
-          id: item.id?.toString() || Math.random().toString(),
           title: item.title || 'Untitled Park',
           url: item.url || '',
-          scraped_at: item.scraped_at || new Date().toISOString()
+          image: item.image || '',
+          region: item.region || '',
+          hours: item.hours || 'Hours not available',
+          activities: item.activities || [],
+          amenities: item.amenities || [],
+          latitude: item.latitude,
+          longitude: item.longitude,
+          scraped_at: item.scraped_at || ''
         }));
-        setParks(transformedData);
+
+        let sortedData = transformedData;
+
+        // Sort by proximity if user location is available
+        if (userLoc) {
+          sortedData = sortParksByProximity(transformedData, userLoc.latitude, userLoc.longitude);
+        } else {
+          // Fallback: sort by title alphabetically
+          sortedData = transformedData.sort((a, b) => a.title.localeCompare(b.title));
+        }
+
+        setParks(sortedData);
+        setFilteredParks(sortedData);
       }
     } catch (err) {
       console.error('Error fetching parks:', err);
@@ -62,7 +195,129 @@ export default function WalkingScreen() {
       Alert.alert('Error', 'Failed to load parks from database');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  // Search functionality
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      applyFilters(parks, filters);
+      return;
+    }
+
+    const filtered = parks.filter(park => 
+      park.title.toLowerCase().includes(query.toLowerCase()) ||
+      park.activities?.some(activity => 
+        activity.toLowerCase().includes(query.toLowerCase())
+      ) ||
+      park.amenities?.some(amenity => 
+        amenity.toLowerCase().includes(query.toLowerCase())
+      ) ||
+      park.region?.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    applyFilters(filtered, filters);
+  };
+
+  // Filter functionality
+  const toggleFilterOption = (categoryIndex: number, option: string) => {
+    const updatedFilters = [...filters];
+    const category = updatedFilters[categoryIndex];
+    
+    if (category.selected.includes(option)) {
+      category.selected = category.selected.filter(item => item !== option);
+    } else {
+      category.selected.push(option);
+    }
+    
+    setFilters(updatedFilters);
+  };
+
+  const applyFilters = (parkList: ParkLocation[], filterList: FilterCategory[]) => {
+    const hasActiveFilters = filterList.some(category => category.selected.length > 0);
+    
+    if (!hasActiveFilters) {
+      setFilteredParks(parkList);
+      return;
+    }
+
+    const scoredParks = parkList.map(park => {
+      let score = 0;
+      
+      filterList.forEach(category => {
+        category.selected.forEach(selectedOption => {
+          if (category.name === 'activity' && park.activities?.includes(selectedOption)) {
+            score += 1;
+          } else if (category.name === 'amenity' && park.amenities?.includes(selectedOption)) {
+            score += 1;
+          } else if (category.name === 'region' && park.region === selectedOption) {
+            score += 1;
+          }
+        });
+      });
+      
+      return { park, score };
+    });
+
+    // Sort by score descending, then maintain original proximity/title order
+    const sortedParks = scoredParks
+      .filter(item => item.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        // Maintain original order for parks with same score
+        return parkList.indexOf(a.park) - parkList.indexOf(b.park);
+      })
+      .map(item => item.park);
+
+    setFilteredParks(sortedParks);
+  };
+
+  const handleApplyFilters = () => {
+    applyFilters(
+      searchQuery ? parks.filter(park => 
+        park.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        park.activities?.some(activity => 
+          activity.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        park.amenities?.some(amenity => 
+          amenity.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        park.region?.toLowerCase().includes(searchQuery.toLowerCase())
+      ) : parks,
+      filters
+    );
+    setShowFilters(false);
+  };
+
+  const handleClearFilters = () => {
+    const resetFilters = filters.map(category => ({
+      ...category,
+      selected: []
+    }));
+    setFilters(resetFilters);
+    setFilteredParks(searchQuery ? 
+      parks.filter(park => 
+        park.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        park.activities?.some(activity => 
+          activity.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        park.amenities?.some(amenity => 
+          amenity.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        park.region?.toLowerCase().includes(searchQuery.toLowerCase())
+      ) : parks
+    );
+  };
+
+  // Pull to refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchParks();
   };
 
   useEffect(() => {
@@ -72,7 +327,6 @@ export default function WalkingScreen() {
   const handleParkSelect = (park: ParkLocation) => {
     setSelectedPark(park);
     
-    // Use the title as the search query for navigation
     router.push({
       pathname: "/tabs/Navigation",
       params: { 
@@ -96,30 +350,68 @@ export default function WalkingScreen() {
     }
   };
 
-  const formatScrapedDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-SG', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return 'Unknown date';
-    }
-  };
-
   const renderParkItem = ({ item }: { item: ParkLocation }) => (
     <TouchableOpacity 
       style={[
         s.parkItem,
-        selectedPark?.id === item.id && s.selectedParkItem
+        selectedPark?.title === item.title && s.selectedParkItem
       ]} 
       onPress={() => handleParkSelect(item)}
     >
+      {/* Park Image */}
+      {item.image ? (
+        <Image 
+          source={{ uri: item.image }} 
+          style={s.parkImage}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[s.parkImage, s.noImage]}>
+          <AppText variant="caption" weight="400" style={s.noImageText}>
+            No Image
+          </AppText>
+        </View>
+      )}
+      
       <AppText variant="title" weight="700" style={s.parkTitle}>
         {item.title}
       </AppText>
+      
+      {/* Display distance if user location and park coordinates are available */}
+      {userLocation && item.latitude && item.longitude && (
+        <View style={s.distanceContainer}>
+          <AppText variant="caption" weight="600" style={s.distanceText}>
+          {kmStr(
+            distanceMeters(
+              userLocation, 
+              { latitude: item.latitude, longitude: item.longitude }
+            )
+          )} away
+        </AppText>
+        </View>
+      )}
+      
+      {/* Hours */}
+      <View style={s.hoursContainer}>
+        <AppText variant="caption" weight="600" style={s.hoursLabel}>
+          Hours:
+        </AppText>
+        <AppText variant="caption" weight="400" style={s.hoursText}>
+          {item.hours}
+        </AppText>
+      </View>
+      
+      {/* Region */}
+      {item.region && (
+        <View style={s.regionContainer}>
+          <AppText variant="caption" weight="600" style={s.regionLabel}>
+            Region:
+          </AppText>
+          <AppText variant="caption" weight="400" style={s.regionText}>
+            {item.region}
+          </AppText>
+        </View>
+      )}
       
       {/* URL - Make it clickable */}
       {item.url && (
@@ -128,15 +420,10 @@ export default function WalkingScreen() {
           style={s.urlContainer}
         >
           <AppText variant="caption" weight="600" style={s.urlText} numberOfLines={1}>
-            🔗 {item.url}
+            🔗 Learn more at NParks.gov.sg
           </AppText>
         </TouchableOpacity>
       )}
-      
-      {/* Scraped Date */}
-      <AppText variant="caption" weight="400" style={s.scrapedDate}>
-        📅 Added: {formatScrapedDate(item.scraped_at)}
-      </AppText>
       
       <View style={s.directionButton}>
         <AppText variant="button" weight="700" style={s.directionButtonText}>
@@ -144,6 +431,237 @@ export default function WalkingScreen() {
         </AppText>
       </View>
     </TouchableOpacity>
+  );
+
+  // Calculate tabs data based on filtered parks
+  const parksPerTab = 10;
+  const totalTabs = Math.ceil(filteredParks.length / parksPerTab);
+  const currentParks = filteredParks.slice(
+    currentTab * parksPerTab,
+    (currentTab + 1) * parksPerTab
+  );
+
+  // Calculate visible page range (max 3 pages at a time)
+  const getVisiblePages = () => {
+    if (totalTabs <= 3) {
+      return Array.from({ length: totalTabs }, (_, i) => i);
+    }
+
+    if (currentTab === 0) {
+      return [0, 1, 2];
+    } else if (currentTab === totalTabs - 1) {
+      return [totalTabs - 3, totalTabs - 2, totalTabs - 1];
+    } else {
+      return [currentTab - 1, currentTab, currentTab + 1];
+    }
+  };
+
+  const visiblePages = getVisiblePages();
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  };
+
+  // Navigation handlers
+  const goToFirstPage = () => {
+    setCurrentTab(0);
+    scrollToTop();
+  };
+
+  const goToLastPage = () => {
+    setCurrentTab(totalTabs - 1);
+    scrollToTop();
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentTab(prev => Math.max(0, prev - 1));
+    scrollToTop();
+  };
+
+  const goToNextPage = () => {
+    setCurrentTab(prev => Math.min(totalTabs - 1, prev + 1));
+    scrollToTop();
+  };
+
+  const handleTabChange = (tabIndex: number) => {
+    setCurrentTab(tabIndex);
+    scrollToTop();
+  };
+
+  const renderTabButtons = () => {
+    if (totalTabs <= 1) return null;
+    
+    return (
+      <View style={s.tabContainer}>
+        {/* Left Navigation Arrows */}
+        <View style={s.navButtons}>
+          <TouchableOpacity
+            style={[
+              s.navButton,
+              currentTab === 0 && s.navButtonDisabled
+            ]}
+            onPress={goToFirstPage}
+            disabled={currentTab === 0}
+          >
+            <AppText style={[
+              s.navButtonText,
+              currentTab === 0 && s.navButtonTextDisabled
+            ]}>
+              {'<<'}
+            </AppText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              s.navButton,
+              currentTab === 0 && s.navButtonDisabled
+            ]}
+            onPress={goToPreviousPage}
+            disabled={currentTab === 0}
+          >
+            <AppText style={[
+              s.navButtonText,
+              currentTab === 0 && s.navButtonTextDisabled
+            ]}>
+              {'<'}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+
+        {/* Page Numbers */}
+        <View style={s.pageNumbers}>
+          {visiblePages.map((pageIndex) => (
+            <TouchableOpacity
+              key={pageIndex}
+              style={[
+                s.tabButton,
+                currentTab === pageIndex && s.activeTabButton
+              ]}
+              onPress={() => handleTabChange(pageIndex)}
+            >
+              <AppText 
+                variant="caption" 
+                weight="700" 
+                style={[
+                  s.tabButtonText,
+                  currentTab === pageIndex && s.activeTabButtonText
+                ]}
+              >
+                {pageIndex + 1}
+              </AppText>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Right Navigation Arrows */}
+        <View style={s.navButtons}>
+          <TouchableOpacity
+            style={[
+              s.navButton,
+              currentTab === totalTabs - 1 && s.navButtonDisabled
+            ]}
+            onPress={goToNextPage}
+            disabled={currentTab === totalTabs - 1}
+          >
+            <AppText style={[
+              s.navButtonText,
+              currentTab === totalTabs - 1 && s.navButtonTextDisabled
+            ]}>
+              {'>'}
+            </AppText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              s.navButton,
+              currentTab === totalTabs - 1 && s.navButtonDisabled
+            ]}
+            onPress={goToLastPage}
+            disabled={currentTab === totalTabs - 1}
+          >
+            <AppText style={[
+              s.navButtonText,
+              currentTab === totalTabs - 1 && s.navButtonTextDisabled
+            ]}>
+              {'>>'}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  // Filter Modal Component
+  const FilterModal = () => (
+    <View style={s.modalOverlay}>
+      <View style={s.modalContent}>
+        <View style={s.modalHeader}>
+          <AppText variant="h2" weight="800" style={s.modalTitle}>
+            Filter Parks
+          </AppText>
+          <TouchableOpacity onPress={() => setShowFilters(false)} style={s.closeButton}>
+            <AppText variant="title" weight="700" style={s.closeButtonText}>
+              ×
+            </AppText>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={s.filterContent}>
+          {filters.map((category, categoryIndex) => (
+            <View key={category.name} style={s.filterCategory}>
+              <AppText variant="title" weight="700" style={s.categoryTitle}>
+                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+              </AppText>
+              <View style={s.optionsContainer}>
+                {category.options.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      s.optionButton,
+                      category.selected.includes(option) && s.optionButtonSelected
+                    ]}
+                    onPress={() => toggleFilterOption(categoryIndex, option)}
+                  >
+                    <AppText 
+                      variant="body" 
+                      weight="400" 
+                      style={[
+                        s.optionText,
+                        category.selected.includes(option) && s.optionTextSelected
+                      ]}
+                    >
+                      {option}
+                    </AppText>
+                    <View style={[
+                      s.checkbox,
+                      category.selected.includes(option) && s.checkboxSelected
+                    ]}>
+                      {category.selected.includes(option) && (
+                        <AppText style={s.checkmark}>✓</AppText>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        <View style={s.modalFooter}>
+          <TouchableOpacity onPress={handleClearFilters} style={s.clearButton}>
+            <AppText variant="button" weight="700" style={s.clearButtonText}>
+              Clear All
+            </AppText>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleApplyFilters} style={s.applyButton}>
+            <AppText variant="button" weight="700" style={s.applyButtonText}>
+              Apply Filters
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 
   if (loading) {
@@ -154,7 +672,7 @@ export default function WalkingScreen() {
           setLanguage={setLang as (c: LangCode) => void}
           bgColor="#D9D991"
           title={t("walkingRoutes.title")}
-          includeTopInset={true} // top bar thingy
+          includeTopInset={true}
           barHeight={44}
           topPadding={2}
           onLogout={async () => {
@@ -219,38 +737,47 @@ export default function WalkingScreen() {
         }}
       />
 
-      {/* Header */}
-      <View style={s.header}>
-        <AppText variant="h1" weight="800" style={s.title}>
-          Singapore Parks
-        </AppText>
-        <AppText variant="body" weight="400" style={s.subtitle}>
-          Browse parks in Singapore. Tap any park to get directions or tap the URL to learn more.
-        </AppText>
-        
-        <View style={s.statsContainer}>
-          <AppText variant="caption" weight="600" style={s.statsText}>
-            {parks.length} parks available
-          </AppText>
-          <TouchableOpacity style={s.refreshButton} onPress={fetchParks}>
-            <AppText variant="caption" weight="700" style={s.refreshButtonText}>
-              Refresh
-            </AppText>
+      {/* Search Bar */}
+      <View style={s.searchContainer}>
+        <View style={s.searchInputContainer}>
+          <TextInput
+            style={s.searchInput}
+            placeholder="Search parks by name, activity, amenity, or region..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          <TouchableOpacity 
+            style={s.filterButton}
+            onPress={() => setShowFilters(true)}
+          >
+            <AppText style={s.filterButtonText}>Filter</AppText>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Parks List */}
       <FlatList
-        data={parks}
+        ref={flatListRef}
+        data={currentParks}
         renderItem={renderParkItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.title}
         contentContainerStyle={s.listContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#007AFF"]}
+            tintColor="#007AFF"
+          />
+        }
         ListEmptyComponent={
           <View style={s.emptyContainer}>
             <AppText variant="body" weight="400" style={s.emptyText}>
-              No parks found in database
+              {searchQuery || filters.some(cat => cat.selected.length > 0) 
+                ? "No parks match your search criteria" 
+                : "No parks found in database"
+              }
             </AppText>
             <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
               <AppText variant="button" weight="700" style={s.retryButtonText}>
@@ -261,16 +788,11 @@ export default function WalkingScreen() {
         }
       />
 
-      {/* Selected Park Info */}
-      {selectedPark && (
-        <View style={s.selectedInfo}>
-          <AppText variant="caption" weight="600" style={s.selectedInfoText}>
-            Opening directions to: <AppText variant="caption" weight="800" style={s.selectedInfoName}>
-              {selectedPark.title}
-            </AppText>
-          </AppText>
-        </View>
-      )}
+      {/* Tab Buttons at Bottom Only */}
+      {totalTabs > 1 && renderTabButtons()}
+
+      {/* Filter Modal */}
+      {showFilters && <FilterModal />}
     </SafeAreaView>
   );
 }
@@ -281,40 +803,237 @@ const s = StyleSheet.create({
     backgroundColor: "#F8F9FA" 
   },
 
-  // Header
-  header: {
-    padding: 20,
+  // Search Bar
+  searchContainer: {
+    padding: 16,
     backgroundColor: "#FFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E9ECEF",
   },
-  title: {
-    marginBottom: 8,
+  searchInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  subtitle: {
-    marginBottom: 12,
+  searchInput: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    backgroundColor: "#FFF",
   },
-  statsContainer: {
+  filterButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  filterButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
+  // Filter Modal
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    margin: 20,
+    maxHeight: "80%",
+    width: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
   },
-  statsText: {
-    color: "#28A745",
+  modalTitle: {
+    fontSize: 20,
   },
-  refreshButton: {
-    backgroundColor: "#28A745",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  refreshButtonText: {
+  closeButtonText: {
+    fontSize: 20,
+    color: "#6C757D",
+  },
+  filterContent: {
+    maxHeight: 400,
+    padding: 20,
+  },
+  filterCategory: {
+    marginBottom: 24,
+  },
+  categoryTitle: {
+    fontSize: 18,
+    marginBottom: 12,
+    color: "#2C3E50",
+  },
+  optionsContainer: {
+    gap: 8,
+  },
+  optionButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  optionButtonSelected: {
+    backgroundColor: "#E7F3FF",
+    borderColor: "#007AFF",
+  },
+  optionText: {
+    flex: 1,
+    fontSize: 16,
+  },
+  optionTextSelected: {
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#6C757D",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxSelected: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  checkmark: {
+    color: "#FFF",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  modalFooter: {
+    flexDirection: "row",
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#E9ECEF",
+    gap: 12,
+  },
+  clearButton: {
+    flex: 1,
+    backgroundColor: "#6C757D",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  clearButtonText: {
+    color: "#FFF",
+  },
+  applyButton: {
+    flex: 1,
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  applyButtonText: {
+    color: "#FFF",
+  },
+
+  // Tab System (Bottom Only)
+  tabContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    backgroundColor: "#FFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E9ECEF",
+  },
+  navButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  navButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  navButtonDisabled: {
+    backgroundColor: "#F8F9FA",
+    borderColor: "#E9ECEF",
+    opacity: 0.5,
+  },
+  navButtonText: {
+    fontSize: 16,
+  },
+  navButtonTextDisabled: {
+    opacity: 0.5,
+  },
+  pageNumbers: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  tabButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  activeTabButton: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  tabButtonText: {
+    color: "#6C757D",
+    fontSize: 12,
+  },
+  activeTabButtonText: {
     color: "#FFF",
   },
 
   // List
   listContainer: {
     padding: 16,
+    flexGrow: 1,
   },
 
   // Park Item
@@ -322,7 +1041,7 @@ const s = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: "transparent",
     shadowColor: "#000",
@@ -335,11 +1054,52 @@ const s = StyleSheet.create({
     borderColor: "#007AFF",
     backgroundColor: "#F0F8FF",
   },
+  parkImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  noImage: {
+    backgroundColor: "#E9ECEF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noImageText: {
+    color: "#6C757D",
+  },
   parkTitle: {
     marginBottom: 8,
   },
-  urlContainer: {
+  distanceContainer: {
     marginBottom: 8,
+  },
+  distanceText: {
+    color: "#6C757D",
+    fontSize: 14,
+  },
+  hoursContainer: {
+    marginBottom: 8,
+  },
+  hoursLabel: {
+    color: "#28A745",
+    marginBottom: 2,
+  },
+  hoursText: {
+    color: "#495057",
+  },
+  regionContainer: {
+    marginBottom: 12,
+  },
+  regionLabel: {
+    color: "#6C757D",
+    marginBottom: 2,
+  },
+  regionText: {
+    color: "#495057",
+  },
+  urlContainer: {
+    marginBottom: 12,
     padding: 8,
     backgroundColor: "#F8F9FA",
     borderRadius: 6,
@@ -348,9 +1108,6 @@ const s = StyleSheet.create({
   },
   urlText: {
     color: "#007AFF",
-  },
-  scrapedDate: {
-    marginBottom: 12,
   },
   directionButton: {
     backgroundColor: "#007AFF",
@@ -401,20 +1158,5 @@ const s = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
     color: "#6C757D",
-  },
-
-  // Selected Location Info
-  selectedInfo: {
-    backgroundColor: "#E7F3FF",
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#007AFF",
-  },
-  selectedInfoText: {
-    color: "#0066CC",
-    textAlign: "center",
-  },
-  selectedInfoName: {
-    color: "#0066CC",
   },
 });

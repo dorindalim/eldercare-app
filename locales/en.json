@@ -183,7 +183,8 @@
       "notifBody": "“{{title}}” starts in about 1 hour.",
       "scheduledTitle": "Reminder Set",
       "scheduledBody": "We'll remind you on {{when}}.",
-      "untitled": "Untitled"
+      "untitled": "Untitled",
+      "fireBody": "Your activity starts in 1 hour."
     }
   },
   "walkingRoutes": {
