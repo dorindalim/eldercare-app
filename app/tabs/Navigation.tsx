@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   FlatList,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -103,6 +104,8 @@ export default function NavigationScreen() {
   const [sheetEvents, setSheetEvents] = useState<CCEvent[]>([]);
   const [sheetCcName, setSheetCcName] = useState<string>("");
 
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef<Record<string, MapMarker | null>>({});
 
@@ -154,6 +157,44 @@ export default function NavigationScreen() {
       searchDestination(presetQuery);
     }
   }, [presetQuery]);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (query.length > 2 && location) {
+        fetchAutocompleteSuggestions(query);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounce);
+  }, [query, location]);
+
+  const fetchAutocompleteSuggestions = async (input: string) => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_WEB_API_KEY}&location=${location.latitude}%2C${location.longitude}&radius=10000`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setSuggestions(data.predictions || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSuggestionPress = async (suggestion: any) => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${suggestion.place_id}&key=${GOOGLE_WEB_API_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.result) {
+        const loc = data.result.geometry.location;
+        const dest = { latitude: loc.lat, longitude: loc.lng };
+        setQuery(suggestion.description);
+        setSuggestions([]);
+        setDestinationOnly(dest);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const hideAllCallouts = () => {
     Object.values(markerRefs.current).forEach((m) => {
@@ -528,6 +569,18 @@ export default function NavigationScreen() {
     }
   };
 
+  const openInGoogleMaps = () => {
+    if (!destination) return;
+    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+    const latLng = `${destination.latitude},${destination.longitude}`;
+    const label = query || 'Destination';
+    const url = Platform.select({
+      ios: `${scheme}${label}@${latLng}`,
+      android: `${scheme}${latLng}(${label})`
+    });
+    Linking.openURL(url);
+  };
+
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
@@ -612,6 +665,19 @@ export default function NavigationScreen() {
               </TouchableOpacity>
             )}
           </View>
+
+          {suggestions.length > 0 && (
+            <FlatList
+              data={suggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={s.suggestionItem} onPress={() => handleSuggestionPress(item)}>
+                  <AppText>{item.description}</AppText>
+                </TouchableOpacity>
+              )}
+              style={s.suggestionsContainer}
+            />
+          )}
 
           {/* Travel mode */}
           <View style={[s.modeRow, { marginTop: 8 }]} pointerEvents="auto">
@@ -744,20 +810,27 @@ export default function NavigationScreen() {
             )}
             style={s.stepList}
           />
-          <TouchableOpacity
-            style={s.stopBtn}
-            onPress={() => {
-              setNavigating(false);
-              setRouteCoords([]);
-              setSteps([]);
-              setEta(null);
-              Speech.speak(t("navigation.search.stopped"));
-            }}
-          >
-            <AppText variant="button" weight="800" color="#FFF">
-              {t("navigation.search.stopNav")}
-            </AppText>
-          </TouchableOpacity>
+          <View style={s.navActions}>
+            <TouchableOpacity
+              style={s.stopBtn}
+              onPress={() => {
+                setNavigating(false);
+                setRouteCoords([]);
+                setSteps([]);
+                setEta(null);
+                Speech.speak(t("navigation.search.stopped"));
+              }}
+            >
+              <AppText variant="button" weight="800" color="#FFF">
+                {t("navigation.search.stopNav")}
+              </AppText>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.openGpsBtn} onPress={openInGoogleMaps}>
+              <AppText variant="button" weight="800" color="#FFF">
+                Open In Google Maps
+              </AppText>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -985,6 +1058,20 @@ const s = StyleSheet.create({
   },
   catMenuItem: { paddingVertical: 10, paddingHorizontal: 12 },
 
+  suggestionsContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginTop: 8,
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+
   input: { flex: 1, paddingVertical: 8, paddingHorizontal: 8 },
 
   iconBtn: {
@@ -1045,7 +1132,9 @@ const s = StyleSheet.create({
   },
   stepList: { maxHeight: 150, marginBottom: 10 },
   stepActive: { fontWeight: "900", color: "#007AFF" },
-  stopBtn: { backgroundColor: "#FF3B30", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  navActions: { flexDirection: "row", gap: 10, marginTop: 10 },
+  stopBtn: { backgroundColor: "#FF3B30", paddingVertical: 12, borderRadius: 10, alignItems: "center", flex: 1 },
+  openGpsBtn: { backgroundColor: "#007AFF", borderRadius: 10, paddingVertical: 12, paddingHorizontal: 10, alignItems: "center", flex: 1 },
 
   overlay: {
     position: "absolute",

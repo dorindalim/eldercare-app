@@ -41,21 +41,24 @@ export default function Signup() {
     await AsyncStorage.setItem("lang", code);
   };
 
-  const phoneDigits = useMemo(() => getDigits(phone), [phone]);
+  const phoneDigits = useMemo(
+    () => getDigits(phone.startsWith("+65") ? phone.substring(3) : phone),
+    [phone]
+  );
 
   const canSubmit = useMemo(
     () =>
-      phoneDigits.length === 9 &&
+      phoneDigits.length === 8 &&
       password.length >= MIN_PWD &&
       password === confirm,
     [phoneDigits.length, password, confirm]
   );
 
   const onSubmit = async () => {
-    if (phoneDigits.length !== 9) {
+    if (phoneDigits.length !== 8) {
       return Alert.alert(
         t("alerts.signupInvalidTitle"),
-        t("auth.signup.phoneInvalidLength", { digits: 9 })
+        t("auth.signup.phoneInvalidLength", { digits: 8 })
       );
     }
 
@@ -87,6 +90,15 @@ export default function Signup() {
     router.replace("/Onboarding/ElderlyForm");
   };
 
+  const handlePhoneChange = (text: string) => {
+    const prefix = "+65 ";
+    if (text.length < prefix.length) {
+      setPhone(prefix);
+    } else {
+      setPhone(text);
+    }
+  };
+
   return (
     <Screen
       topBar={
@@ -110,7 +122,7 @@ export default function Signup() {
             placeholderTextColor="#9CA3AF"
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={handlePhoneChange}
             style={s.input}
           />
 
