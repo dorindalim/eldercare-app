@@ -16,7 +16,11 @@
     "invalidCodeBody": "请检查后再试。",
     "signupInvalidTitle": "请检查信息",
     "signupFailedTitle": "注册失败",
-    "signupFailedBody": "该手机号可能已被注册。"
+    "signupFailedBody": "该手机号可能已被注册。",
+    "noEC": {
+      "title": "没有紧急联系人",
+      "body": "请在个人资料中添加紧急联系人的手机号。"
+    }
   },
   "auth": {
     "login": {
@@ -67,6 +71,17 @@
     "imActive": "我在活动中",
     "tapToCheckIn": "轻触打卡",
     "checkedIn": "今日已打卡"
+  },
+  "sos": {
+    "title": "正在发送求救",
+    "titleShort": "求救",
+    "subtitle": "我们将向您的紧急联系人发送短信并拨打电话。",
+    "autoCalling": "将在 {{seconds}} 秒后自动拨打 {{name}}",
+    "cancel": "取消",
+    "callNowBtn": "立即致电 {{name}}",
+    "ecFallback": "紧急联系人",
+    "yourLovedOne": "您所关心的人",
+    "callConfirm": "要拨打 {{name}} 吗？"
   },
   "community": {
     "title": "社区俱乐部活动",
@@ -183,7 +198,8 @@
       "notifBody": "“{{title}}” 约 1 小时后开始。",
       "scheduledTitle": "已设置提醒",
       "scheduledBody": "我们会在 {{when}} 提醒您。",
-      "untitled": "未命名"
+      "untitled": "未命名",
+      "fireBody": "您的活动将在 1 小时后开始。"
     }
   },
   "walkingRoutes": {
@@ -274,7 +290,7 @@
   "elderlyOnboarding": {
     "title": "基本信息",
     "namePH": "姓名",
-    "yobPH": "出生年份（e.g 2000）",
+    "yobPH": "出生年份（例如 2000）",
     "genderLabel": "性别",
     "male": "男",
     "female": "女",

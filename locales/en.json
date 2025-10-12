@@ -16,7 +16,11 @@
     "invalidCodeBody": "Please check and try again.",
     "signupInvalidTitle": "Check details",
     "signupFailedTitle": "Sign up failed",
-    "signupFailedBody": "That phone may already be registered."
+    "signupFailedBody": "That phone may already be registered.",
+    "noEC": {
+      "title": "No emergency contact",
+      "body": "Please add an emergency contact phone in your profile."
+    }
   },
   "auth": {
     "login": {
@@ -67,6 +71,17 @@
     "imActive": "I'm Active",
     "tapToCheckIn": "Tap to check in",
     "checkedIn": "You have Checked In today!"
+  },
+  "sos": {
+    "title": "Sending SOS",
+    "titleShort": "SOS",
+    "subtitle": "We’ll message and call your emergency contact.",
+    "autoCalling": "Auto-calling {{name}} in {{seconds}}s",
+    "cancel": "Cancel",
+    "callNowBtn": "Call {{name}} now",
+    "ecFallback": "Emergency Contact",
+    "yourLovedOne": "Your loved one",
+    "callConfirm": "Do you want to call {{name}}?"
   },
   "community": {
     "title": "CC Activities",

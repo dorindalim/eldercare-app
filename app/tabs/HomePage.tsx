@@ -1,9 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as SMS from "expo-sms";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Animated,
+  Easing,
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
@@ -11,6 +23,17 @@ import AppText from "../../src/components/AppText";
 import CheckinCard from "../../src/components/CheckinCard";
 import TopBar, { LangCode } from "../../src/components/TopBar";
 import { useCheckins } from "../../src/hooks/useCheckIns";
+import { supabase } from "../../src/lib/supabase";
+
+const EMERGENCY_SERVICES = "995";
+
+function normalizeSGToE164(local: string | null | undefined) {
+  const d = String(local ?? "").replace(/\D/g, "");
+  if (!d) return null;
+  if (d.startsWith("65") && d.length >= 10) return `+${d.slice(0, 10)}`;
+  if (d.length >= 8) return `+65${d.slice(-8)}`;
+  return null;
+}
 
 export default function ElderlyHome() {
   const router = useRouter();
@@ -22,6 +45,18 @@ export default function ElderlyHome() {
   );
 
   const [refreshing, setRefreshing] = useState(false);
+
+  const [sosVisible, setSosVisible] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  const ecRef = useRef<{ name: string | null; phoneIntl: string | null }>({
+    name: null,
+    phoneIntl: null,
+  });
+
+  const ecLabel = ecRef.current.name ?? t("sos.ecFallback");
 
   const onRefresh = async () => {
     try {
@@ -44,6 +79,148 @@ export default function ElderlyHome() {
     }
   };
 
+  const fetchEmergencyContact = async () => {
+    if (!session?.userId) {
+      return {
+        ecName: null as string | null,
+        ecPhoneIntl: null as string | null,
+        elderName: null as string | null,
+      };
+    }
+    const { data, error } = await supabase
+      .from("elderly_profiles")
+      .select("emergency_name, emergency_phone, name")
+      .eq("user_id", session.userId)
+      .maybeSingle();
+
+    if (error) return { ecName: null, ecPhoneIntl: null, elderName: null };
+    const ecPhoneIntl = normalizeSGToE164(data?.emergency_phone);
+    return {
+      ecName: data?.emergency_name ?? null,
+      ecPhoneIntl,
+      elderName: data?.name ?? null,
+    };
+  };
+
+  const getLiveLocationUrl = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return null;
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude, longitude } = pos.coords;
+      return `https://maps.google.com/?q=${latitude},${longitude}`;
+    } catch {
+      return null;
+    }
+  };
+
+  const callNumber = async (phone: string) => {
+    try {
+      await Linking.openURL(`tel:${phone}`);
+    } catch { }
+  };
+
+  const sendSms = async (to: string, body: string) => {
+    try {
+      const available = await SMS.isAvailableAsync();
+      if (available) {
+        await SMS.sendSMSAsync([to], body);
+      } else {
+        await Linking.openURL(`sms:${to}?body=${encodeURIComponent(body)}`);
+      }
+    } catch {
+      Alert.alert("SMS failed", "Could not open your SMS app.");
+    }
+  };
+
+  const performSOS = async () => {
+    let { name, phoneIntl } = ecRef.current;
+    if (!phoneIntl) {
+      const f = await fetchEmergencyContact();
+      name = f.ecName ?? null;
+      phoneIntl = f.ecPhoneIntl;
+      ecRef.current = { name, phoneIntl };
+    }
+    if (!phoneIntl) {
+      Alert.alert(t("alerts.noEC.title"), t("alerts.noEC.body"));
+      return;
+    }
+
+    const mapsUrl = await getLiveLocationUrl();
+    const who =
+      (await supabase
+        .from("elderly_profiles")
+        .select("name")
+        .eq("user_id", session?.userId ?? "")
+        .maybeSingle()).data?.name ?? "Your loved one";
+
+    const timeStr = new Date().toLocaleString("en-SG", { hour12: false });
+    const message =
+      `${who} has sent an SOS.\n` +
+      (mapsUrl ? `Live location: ${mapsUrl}\n` : "") +
+      `Time: ${timeStr}`;
+
+    // await callNumber(EMERGENCY_SERVICES); 
+    await sendSms(phoneIntl, message);
+
+    Alert.alert(
+      t("sos.titleShort"),
+      t("sos.callConfirm", { name: name ?? t("sos.ecFallback") }),
+      [
+        { text: t("sos.cancel"), style: "cancel" },
+        {
+          text: t("sos.callNowBtn", { name: name ?? t("sos.ecFallback") }),
+          onPress: () => callNumber(phoneIntl!),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const startSOS = async () => {
+    const { ecName, ecPhoneIntl } = await fetchEmergencyContact();
+    ecRef.current = { name: ecName ?? null, phoneIntl: ecPhoneIntl };
+
+    setSosVisible(true);
+    setCountdown(5);
+
+    progressAnim.setValue(0);
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 5000,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start();
+
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(timerRef.current!);
+          setSosVisible(false);
+          performSOS();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const cancelSOS = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setSosVisible(false);
+    progressAnim.stopAnimation();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      progressAnim.stopAnimation();
+    };
+  }, []);
+
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
@@ -63,7 +240,12 @@ export default function ElderlyHome() {
         contentContainerStyle={s.scroll}
         keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" colors={["#111827"]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#111827"
+            colors={["#111827"]}
+          />
         }
       >
         <CheckinCard
@@ -77,22 +259,16 @@ export default function ElderlyHome() {
           onPressRewards={() => router.push("/tabs/Rewards")}
         />
 
-        {/* Row 1: Navigation + CC Activities */}
+        {/* Row 1 */}
         <View style={s.row}>
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/tabs/Navigation")}
-          >
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Navigation")}>
             <Ionicons name="navigate-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.navigation")}
             </AppText>
           </Pressable>
 
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/tabs/Community")}
-          >
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Community")}>
             <Ionicons name="people-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.ccActivities")}
@@ -100,7 +276,7 @@ export default function ElderlyHome() {
           </Pressable>
         </View>
 
-        {/* Row 2: Profile + Walking Routes */}
+        {/* Row 2 */}
         <View style={s.row}>
           <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
             <Ionicons name="medkit-outline" size={28} color="#222" />
@@ -109,10 +285,7 @@ export default function ElderlyHome() {
             </AppText>
           </Pressable>
 
-          <Pressable
-            style={s.rect}
-            onPress={() => router.push("/tabs/Walking")}
-          >
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Walking")}>
             <Ionicons name="walk-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.walkingRoutes")}
@@ -120,28 +293,80 @@ export default function ElderlyHome() {
           </Pressable>
         </View>
 
-        {/* SOS Button */}
+        {/* SOS */}
         <View style={s.sosWrap}>
-          <Pressable style={s.sos}>
+          <Pressable style={s.sos} onPress={startSOS}>
             <AppText variant="h1" weight="900" color="#FFF">
               {t("home.sos")}
             </AppText>
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* SOS overlay */}
+      {sosVisible && (
+        <View style={s.overlay}>
+          <View style={s.modal}>
+            <AppText variant="h1" weight="900" style={{ textAlign: "center" }}>
+              {t("sos.title")}
+            </AppText>
+            <AppText variant="body" style={s.subtitle}>
+              {t("sos.subtitle")}
+            </AppText>
+
+            {/* Big countdown */}
+            <View style={s.countdownWrap}>
+              <AppText variant="h1" weight="900" style={s.countdownNumber}>
+                {countdown}
+              </AppText>
+            </View>
+
+            <AppText variant="title" style={s.autoText}>
+              {t("sos.autoCalling", { name: ecLabel, seconds: countdown })}
+            </AppText>
+
+            <View style={s.progressTrack}>
+              <Animated.View
+                style={[
+                  s.progressFill,
+                  {
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["0%", "100%"],
+                    }),
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={s.btnRow}>
+              <Pressable style={s.cancelBtn} onPress={cancelSOS}>
+                <AppText variant="title" weight="800" style={s.cancelBtnText}>
+                  {t("sos.cancel")}
+                </AppText>
+              </Pressable>
+              <Pressable
+                style={s.callNowBtn}
+                onPress={() => {
+                  cancelSOS();
+                  performSOS();
+                }}
+              >
+                <AppText variant="title" weight="800" style={s.callNowBtnText}>
+                  {t("sos.callNowBtn", { name: ecLabel })}
+                </AppText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#F8FAFC" },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 18,
-    paddingBottom: 24,
-    paddingTop: 6,
-  },
-
+  scroll: { flexGrow: 1, paddingHorizontal: 18, paddingBottom: 24, paddingTop: 6 },
   row: {
     width: "100%",
     maxWidth: 520,
@@ -167,23 +392,36 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  rectText: {
-    marginTop: 8,
-    textAlign: "center",
-  },
+  rectText: { marginTop: 8, textAlign: "center" },
 
   sosWrap: { alignItems: "center", marginTop: 20, marginBottom: 12 },
   sos: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "#E53935",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    width: 140, height: 140, borderRadius: 70, backgroundColor: "#E53935",
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 }, elevation: 4,
   },
+
+  overlay: {
+    position: "absolute", left: 0, right: 0, top: 0, bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", paddingHorizontal: 20,
+  },
+  modal: {
+    width: "100%", maxWidth: 360, borderRadius: 18, backgroundColor: "#fff",
+    paddingVertical: 18, paddingHorizontal: 16, alignItems: "center",
+    shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6,
+  },
+  subtitle: { marginTop: 6, textAlign: "center", color: "#6B7280" },
+  countdownWrap: { flexDirection: "row", alignItems: "flex-end", marginTop: 10 },
+  countdownNumber: { fontSize: 64, lineHeight: 64, color: "#111827" },
+  autoText: { marginTop: 8, textAlign: "center", color: "#374151" },
+  progressTrack: {
+    width: "100%", height: 10, backgroundColor: "#E5E7EB", borderRadius: 999, overflow: "hidden", marginTop: 12,
+  },
+  progressFill: { height: "100%", backgroundColor: "#EF4444" },
+  btnRow: { flexDirection: "row", gap: 10, marginTop: 14, width: "100%" },
+  cancelBtn: { flex: 1, backgroundColor: "#111827", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  cancelBtnText: { color: "#fff" },
+  callNowBtn: { flex: 1, backgroundColor: "#EF4444", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  callNowBtnText: { color: "#fff" },
 });

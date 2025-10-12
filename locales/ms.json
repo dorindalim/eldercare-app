@@ -16,7 +16,11 @@
     "invalidCodeBody": "Sila semak dan cuba lagi.",
     "signupInvalidTitle": "Semak butiran",
     "signupFailedTitle": "Pendaftaran gagal",
-    "signupFailedBody": "Nombor telefon itu mungkin telah didaftarkan."
+    "signupFailedBody": "Nombor telefon itu mungkin telah didaftarkan.",
+    "noEC": {
+      "title": "Tiada kenalan kecemasan",
+      "body": "Sila tambah nombor telefon kenalan kecemasan dalam profil anda."
+    }
   },
   "auth": {
     "login": {
@@ -66,7 +70,18 @@
     "sos": "SOS",
     "imActive": "Saya Aktif",
     "tapToCheckIn": "Ketuk untuk daftar masuk",
-    "checkedIn": "Telah daftar masuk hari ini"
+    "checkedIn": "Telah daftar masuk hari ini!"
+  },
+  "sos": {
+    "title": "Menghantar SOS",
+    "titleShort": "SOS",
+    "subtitle": "Kami akan mesej dan menelefon kenalan kecemasan anda.",
+    "autoCalling": "Memanggil {{name}} secara automatik dalam {{seconds}}s",
+    "cancel": "Batal",
+    "callNowBtn": "Telefon {{name}} sekarang",
+    "ecFallback": "Kenalan Kecemasan",
+    "yourLovedOne": "Orang tersayang anda",
+    "callConfirm": "Adakah anda mahu menelefon {{name}}?"
   },
   "community": {
     "title": "Aktiviti CC",
@@ -111,10 +126,10 @@
       "celebrationFestivity": "Perayaan & Keraian",
       "kopiTalksDialogues": "Sembang Kopi & Dialog",
       "charityVolunteerism": "Amal & Sukarelawan",
-      "overseasOutingsTours": "Lawatan/Langka Luar Negara"
+      "overseasOutingsTours": "Lawatan/Percutian Luar Negara"
     },
     "sortSummary": {
-      "default": "Semua kategori · Akan datang · Mana-mana jarak · Harga: Semua"
+      "default": "Semua kategori · Akan Datang · Mana-mana jarak · Harga: Semua"
     },
     "distance": {
       "any": "Mana-mana",
@@ -161,7 +176,7 @@
       "loading": "Memuatkan…",
       "filter": {
         "everything": "Semua",
-        "cc": "Community Clubs",
+        "cc": "Kelab Komuniti",
         "clinics": "Klinik",
         "parks": "Taman"
       },
@@ -181,9 +196,10 @@
       "tooSoonBody": "Masa peringatan telah berlalu.",
       "notifTitle": "Aktiviti akan datang",
       "notifBody": "“{{title}}” bermula kira-kira 1 jam lagi.",
-      "scheduledTitle": "Peringatan Ditentukan",
+      "scheduledTitle": "Peringatan Dijadualkan",
       "scheduledBody": "Kami akan mengingatkan anda pada {{when}}.",
-      "untitled": "Tanpa tajuk"
+      "untitled": "Tanpa tajuk",
+      "fireBody": "Aktiviti anda bermula dalam 1 jam."
     }
   },
   "walkingRoutes": {
