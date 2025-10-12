@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Animated,
+  AppState,
   Easing,
   Linking,
   Pressable,
@@ -46,17 +47,33 @@ export default function ElderlyHome() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  // SOS state
   const [sosVisible, setSosVisible] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
+  // EC cache
   const ecRef = useRef<{ name: string | null; phoneIntl: string | null }>({
     name: null,
     phoneIntl: null,
   });
 
-  const ecLabel = ecRef.current.name ?? t("sos.ecFallback");
+  // Auto-call after SMS composer closes
+  const awaitingReturnRef = useRef(false);
+  const pendingCallRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active" && awaitingReturnRef.current && pendingCallRef.current) {
+        // App is back from SMS composer → place the call
+        callNumber(pendingCallRef.current);
+        awaitingReturnRef.current = false;
+        pendingCallRef.current = null;
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const onRefresh = async () => {
     try {
@@ -119,20 +136,39 @@ export default function ElderlyHome() {
   const callNumber = async (phone: string) => {
     try {
       await Linking.openURL(`tel:${phone}`);
-    } catch { }
+    } catch {}
   };
 
-  const sendSms = async (to: string, body: string) => {
+  const openSmsComposer = async (to: string, body: string) => {
     try {
       const available = await SMS.isAvailableAsync();
       if (available) {
+        // This opens the native Messages UI
         await SMS.sendSMSAsync([to], body);
       } else {
+        // Fallback
         await Linking.openURL(`sms:${to}?body=${encodeURIComponent(body)}`);
       }
     } catch {
       Alert.alert("SMS failed", "Could not open your SMS app.");
     }
+  };
+
+  // Opens Messages with text, then calls the EC when the app returns
+  const sendSmsThenAutoCall = async (phoneIntl: string, message: string) => {
+    awaitingReturnRef.current = true;
+    pendingCallRef.current = phoneIntl;
+
+    await openSmsComposer(phoneIntl, message);
+
+    // Extra nudge for Android cases where app is already active immediately
+    setTimeout(() => {
+      if (awaitingReturnRef.current && pendingCallRef.current) {
+        callNumber(pendingCallRef.current);
+        awaitingReturnRef.current = false;
+        pendingCallRef.current = null;
+      }
+    }, 300);
   };
 
   const performSOS = async () => {
@@ -149,7 +185,7 @@ export default function ElderlyHome() {
     }
 
     const mapsUrl = await getLiveLocationUrl();
-    const who =
+    const elderName =
       (await supabase
         .from("elderly_profiles")
         .select("name")
@@ -158,25 +194,12 @@ export default function ElderlyHome() {
 
     const timeStr = new Date().toLocaleString("en-SG", { hour12: false });
     const message =
-      `${who} has sent an SOS.\n` +
+      `${elderName} has sent an SOS.\n` +
       (mapsUrl ? `Live location: ${mapsUrl}\n` : "") +
       `Time: ${timeStr}`;
 
-    // await callNumber(EMERGENCY_SERVICES); 
-    await sendSms(phoneIntl, message);
-
-    Alert.alert(
-      t("sos.titleShort"),
-      t("sos.callConfirm", { name: name ?? t("sos.ecFallback") }),
-      [
-        { text: t("sos.cancel"), style: "cancel" },
-        {
-          text: t("sos.callNowBtn", { name: name ?? t("sos.ecFallback") }),
-          onPress: () => callNumber(phoneIntl!),
-        },
-      ],
-      { cancelable: true }
-    );
+    // If you also want to place an emergency services call after EC, you could queue EMERGENCY_SERVICES.
+    await sendSmsThenAutoCall(phoneIntl, message);
   };
 
   const startSOS = async () => {
@@ -200,7 +223,7 @@ export default function ElderlyHome() {
         if (c <= 1) {
           clearInterval(timerRef.current!);
           setSosVisible(false);
-          performSOS();
+          performSOS(); // opens Messages, then auto-calls on return
           return 0;
         }
         return c - 1;
@@ -212,6 +235,9 @@ export default function ElderlyHome() {
     if (timerRef.current) clearInterval(timerRef.current);
     setSosVisible(false);
     progressAnim.stopAnimation();
+    // clear any pending auto-call intent just in case
+    awaitingReturnRef.current = false;
+    pendingCallRef.current = null;
   };
 
   useEffect(() => {
@@ -276,7 +302,7 @@ export default function ElderlyHome() {
           </Pressable>
         </View>
 
-        {/* Row 2 */}
+        {/* Row 2: Clinic + Walking Routes */}
         <View style={s.row}>
           <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
             <Ionicons name="medkit-outline" size={28} color="#222" />
@@ -293,6 +319,7 @@ export default function ElderlyHome() {
           </Pressable>
         </View>
 
+
         {/* SOS */}
         <View style={s.sosWrap}>
           <Pressable style={s.sos} onPress={startSOS}>
@@ -303,7 +330,7 @@ export default function ElderlyHome() {
         </View>
       </ScrollView>
 
-      {/* SOS overlay */}
+      {/* SOS overlay: only Cancel */}
       {sosVisible && (
         <View style={s.overlay}>
           <View style={s.modal}>
@@ -319,12 +346,12 @@ export default function ElderlyHome() {
               <AppText variant="h1" weight="900" style={s.countdownNumber}>
                 {countdown}
               </AppText>
+              <AppText variant="title" weight="700" style={s.countdownSuffix}>
+                s
+              </AppText>
             </View>
 
-            <AppText variant="title" style={s.autoText}>
-              {t("sos.autoCalling", { name: ecLabel, seconds: countdown })}
-            </AppText>
-
+            {/* Progress bar */}
             <View style={s.progressTrack}>
               <Animated.View
                 style={[
@@ -339,21 +366,10 @@ export default function ElderlyHome() {
               />
             </View>
 
-            <View style={s.btnRow}>
-              <Pressable style={s.cancelBtn} onPress={cancelSOS}>
-                <AppText variant="title" weight="800" style={s.cancelBtnText}>
+            <View style={s.btnRowSingle}>
+              <Pressable style={s.cancelOnlyBtn} onPress={cancelSOS}>
+                <AppText variant="title" weight="800" style={s.cancelOnlyText}>
                   {t("sos.cancel")}
-                </AppText>
-              </Pressable>
-              <Pressable
-                style={s.callNowBtn}
-                onPress={() => {
-                  cancelSOS();
-                  performSOS();
-                }}
-              >
-                <AppText variant="title" weight="800" style={s.callNowBtnText}>
-                  {t("sos.callNowBtn", { name: ecLabel })}
                 </AppText>
               </Pressable>
             </View>
@@ -414,14 +430,20 @@ const s = StyleSheet.create({
   subtitle: { marginTop: 6, textAlign: "center", color: "#6B7280" },
   countdownWrap: { flexDirection: "row", alignItems: "flex-end", marginTop: 10 },
   countdownNumber: { fontSize: 64, lineHeight: 64, color: "#111827" },
-  autoText: { marginTop: 8, textAlign: "center", color: "#374151" },
+  countdownSuffix: { marginLeft: 4, color: "#6B7280" },
+
   progressTrack: {
     width: "100%", height: 10, backgroundColor: "#E5E7EB", borderRadius: 999, overflow: "hidden", marginTop: 12,
   },
   progressFill: { height: "100%", backgroundColor: "#EF4444" },
-  btnRow: { flexDirection: "row", gap: 10, marginTop: 14, width: "100%" },
-  cancelBtn: { flex: 1, backgroundColor: "#111827", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
-  cancelBtnText: { color: "#fff" },
-  callNowBtn: { flex: 1, backgroundColor: "#EF4444", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
-  callNowBtnText: { color: "#fff" },
+
+  // Single red cancel button
+  btnRowSingle: { marginTop: 14, width: "100%" },
+  cancelOnlyBtn: {
+    backgroundColor: "#EF4444",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  cancelOnlyText: { color: "#fff" },
 });
