@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -6,6 +7,7 @@ import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, Scr
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import ParkDetailsModal from "../../src/components/ParkDetailsModal";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
@@ -33,7 +35,7 @@ type LatLng = {
   longitude: number;
 };
 
-// Helper function to calculate distance between two coordinates using Haversine formula
+// Calculate distance between two coordinates using Haversine formula
 const distanceMeters = (a: LatLng, b: LatLng) => {
   const R = 6371e3;
   const φ1 = (a.latitude * Math.PI) / 180;
@@ -44,7 +46,7 @@ const distanceMeters = (a: LatLng, b: LatLng) => {
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 };
 
-// Add your kmStr function
+// Convert meters to kilometers
 const kmStr = (m?: number | null) =>
   m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`;
 
@@ -53,7 +55,6 @@ export default function WalkingScreen() {
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
   
-  // Add FlatList ref
   const flatListRef = useRef<FlatList>(null);
   
   const setLang = async (code: string) => {
@@ -71,6 +72,7 @@ export default function WalkingScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number; longitude: number} | null>(null);
+  const [showParkDetails, setShowParkDetails] = useState(false);
 
   // Filter categories
   const [filters, setFilters] = useState<FilterCategory[]>([
@@ -92,68 +94,70 @@ export default function WalkingScreen() {
   ]);
 
   // Get user's current location
-  const getUserLocation = () => {
-    return new Promise<{latitude: number; longitude: number}>((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported"));
-        return;
+  const getUserLocation = async (): Promise<{latitude: number; longitude: number} | null> => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('Location permission denied');
+        return null;
       }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          resolve({ latitude, longitude });
-        },
-        (error) => {
-          reject(error);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-      );
-    });
+      const pos = await Location.getCurrentPositionAsync({});
+      return { 
+        latitude: pos.coords.latitude, 
+        longitude: pos.coords.longitude 
+      };
+    } catch (error) {
+      console.warn('Could not get user location:', error);
+      return null;
+    }
   };
 
   // Sort parks by proximity to user location
   const sortParksByProximity = (parks: ParkLocation[], userLat: number, userLon: number): ParkLocation[] => {
-  const parksWithLocation: ParkLocation[] = [];
-  const parksWithoutLocation: ParkLocation[] = [];
+    const parksWithLocation: ParkLocation[] = [];
+    const parksWithoutLocation: ParkLocation[] = [];
 
-  // Separate parks with and without coordinates
-  parks.forEach(park => {
-    if (park.latitude !== null && park.longitude !== null) {
-      parksWithLocation.push(park);
-    } else {
-      parksWithoutLocation.push(park);
-    }
-  });
+    // Separate parks with and without coordinates
+    parks.forEach(park => {
+      if (park.latitude !== null && park.longitude !== null) {
+        parksWithLocation.push(park);
+      } else {
+        parksWithoutLocation.push(park);
+      }
+    });
 
     // Sort parks with coordinates by distance using distanceMeters
-  const sortedParksWithLocation = parksWithLocation.sort((a, b) => {
-    const userLocation = { latitude: userLat, longitude: userLon };
-    const distanceA = distanceMeters(userLocation, { latitude: a.latitude!, longitude: a.longitude! });
-    const distanceB = distanceMeters(userLocation, { latitude: b.latitude!, longitude: b.longitude! });
-    return distanceA - distanceB;
-  });
+    const sortedParksWithLocation = parksWithLocation.sort((a, b) => {
+      const userLocation = { latitude: userLat, longitude: userLon };
+
+      // Check that location not null 
+      if (!a.latitude || !a.longitude || !b.latitude || !b.longitude) {return 0; }
+      
+      const distanceA = distanceMeters(userLocation, { latitude: a.latitude!, longitude: a.longitude! });
+      const distanceB = distanceMeters(userLocation, { latitude: b.latitude!, longitude: b.longitude! });
+      return distanceA - distanceB;
+    });
 
     // Return sorted parks with location first, then parks without location
     return [...sortedParksWithLocation, ...parksWithoutLocation];
   };
 
+  const [locationLoading, setLocationLoading] = useState(false);
+
   // Fetch parks from Supabase
   const fetchParks = async () => {
     try {
       setLoading(true);
+      setLocationLoading(true);
       setError(null);
 
       // Try to get user location first
-      let userLoc: {latitude: number; longitude: number} | null = null;
-      try {
-        userLoc = await getUserLocation();
+      const userLoc = await getUserLocation();
+      setLocationLoading(false);
+      if (userLoc) {
         setUserLocation(userLoc);
-      } catch (locationError) {
-        console.warn('Could not get user location:', locationError);
-        // Continue without user location - parks will be sorted by title
       }
-
       const { data, error } = await supabase
         .from('all_parks')
         .select('*');
@@ -169,8 +173,8 @@ export default function WalkingScreen() {
           image: item.image || '',
           region: item.region || '',
           hours: item.hours || 'Hours not available',
-          activities: item.activities || [],
-          amenities: item.amenities || [],
+          activities: Array.isArray(item.activities) ? item.activities : [],
+          amenities: Array.isArray(item.amenities) ? item.amenities : [],
           latitude: item.latitude,
           longitude: item.longitude,
           scraped_at: item.scraped_at || ''
@@ -190,6 +194,7 @@ export default function WalkingScreen() {
         setFilteredParks(sortedData);
       }
     } catch (err) {
+      setLocationLoading(false);
       console.error('Error fetching parks:', err);
       setError('Failed to load parks');
       Alert.alert('Error', 'Failed to load parks from database');
@@ -208,16 +213,64 @@ export default function WalkingScreen() {
       return;
     }
 
-    const filtered = parks.filter(park => 
-      park.title.toLowerCase().includes(query.toLowerCase()) ||
-      park.activities?.some(activity => 
-        activity.toLowerCase().includes(query.toLowerCase())
-      ) ||
-      park.amenities?.some(amenity => 
-        amenity.toLowerCase().includes(query.toLowerCase())
-      ) ||
-      park.region?.toLowerCase().includes(query.toLowerCase())
-    );
+    const searchTerm = query.toLowerCase().trim();
+
+    const filtered = parks.filter(park => {
+      // Check park title (with safe fallback)
+      const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+      
+      // Check activities array (with safe fallback for undefined)
+      const activityMatch = Array.isArray(park.activities) && 
+      park.activities.some(activity => 
+        activity?.toLowerCase().includes(searchTerm)
+      );
+      
+      // Check amenities array (with safe fallback for undefined)  
+      const amenityMatch = Array.isArray(park.amenities) &&
+      park.amenities.some(amenity => 
+        amenity?.toLowerCase().includes(searchTerm)
+      );
+      
+      // Check region (with safe fallback)
+      const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+
+      return titleMatch || activityMatch || amenityMatch || regionMatch;
+    });
+    
+    applyFilters(filtered, filters);
+  };
+
+  // Search button handler
+  const handleSearchButton = () => {
+    if (!searchQuery.trim()) {
+      // If search is empty, reset to all parks
+      applyFilters(parks, filters);
+      return;
+    }
+
+    const searchTerm = searchQuery.toLowerCase().trim();
+
+    const filtered = parks.filter(park => {
+      // Check park title (with safe fallback)
+      const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+      
+      // Check activities array (with safe fallback for undefined)
+      const activityMatch = Array.isArray(park.activities) && 
+      park.activities.some(activity => 
+        activity?.toLowerCase().includes(searchTerm)
+      );
+      
+      // Check amenities array (with safe fallback for undefined)  
+      const amenityMatch = Array.isArray(park.amenities) &&
+      park.amenities.some(amenity => 
+        amenity?.toLowerCase().includes(searchTerm)
+      );
+      
+      // Check region (with safe fallback)
+      const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+
+      return titleMatch || activityMatch || amenityMatch || regionMatch;
+    });
     
     applyFilters(filtered, filters);
   };
@@ -324,8 +377,20 @@ export default function WalkingScreen() {
     fetchParks();
   }, []);
 
+  // Updated park selection handler
   const handleParkSelect = (park: ParkLocation) => {
     setSelectedPark(park);
+    setShowParkDetails(true); // Show the modal instead of navigating
+  };
+
+  const handleCloseParkDetails = () => {
+    setShowParkDetails(false);
+    setSelectedPark(null);
+  };
+
+  const handleGetDirections = (park: ParkLocation) => {
+    setShowParkDetails(false);
+    setSelectedPark(null);
     
     router.push({
       pathname: "/tabs/Navigation",
@@ -373,23 +438,22 @@ export default function WalkingScreen() {
         </View>
       )}
       
-      <AppText variant="title" weight="700" style={s.parkTitle}>
-        {item.title}
-      </AppText>
-      
-      {/* Display distance if user location and park coordinates are available */}
-      {userLocation && item.latitude && item.longitude && (
-        <View style={s.distanceContainer}>
-          <AppText variant="caption" weight="600" style={s.distanceText}>
-          {kmStr(
-            distanceMeters(
-              userLocation, 
-              { latitude: item.latitude, longitude: item.longitude }
-            )
-          )} away
+      {/* Park Title with Distance */}
+      <View style={s.titleContainer}>
+        <AppText variant="title" weight="700" style={s.parkTitle}>
+          {item.title}
         </AppText>
-        </View>
-      )}
+        {userLocation && item.latitude && item.longitude && (
+          <AppText variant="caption" weight="600" style={s.distanceText}>
+            ({kmStr(
+              distanceMeters(
+                userLocation, 
+                { latitude: item.latitude, longitude: item.longitude }
+              )
+            )} away)
+          </AppText>
+        )}
+      </View>
       
       {/* Hours */}
       <View style={s.hoursContainer}>
@@ -744,13 +808,24 @@ export default function WalkingScreen() {
             style={s.searchInput}
             placeholder="Search parks by name, activity, amenity, or region..."
             value={searchQuery}
-            onChangeText={handleSearch}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearchButton} // Allow search on enter
           />
+          <TouchableOpacity 
+            style={s.searchButton}
+            onPress={handleSearchButton}
+          >
+            <AppText style={s.searchButtonText}>Search</AppText>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Filter Button Below Search */}
+        <View style={s.filterButtonContainer}>
           <TouchableOpacity 
             style={s.filterButton}
             onPress={() => setShowFilters(true)}
           >
-            <AppText style={s.filterButtonText}>Filter</AppText>
+            <AppText style={s.filterButtonText}>Filter Parks</AppText>
           </TouchableOpacity>
         </View>
       </View>
@@ -793,6 +868,17 @@ export default function WalkingScreen() {
 
       {/* Filter Modal */}
       {showFilters && <FilterModal />}
+
+      {/* Park Details Modal */}
+      <ParkDetailsModal
+        park={selectedPark}
+        visible={showParkDetails}
+        onClose={handleCloseParkDetails}
+        userLocation={userLocation}
+        onGetDirections={handleGetDirections}
+        distanceMeters={distanceMeters}
+        kmStr={kmStr}
+      />
     </SafeAreaView>
   );
 }
@@ -814,6 +900,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
@@ -825,12 +912,28 @@ const s = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#FFF",
   },
+  searchButton: {
+    backgroundColor: "#28A745",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  searchButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  filterButtonContainer: {
+    alignItems: "flex-start",
+  },
   filterButton: {
     backgroundColor: "#007AFF",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
-    minWidth: 80,
+    minWidth: 120,
     alignItems: "center",
   },
   filterButtonText: {
@@ -1068,11 +1171,11 @@ const s = StyleSheet.create({
   noImageText: {
     color: "#6C757D",
   },
-  parkTitle: {
+  titleContainer: {
     marginBottom: 8,
   },
-  distanceContainer: {
-    marginBottom: 8,
+  parkTitle: {
+    marginBottom: 4,
   },
   distanceText: {
     color: "#6C757D",

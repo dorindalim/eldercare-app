@@ -6,8 +6,8 @@
   "scripts": {
     "start": "expo start",
     "start:go": "EXPO_USE_DEV_CLIENT=0 expo start -c",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "reset-project": "node ./scripts/reset-project.js"
@@ -26,6 +26,7 @@
     "expo-blur": "~15.0.7",
     "expo-clipboard": "^8.0.7",
     "expo-constants": "~18.0.8",
+    "expo-dev-client": "~6.0.15",
     "expo-device": "~8.0.9",
     "expo-font": "~14.0.8",
     "expo-haptics": "~15.0.7",
