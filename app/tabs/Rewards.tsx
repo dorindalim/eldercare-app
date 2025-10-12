@@ -228,7 +228,6 @@ export default function RewardsScreen() {
               {t("rewards.balance")}
             </AppText>
             <View style={s.balancePill}>
-              {/* <Ionicons name="logo-usd" size={18} color="#111827" /> */}
               <AppText weight="800" style={{ marginLeft: 6 }}>
                 {coins} {coins === 1 ? t("rewards.coin") : t("rewards.coins")}
               </AppText>
@@ -259,18 +258,22 @@ export default function RewardsScreen() {
                   {t("rewards.cost", { count: item.cost })}
                 </AppText>
 
+                {/* >>> Half/Half buttons with spacing <<< */}
                 <View style={s.actionsRow}>
                   <Pressable
                     onPress={() => setTermsOpen(item)}
-                    style={s.linkBtn}
+                    style={[s.btnBase, s.halfBtn, s.linkBtn, { marginRight: 8 }]}
                   >
                     <AppText weight="800" color="#111827">
                       {t("rewards.viewTerms")}
                     </AppText>
                   </Pressable>
+
                   <Pressable
                     onPress={() => onRedeem(item)}
                     style={[
+                      s.btnBase,
+                      s.halfBtn,
                       s.redeemBtn,
                       coins < item.cost && s.redeemBtnDisabled,
                     ]}
@@ -397,26 +400,34 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F9FAFB",
   },
-  actionsRow: { flexDirection: "row", gap: 12, marginTop: 8, paddingHorizontal: 2 },
-  actionBtnWide: {
-    flex: 1,           
-    minHeight: 48,     
+
+  /* Updated actions */
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  btnBase: {
+    minHeight: 48,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  halfBtn: {
+    flex: 1,
   },
   linkBtn: {
     borderWidth: 1,
     borderColor: "#111827",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
     backgroundColor: "#FFF",
   },
   redeemBtn: {
     backgroundColor: "#111827",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
   },
   redeemBtnDisabled: { opacity: 0.4 },
+
   voucherRow: {
     flexDirection: "row",
     alignItems: "center",
