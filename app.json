@@ -60,6 +60,7 @@
       "typedRoutes": true
     },
     "extra": {
+      "GOOGLE_PLACES_KEY": "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGs",
       "router": {},
       "eas": {
         "projectId": "cec36b27-3167-4160-8471-986df452d97e"

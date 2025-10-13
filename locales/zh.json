@@ -147,7 +147,9 @@
       "deviceScheduled": "设备上的已计划本地通知",
       "noneScheduled": "暂无安排。",
       "event": "活动",
-      "reminder": "提醒"
+      "reminder": "提醒",
+      "turnOffTitle": "关闭通知",
+      "turnOffBody": "要禁用通知，请使用设备设置中的应用程序设置。"
     }
   },
   "navigation": {
@@ -361,6 +363,13 @@
       "confirmDeletion": "确认删除",
       "confirmStepCheckbox": "我了解此操作不可撤销。",
       "explain": "账户待删除期间，门户已禁用。"
+    },
+    "notifications": {
+      "title": "通知",
+      "status": {
+        "allowed": "已允许",
+        "notAllowed": "未允许"
+      }
     }
   },
   "delete": {

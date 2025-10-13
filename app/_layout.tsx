@@ -1,3 +1,5 @@
+import "react-native-get-random-values";
+import "react-native-url-polyfill/auto";
 import "../i18n";
 
 import { Stack } from "expo-router";

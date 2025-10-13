@@ -212,15 +212,19 @@ export default function ElderlyProfile() {
     if (!notifAllowed) {
       const ok = await ensureNotifPermission();
       if (!ok) {
-        Alert.alert("Notifications", "Permission not granted.");
+        Alert.alert(        
+          t("navigation.reminders.permTitle"),
+          t("navigation.reminders.permBody"),
+          [{ text: t("common.ok") }]
+        );
       }
     } else {
       Alert.alert(
-        "Turn off notifications",
-        "To disable notifications, please use your device Settings for this app.",
+        t("community.notifs.turnOffTitle"),
+        t("community.notifs.turnOffBody"),
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("profile.locationAccess.openSettings"), onPress: () => Linking.openSettings?.() },
         ]
       );
     }
@@ -599,10 +603,10 @@ export default function ElderlyProfile() {
           <View style={[s.rowBetween, { marginTop: 14, alignItems: "center" }]}>
             <View style={{ flexShrink: 1, paddingRight: 10 }}>
               <AppText variant="label" weight="700" color="#374151">
-                Notifications
+                {t("profile.notifications.title")}
               </AppText>
               <AppText variant="caption" color="#6B7280" style={{ marginTop: 2 }}>
-                {notifAllowed ? "Allowed" : "Not allowed"}
+                {notifAllowed ? t("profile.notifications.status.allowed") : t("profile.notifications.status.notAllowed")}
               </AppText>
             </View>
 

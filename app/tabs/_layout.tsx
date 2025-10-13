@@ -57,6 +57,15 @@ export default function ElderlyTabs() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="Bulletin"
+        options={{
+          title: t("Bulletin Board"),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="newspaper-outline" color={color} size={size} />
+          ),
+        }}
+      />
 
       {/* Hidden screens */}
       <Tabs.Screen name="Profile" options={{ href: null }} />

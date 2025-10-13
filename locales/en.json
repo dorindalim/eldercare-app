@@ -147,7 +147,9 @@
       "deviceScheduled": "Scheduled Local Notifications (device)",
       "noneScheduled": "None scheduled.",
       "event": "Event",
-      "reminder": "Reminder"
+      "reminder": "Reminder",
+      "turnOffTitle": "Turn off notifications",
+      "turnOffBody": "To disable notifications, please use your device Settings for this app."
     }
   },
   "navigation": {
@@ -285,7 +287,7 @@
       "otherPH": "Describe other assistive needs"
     },
     "drugAllergiesPH": "Drug allergies (optional)",
-    "publicNotePH": "Public note for first responders (optional)",
+    "publicNotePH": "Public note",
     "finish": "Save & Continue",
     "errors": {
       "missingConditionName": "Please enter at least one condition name, or select “I have no medical conditions.”",
@@ -361,7 +363,15 @@
       "confirmDeletion": "Confirm deletion",
       "confirmStepCheckbox": "I understand this action is permanent.",
       "explain": "Portal disabled while account is pending deletion."
-    }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "status": {
+        "allowed": "Allowed",
+        "notAllowed": "Not allowed"
+  }
+}
+
   },
   "delete": {
     "typeMismatch": "Confirmation phrase doesn’t match.",

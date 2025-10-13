@@ -147,7 +147,9 @@
       "deviceScheduled": "Pemberitahuan Tempatan Dijadualkan (peranti)",
       "noneScheduled": "Tiada yang dijadualkan.",
       "event": "Acara",
-      "reminder": "Peringatan"
+      "reminder": "Peringatan",
+      "turnOffTitle": "Matikan pemberitahuan",
+      "turnOffBody": "Untuk melumpuhkan pemberitahuan, sila gunakan Tetapan peranti untuk aplikasi ini."
     }
   },
   "navigation": {
@@ -361,6 +363,13 @@
       "confirmDeletion": "Sahkan pemadaman",
       "confirmStepCheckbox": "Saya faham tindakan ini adalah kekal.",
       "explain": "Portal dinyahdaya sementara akaun menunggu pemadaman."
+    },
+    "notifications": {
+      "title": "Pemberitahuan",
+      "status": {
+        "allowed": "Dibenarkan",
+        "notAllowed": "Tidak dibenarkan"
+      }
     }
   },
   "delete": {
