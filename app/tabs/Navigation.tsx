@@ -121,6 +121,23 @@ export default function NavigationScreen() {
   const params = useLocalSearchParams();
   const presetQuery = params.presetQuery as string | undefined;
   const autoRanRef = useRef(false);
+  const presetLat = params.presetLat ? parseFloat(params.presetLat as string) : null;
+  const presetLng = params.presetLng ? parseFloat(params.presetLng as string) : null;
+
+  const [searchInput, setSearchInput] = useState(presetQuery || '');
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        setPermissionGranted(true);
+        const pos = await Location.getCurrentPositionAsync({});
+        setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      } else {
+        Alert.alert(t("navigation.search.permissionTitle"), t("navigation.search.permissionBody"));
+      }
+    })();
+  }, [i18n.language]);
 
   useEffect(() => {
     (async () => {

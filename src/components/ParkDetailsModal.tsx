@@ -2,14 +2,27 @@ import { Image, Linking, Modal, ScrollView, StyleSheet, TouchableOpacity, View }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
 
+type Activity = {
+  title: string;
+  description: string;
+  etiquette_link: string;
+  category: string;
+};
+
+type Amenity = {
+  title: string;
+  description: string;
+  image: string;
+};
+
 type ParkLocation = {
   title: string;
   url: string;
   image: string;
   region: string;
   hours: string;
-  activities: string[];
-  amenities: string[];
+  activities: Activity[];
+  amenities: Amenity[];
   latitude: number | null;
   longitude: number | null;
   scraped_at: string;
@@ -37,6 +50,18 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
       }
     } catch (err) {
       console.error('Failed to open URL:', err);
+    }
+  };
+
+  const handleEtiquettePress = async (url: string) => {
+    if (!url) return;
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      }
+    } catch (err) {
+      console.error('Failed to open etiquette link:', err);
     }
   };
 
@@ -121,12 +146,35 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
               <AppText variant="title" weight="700" style={styles.sectionTitle}>
                 Activities ({park.activities.length})
               </AppText>
-              <View style={styles.tagsContainer}>
+              <View style={styles.itemsContainer}>
                 {park.activities.map((activity, index) => (
-                  <View key={index} style={styles.tag}>
-                    <AppText variant="caption" weight="600" style={styles.tagText}>
-                      {activity}
+                  <View key={index} style={styles.itemCard}>
+                    <AppText variant="body" weight="700" style={styles.itemTitle}>
+                      {activity.title}
                     </AppText>
+                    
+                    {activity.description && (
+                      <AppText variant="caption" weight="400" style={styles.itemDescription}>
+                        {activity.description}
+                      </AppText>
+                    )}
+                    {activity.category && (
+                      <View style={styles.categoryBadge}>
+                        <AppText variant="caption" weight="600" style={styles.categoryText}>
+                          {activity.category}
+                        </AppText>
+                      </View>
+                    )}
+                    {activity.etiquette_link && (
+                      <TouchableOpacity 
+                        onPress={() => handleEtiquettePress(activity.etiquette_link)}
+                        style={styles.etiquetteLink}
+                      >
+                        <AppText variant="caption" weight="600" style={styles.etiquetteText}>
+                          📚 View Activity Etiquette
+                        </AppText>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
               </View>
@@ -139,12 +187,31 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
               <AppText variant="title" weight="700" style={styles.sectionTitle}>
                 Amenities ({park.amenities.length})
               </AppText>
-              <View style={styles.tagsContainer}>
+              <View style={styles.itemsContainer}>
                 {park.amenities.map((amenity, index) => (
-                  <View key={index} style={styles.tag}>
-                    <AppText variant="caption" weight="600" style={styles.tagText}>
-                      {amenity}
+                  <View key={index} style={styles.itemCard}>
+                    {/* Amenity Image */}
+                    {amenity.image ? (
+                      <Image 
+                        source={{ uri: amenity.image }} 
+                        style={styles.amenityImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.amenityImage, styles.noAmenityImage]}>
+                        <AppText variant="caption" weight="400" style={styles.noImageText}>
+                          No Image
+                        </AppText>
+                      </View>
+                    )}
+                    <AppText variant="body" weight="700" style={styles.itemTitle}>
+                      {amenity.title}
                     </AppText>
+                    {amenity.description && (
+                      <AppText variant="caption" weight="400" style={styles.itemDescription}>
+                        {amenity.description}
+                      </AppText>
+                    )}
                   </View>
                 ))}
               </View>
@@ -260,29 +327,66 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     color: '#2C3E50',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   sectionContent: {
     fontSize: 16,
     color: '#495057',
     lineHeight: 22,
   },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+  itemsContainer: {
+    gap: 12,
   },
-  tag: {
+  itemCard: {
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  itemTitle: {
+    fontSize: 16,
+    color: '#2C3E50',
+    marginBottom: 4,
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#6C757D',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  amenityImage: {
+    width: '100%',
+    height: 120,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  noAmenityImage: {
+    backgroundColor: '#E9ECEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryBadge: {
+    alignSelf: 'flex-start',
     backgroundColor: '#E7F3FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#007AFF',
   },
-  tagText: {
+  categoryText: {
     color: '#007AFF',
-    fontSize: 14,
+    fontSize: 12,
+  },
+  etiquetteLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+  },
+  etiquetteText: {
+    color: '#28A745',
+    fontSize: 12,
   },
   urlButton: {
     backgroundColor: '#F8F9FA',

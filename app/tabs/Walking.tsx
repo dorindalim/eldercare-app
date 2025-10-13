@@ -11,14 +11,27 @@ import ParkDetailsModal from "../../src/components/ParkDetailsModal";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
+type Activity = {
+  title: string;
+  description: string;
+  etiquette_link: string;
+  category: string;
+};
+
+type Amenity = {
+  title: string;
+  description: string;
+  image: string;
+};
+
 type ParkLocation = {
   title: string;
   url: string;
   image: string;
   region: string;
   hours: string;
-  activities: string[];
-  amenities: string[];
+  activities: Activity[];
+  amenities: Amenity[];
   latitude: number | null;
   longitude: number | null;
   scraped_at: string;
@@ -73,25 +86,33 @@ export default function WalkingScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number; longitude: number} | null>(null);
   const [showParkDetails, setShowParkDetails] = useState(false);
+  // Add these to your existing state
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
 
   // Filter categories
-  const [filters, setFilters] = useState<FilterCategory[]>([
-    {
-      name: "activity",
-      options: ["Barbecuing", "Birdwatching", "Camping", "Contemplative landscape", "Cycling or inline skating", "Dining", "Fishing", "Fitness Studio", "Fun with children", "Fun with your dog", "Hiking", "Nature walks or tours", "Photography", "Shopping", "Therapeutic gardens", "Wellness"],
-      selected: []
-    },
-    {
-      name: "amenity",
-      options: ["Restrooms", "Parking", "Picnic Area", "Walking Trails", "Drinking Fountain", "Allotment Garden", "Art or Exhibition Space", "Bird Perch", "Community Garden", "Dining", "Fishing Facility", "Therapeutic Garden", "Venue for Booking", "Wellness Provider"],
-      selected: []
-    },
-    {
-      name: "region",
-      options: ["Central", "East", "North", "South", "West", "Offshore islands"],
-      selected: []
-    }
-  ]);
+  const [filters, setFilters] = useState<FilterCategory[]>([]);
+
+  // Update filters when language changes
+  useEffect(() => {
+    setFilters([
+      {
+        name: "activity",
+        options: Object.values(t('walking.filters.activities', { returnObjects: true })),
+        selected: []
+      },
+      {
+        name: "amenity", 
+        options: Object.values(t('walking.filters.amenities', { returnObjects: true })),
+        selected: []
+      },
+      {
+        name: "region",
+        options: Object.values(t('walking.filters.regions', { returnObjects: true })),
+        selected: []
+      }
+    ]);
+  }, [t, i18n.language]); // Re-run when language changes
 
   // Get user's current location
   const getUserLocation = async (): Promise<{latitude: number; longitude: number} | null> => {
@@ -204,76 +225,66 @@ export default function WalkingScreen() {
     }
   };
 
+  // Clear screen each time
+   const clearAllSearchAndFilters = () => {
+    // Clear search query
+    setSearchQuery("");
+  
+    // Clear all filter selections
+    const resetFilters = filters.map(category => ({
+      ...category,
+      selected: []
+    }));
+    setFilters(resetFilters);
+    
+    // Reset to show all parks
+    setFilteredParks(parks);
+    };
+
   // Search functionality
+  const performSearch = (query: string) => {
+  if (!query.trim()) {
+    // If search is empty, reset to all parks
+    applyFilters(parks, filters);
+    return;
+  }
+
+  const searchTerm = query.toLowerCase().trim();
+
+    const filtered = parks.filter(park => {
+      // Check park title (with safe fallback)
+      const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+      
+      // Check activities array - search in activity titles
+      const activityMatch = Array.isArray(park.activities) && 
+        park.activities.some(activity => 
+          activity?.title?.toLowerCase().includes(searchTerm)
+        );
+      
+      // Check amenities array - search in amenity titles
+      const amenityMatch = Array.isArray(park.amenities) &&
+        park.amenities.some(amenity => 
+          amenity?.title?.toLowerCase().includes(searchTerm)
+        );
+      
+      // Check region (with safe fallback)
+      const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+
+      return titleMatch || activityMatch || amenityMatch || regionMatch;
+    });
+    
+    applyFilters(filtered, filters);
+  };
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
-    if (!query.trim()) {
-      applyFilters(parks, filters);
-      return;
-    }
-
-    const searchTerm = query.toLowerCase().trim();
-
-    const filtered = parks.filter(park => {
-      // Check park title (with safe fallback)
-      const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
-      
-      // Check activities array (with safe fallback for undefined)
-      const activityMatch = Array.isArray(park.activities) && 
-      park.activities.some(activity => 
-        activity?.toLowerCase().includes(searchTerm)
-      );
-      
-      // Check amenities array (with safe fallback for undefined)  
-      const amenityMatch = Array.isArray(park.amenities) &&
-      park.amenities.some(amenity => 
-        amenity?.toLowerCase().includes(searchTerm)
-      );
-      
-      // Check region (with safe fallback)
-      const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
-
-      return titleMatch || activityMatch || amenityMatch || regionMatch;
-    });
-    
-    applyFilters(filtered, filters);
+    performSearch(query);
   };
 
-  // Search button handler
   const handleSearchButton = () => {
-    if (!searchQuery.trim()) {
-      // If search is empty, reset to all parks
-      applyFilters(parks, filters);
-      return;
-    }
-
-    const searchTerm = searchQuery.toLowerCase().trim();
-
-    const filtered = parks.filter(park => {
-      // Check park title (with safe fallback)
-      const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
-      
-      // Check activities array (with safe fallback for undefined)
-      const activityMatch = Array.isArray(park.activities) && 
-      park.activities.some(activity => 
-        activity?.toLowerCase().includes(searchTerm)
-      );
-      
-      // Check amenities array (with safe fallback for undefined)  
-      const amenityMatch = Array.isArray(park.amenities) &&
-      park.amenities.some(amenity => 
-        amenity?.toLowerCase().includes(searchTerm)
-      );
-      
-      // Check region (with safe fallback)
-      const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
-
-      return titleMatch || activityMatch || amenityMatch || regionMatch;
-    });
-    
-    applyFilters(filtered, filters);
+    performSearch(searchQuery);
   };
+
 
   // Filter functionality
   const toggleFilterOption = (categoryIndex: number, option: string) => {
@@ -302,10 +313,18 @@ export default function WalkingScreen() {
       
       filterList.forEach(category => {
         category.selected.forEach(selectedOption => {
-          if (category.name === 'activity' && park.activities?.includes(selectedOption)) {
-            score += 1;
-          } else if (category.name === 'amenity' && park.amenities?.includes(selectedOption)) {
-            score += 1;
+          if (category.name === 'activity' && Array.isArray(park.activities)) {
+            park.activities.forEach(activity => {
+              if (activity?.title === selectedOption) {
+                score += 1;
+              }
+            });
+          } else if (category.name === 'amenity' && Array.isArray(park.amenities)) {
+            park.amenities.forEach(amenity => {
+              if (amenity?.title === selectedOption) {
+                score += 1;
+              }
+            });
           } else if (category.name === 'region' && park.region === selectedOption) {
             score += 1;
           }
@@ -332,16 +351,20 @@ export default function WalkingScreen() {
 
   const handleApplyFilters = () => {
     applyFilters(
-      searchQuery ? parks.filter(park => 
-        park.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        park.activities?.some(activity => 
-          activity.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        park.amenities?.some(amenity => 
-          amenity.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        park.region?.toLowerCase().includes(searchQuery.toLowerCase())
-      ) : parks,
+      searchQuery ? parks.filter(park => {
+        const searchTerm = searchQuery.toLowerCase();
+        const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+        const activityMatch = Array.isArray(park.activities) && 
+          park.activities.some(activity => 
+            activity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const amenityMatch = Array.isArray(park.amenities) &&
+          park.amenities.some(amenity => 
+            amenity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+        return titleMatch || activityMatch || amenityMatch || regionMatch;
+      }) : parks,
       filters
     );
     setShowFilters(false);
@@ -354,16 +377,20 @@ export default function WalkingScreen() {
     }));
     setFilters(resetFilters);
     setFilteredParks(searchQuery ? 
-      parks.filter(park => 
-        park.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        park.activities?.some(activity => 
-          activity.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        park.amenities?.some(amenity => 
-          amenity.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        park.region?.toLowerCase().includes(searchQuery.toLowerCase())
-      ) : parks
+      parks.filter(park => {
+        const searchTerm = searchQuery.toLowerCase();
+        const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+        const activityMatch = Array.isArray(park.activities) && 
+          park.activities.some(activity => 
+            activity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const amenityMatch = Array.isArray(park.amenities) &&
+          park.amenities.some(amenity => 
+            amenity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+        return titleMatch || activityMatch || amenityMatch || regionMatch;
+      }) : parks
     );
   };
 
@@ -395,9 +422,14 @@ export default function WalkingScreen() {
     router.push({
       pathname: "/tabs/Navigation",
       params: { 
-        presetQuery: park.title
-      }
-    });
+        presetQuery: park.title,
+      // Add coordinates if available for more accurate navigation
+      ...(park.latitude && park.longitude && {
+        presetLat: park.latitude.toString(),
+        presetLng: park.longitude.toString()
+      })
+    }
+  });
   };
 
   const handleUrlPress = async (url: string) => {
@@ -458,9 +490,6 @@ export default function WalkingScreen() {
       {/* Hours */}
       <View style={s.hoursContainer}>
         <AppText variant="caption" weight="600" style={s.hoursLabel}>
-          Hours:
-        </AppText>
-        <AppText variant="caption" weight="400" style={s.hoursText}>
           {item.hours}
         </AppText>
       </View>
@@ -468,15 +497,22 @@ export default function WalkingScreen() {
       {/* Region */}
       {item.region && (
         <View style={s.regionContainer}>
-          <AppText variant="caption" weight="600" style={s.regionLabel}>
-            Region:
-          </AppText>
-          <AppText variant="caption" weight="400" style={s.regionText}>
-            {item.region}
+          <AppText variant="caption" weight="600" style={s.regionText}>
+            Region: {item.region}
           </AppText>
         </View>
       )}
       
+      {/* Activities & Amenities Count - Combined */}
+      {(item.activities?.length > 0 || item.amenities?.length > 0) && (
+        <View style={s.combinedCountContainer}>
+          <AppText variant="caption" weight="600" style={s.combinedCountText}>
+            {item.activities?.length || 0} activit{item.activities?.length !== 1 ? 'ies ' : 'y '} 
+            and {item.amenities?.length || 0} amenit{item.amenities?.length !== 1 ? 'ies' : 'y'} available
+          </AppText>
+        </View>
+      )}
+            
       {/* URL - Make it clickable */}
       {item.url && (
         <TouchableOpacity 
@@ -489,12 +525,16 @@ export default function WalkingScreen() {
         </TouchableOpacity>
       )}
       
-      <View style={s.directionButton}>
-        <AppText variant="button" weight="700" style={s.directionButtonText}>
-          Get Directions
-        </AppText>
-      </View>
+      {/* Get Directions Button - Make it a separate TouchableOpacity */}
+    <TouchableOpacity 
+      style={s.directionButton}
+      onPress={() => handleGetDirections(item)}
+    >
+      <AppText variant="button" weight="400" style={s.directionButtonText}>
+        Get Directions
+      </AppText>
     </TouchableOpacity>
+  </TouchableOpacity>
   );
 
   // Calculate tabs data based on filtered parks
@@ -656,78 +696,6 @@ export default function WalkingScreen() {
     );
   };
 
-  // Filter Modal Component
-  const FilterModal = () => (
-    <View style={s.modalOverlay}>
-      <View style={s.modalContent}>
-        <View style={s.modalHeader}>
-          <AppText variant="h2" weight="800" style={s.modalTitle}>
-            Filter Parks
-          </AppText>
-          <TouchableOpacity onPress={() => setShowFilters(false)} style={s.closeButton}>
-            <AppText variant="title" weight="700" style={s.closeButtonText}>
-              ×
-            </AppText>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={s.filterContent}>
-          {filters.map((category, categoryIndex) => (
-            <View key={category.name} style={s.filterCategory}>
-              <AppText variant="title" weight="700" style={s.categoryTitle}>
-                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-              </AppText>
-              <View style={s.optionsContainer}>
-                {category.options.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      s.optionButton,
-                      category.selected.includes(option) && s.optionButtonSelected
-                    ]}
-                    onPress={() => toggleFilterOption(categoryIndex, option)}
-                  >
-                    <AppText 
-                      variant="body" 
-                      weight="400" 
-                      style={[
-                        s.optionText,
-                        category.selected.includes(option) && s.optionTextSelected
-                      ]}
-                    >
-                      {option}
-                    </AppText>
-                    <View style={[
-                      s.checkbox,
-                      category.selected.includes(option) && s.checkboxSelected
-                    ]}>
-                      {category.selected.includes(option) && (
-                        <AppText style={s.checkmark}>✓</AppText>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-
-        <View style={s.modalFooter}>
-          <TouchableOpacity onPress={handleClearFilters} style={s.clearButton}>
-            <AppText variant="button" weight="700" style={s.clearButtonText}>
-              Clear All
-            </AppText>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleApplyFilters} style={s.applyButton}>
-            <AppText variant="button" weight="700" style={s.applyButtonText}>
-              Apply Filters
-            </AppText>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
   if (loading) {
     return (
       <SafeAreaView style={s.safe}>
@@ -801,34 +769,120 @@ export default function WalkingScreen() {
         }}
       />
 
-      {/* Search Bar */}
-      <View style={s.searchContainer}>
-        <View style={s.searchInputContainer}>
-          <TextInput
-            style={s.searchInput}
-            placeholder="Search parks by name, activity, amenity, or region..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearchButton} // Allow search on enter
-          />
-          <TouchableOpacity 
-            style={s.searchButton}
-            onPress={handleSearchButton}
-          >
-            <AppText style={s.searchButtonText}>Search</AppText>
-          </TouchableOpacity>
-        </View>
+      {/* Top Action Buttons */}
+      <View style={s.topActionsContainer}>
+        <TouchableOpacity 
+          style={s.actionButton}
+          onPress={() => {
+            clearAllSearchAndFilters();
+            setShowSearchPanel(!showSearchPanel);
+            setShowFilterPanel(false);
+          }}
+        >
+          <AppText style={s.actionButtonText}>Search Parks</AppText>
+        </TouchableOpacity>
         
-        {/* Filter Button Below Search */}
-        <View style={s.filterButtonContainer}>
-          <TouchableOpacity 
-            style={s.filterButton}
-            onPress={() => setShowFilters(true)}
-          >
-            <AppText style={s.filterButtonText}>Filter Parks</AppText>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={s.actionButton}
+          onPress={() => {
+            clearAllSearchAndFilters();
+            setShowFilterPanel(!showFilterPanel);
+            setShowSearchPanel(false);
+          }}
+        >
+          <AppText style={s.actionButtonText}>Filter Parks</AppText>
+        </TouchableOpacity>
       </View>
+
+      {/* Search Panel */}
+      {showSearchPanel && (
+        <View style={s.panelContainer}>
+          <View style={s.searchPanel}>
+            <View style={s.searchInputContainer}>
+              <TextInput
+                style={s.searchInput}
+                placeholder="Search keywords"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearchButton}
+              />
+              <TouchableOpacity 
+                style={s.searchButton}
+                onPress={() => {
+                  handleSearchButton();
+                  setShowSearchPanel(false);
+                }}
+              >
+                <AppText style={s.searchButtonText}>Search</AppText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Filter Panel */}
+      {showFilterPanel && (
+        <View style={s.panelContainer}>
+          <View style={s.filterPanel}>
+            <ScrollView style={s.filterPanelContent}>
+              {filters.map((category, categoryIndex) => (
+                <View key={category.name} style={s.filterCategory}>
+                  <AppText variant="title" weight="700" style={s.categoryTitle}>
+                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                  </AppText>
+                  <View style={s.optionsContainer}>
+                    {category.options.map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        style={[
+                          s.optionButton,
+                          category.selected.includes(option) && s.optionButtonSelected
+                        ]}
+                        onPress={() => toggleFilterOption(categoryIndex, option)}
+                      >
+                        <AppText 
+                          variant="body" 
+                          weight="400" 
+                          style={[
+                            s.optionText,
+                            category.selected.includes(option) && s.optionTextSelected
+                          ]}
+                        >
+                          {option}
+                        </AppText>
+                        <View style={[
+                          s.checkbox,
+                          category.selected.includes(option) && s.checkboxSelected
+                        ]}>
+                          {category.selected.includes(option) && (
+                            <AppText style={s.checkmark}>✓</AppText>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            
+            <View style={s.panelFooter}>
+              <TouchableOpacity onPress={handleClearFilters} style={s.clearButton}>
+                <AppText variant="button" weight="700" style={s.clearButtonText}>
+                  Clear All
+                </AppText>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                handleApplyFilters();
+                setShowFilterPanel(false);
+              }} style={s.applyButton}>
+                <AppText variant="button" weight="700" style={s.applyButtonText}>
+                  Apply Filters
+                </AppText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Parks List */}
       <FlatList
@@ -866,19 +920,16 @@ export default function WalkingScreen() {
       {/* Tab Buttons at Bottom Only */}
       {totalTabs > 1 && renderTabButtons()}
 
-      {/* Filter Modal */}
-      {showFilters && <FilterModal />}
-
       {/* Park Details Modal */}
       <ParkDetailsModal
-        park={selectedPark}
-        visible={showParkDetails}
-        onClose={handleCloseParkDetails}
-        userLocation={userLocation}
-        onGetDirections={handleGetDirections}
-        distanceMeters={distanceMeters}
-        kmStr={kmStr}
-      />
+      park={selectedPark}
+      visible={showParkDetails}
+      onClose={handleCloseParkDetails}
+      userLocation={userLocation}
+      onGetDirections={handleGetDirections}
+      distanceMeters={distanceMeters}
+      kmStr={kmStr}
+    />
     </SafeAreaView>
   );
 }
@@ -889,18 +940,58 @@ const s = StyleSheet.create({
     backgroundColor: "#F8F9FA" 
   },
 
-  // Search Bar
-  searchContainer: {
+  // Top Action Buttons
+  topActionsContainer: {
+    flexDirection: "row",
     padding: 16,
     backgroundColor: "#FFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E9ECEF",
+    gap: 12,
   },
+  actionButton: {
+    flex: 1,
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
+  // Panels
+  panelContainer: {
+    backgroundColor: "#FFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
+  },
+  searchPanel: {
+    padding: 16,
+  },
+  filterPanel: {
+    maxHeight: 400,
+  },
+  filterPanelContent: {
+    maxHeight: 300,
+    padding: 16,
+  },
+  panelFooter: {
+    flexDirection: "row",
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E9ECEF",
+    gap: 12,
+  },
+
+  // Search Input
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
@@ -925,74 +1016,8 @@ const s = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
-  filterButtonContainer: {
-    alignItems: "flex-start",
-  },
-  filterButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 120,
-    alignItems: "center",
-  },
-  filterButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
 
-  // Filter Modal
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    margin: 20,
-    maxHeight: "80%",
-    width: "90%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
-  },
-  modalTitle: {
-    fontSize: 20,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F8F9FA",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: "#6C757D",
-  },
-  filterContent: {
-    maxHeight: 400,
-    padding: 20,
-  },
+  // Filter Styles (keep these for the filter panel)
   filterCategory: {
     marginBottom: 24,
   },
@@ -1044,13 +1069,6 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
-  modalFooter: {
-    flexDirection: "row",
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#E9ECEF",
-    gap: 12,
-  },
   clearButton: {
     flex: 1,
     backgroundColor: "#6C757D",
@@ -1071,7 +1089,7 @@ const s = StyleSheet.create({
   applyButtonText: {
     color: "#FFF",
   },
-
+  
   // Tab System (Bottom Only)
   tabContainer: {
     flexDirection: "row",
@@ -1194,12 +1212,15 @@ const s = StyleSheet.create({
   regionContainer: {
     marginBottom: 12,
   },
-  regionLabel: {
-    color: "#6C757D",
-    marginBottom: 2,
-  },
   regionText: {
     color: "#495057",
+  },
+  countContainer: {
+    marginBottom: 8,
+  },
+  countLabel: {
+    color: "#6C757D",
+    fontSize: 14,
   },
   urlContainer: {
     marginBottom: 12,
@@ -1214,7 +1235,7 @@ const s = StyleSheet.create({
   },
   directionButton: {
     backgroundColor: "#007AFF",
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
     alignSelf: "flex-start",
@@ -1261,5 +1282,18 @@ const s = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
     color: "#6C757D",
+  },
+  combinedCountContainer: {
+  marginBottom: 8,
+  padding: 6,
+  backgroundColor: '#E7F3FF',
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: '#007AFF',
+  alignSelf: 'flex-start',
+  },
+  combinedCountText: {
+    color: '#007AFF',
+    fontSize: 12,
   },
 });

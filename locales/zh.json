@@ -391,5 +391,85 @@
       "5": "五",
       "6": "六"
     }
+  },
+  "walking": {
+    "title": "步行路线",
+    "loading": "正在加载公园...",
+    "error": "加载公园失败",
+    "retry": "重试",
+    "search": {
+      "button": "搜索公园",
+      "placeholder": "按名称、活动、设施或区域搜索公园...",
+      "action": "搜索"
+    },
+    "filter": {
+      "button": "筛选公园", 
+      "clearAll": "清除全部",
+      "apply": "应用筛选"
+    },
+    "parks": {
+      "hours": "营业时间",
+      "region": "区域",
+      "activities": "项活动",
+      "amenities": "项设施",
+      "available": "有{{activities}}和{{amenities}}可用",
+      "learnMore": "在NParks.gov.sg了解更多",
+      "getDirections": "获取路线",
+      "emptySearch": "没有符合搜索条件的公园",
+      "emptyDatabase": "数据库中未找到公园",
+      "tryAgain": "再试一次"
+    },
+    "location": {
+      "away": "距离{{distance}}"
+    },
+    "filters": {
+      "categories": {
+        "activity": "活动",
+        "amenity": "设施",
+        "region": "区域"
+      },
+      "activities": {
+        "barbecuing": "烧烤",
+        "birdwatching": "观鸟",
+        "camping": "露营",
+        "contemplativeLandscape": "冥想景观",
+        "cycling": "骑自行车或轮滑",
+        "dining": "餐饮",
+        "fishing": "钓鱼",
+        "fitnessStudio": "健身工作室",
+        "funWithChildren": "亲子娱乐",
+        "funWithDog": "与狗同乐",
+        "hiking": "远足",
+        "natureWalks": "自然漫步或导览",
+        "photography": "摄影",
+        "shopping": "购物",
+        "therapeuticGardens": "治疗花园",
+        "wellness": "健康养生"
+      },
+      "amenities": {
+        "restrooms": "洗手间",
+        "parking": "停车场",
+        "picnicArea": "野餐区",
+        "walkingTrails": "步行道",
+        "drinkingFountain": "饮水机",
+        "allotmentGarden": "分配花园",
+        "artSpace": "艺术或展览空间",
+        "birdPerch": "鸟类栖息处",
+        "communityGarden": "社区花园",
+        "dining": "餐饮",
+        "fishingFacility": "钓鱼设施",
+        "therapeuticGarden": "治疗花园",
+        "venueBooking": "预订场地",
+        "wellnessProvider": "健康服务提供者"
+      },
+      "regions": {
+        "central": "中部",
+        "east": "东部",
+        "north": "北部",
+        "south": "南部",
+        "west": "西部",
+        "offshoreIslands": "离岸岛屿"
+      }
+    }
   }
 }

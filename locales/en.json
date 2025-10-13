@@ -391,5 +391,85 @@
       "5": "F",
       "6": "Sa"
     }
+  },
+    "walking": {
+    "title": "Walking Routes",
+    "loading": "Loading parks...",
+    "error": "Failed to load parks", 
+    "retry": "Retry",
+    "search": {
+      "button": "Search Parks",
+      "placeholder": "Search parks by name, activity, amenity, or region...",
+      "action": "Search"
+    },
+    "filter": {
+      "button": "Filter Parks", 
+      "clearAll": "Clear All",
+      "apply": "Apply Filters"
+    },
+    "parks": {
+      "hours": "Hours",
+      "region": "Region",
+      "activities": "activit{{count}}ies",
+      "amenities": "amenit{{count}}ies", 
+      "available": "{{activities}} and {{amenities}} available",
+      "learnMore": "Learn more at NParks.gov.sg",
+      "getDirections": "Get Directions",
+      "emptySearch": "No parks match your search criteria",
+      "emptyDatabase": "No parks found in database",
+      "tryAgain": "Try Again"
+    },
+    "location": {
+      "away": "{{distance}} away"
+    },
+    "filters": {
+      "categories": {
+        "activity": "Activity",
+        "amenity": "Amenity",
+        "region": "Region"
+      },
+      "activities": {
+        "barbecuing": "Barbecuing",
+        "birdwatching": "Birdwatching",
+        "camping": "Camping",
+        "contemplativeLandscape": "Contemplative landscape",
+        "cycling": "Cycling or inline skating",
+        "dining": "Dining",
+        "fishing": "Fishing",
+        "fitnessStudio": "Fitness Studio",
+        "funWithChildren": "Fun with children",
+        "funWithDog": "Fun with your dog",
+        "hiking": "Hiking",
+        "natureWalks": "Nature walks or tours",
+        "photography": "Photography",
+        "shopping": "Shopping",
+        "therapeuticGardens": "Therapeutic gardens",
+        "wellness": "Wellness"
+      },
+      "amenities": {
+        "restrooms": "Restrooms",
+        "parking": "Parking",
+        "picnicArea": "Picnic Area",
+        "walkingTrails": "Walking Trails",
+        "drinkingFountain": "Drinking Fountain",
+        "allotmentGarden": "Allotment Garden",
+        "artSpace": "Art or Exhibition Space",
+        "birdPerch": "Bird Perch",
+        "communityGarden": "Community Garden",
+        "dining": "Dining",
+        "fishingFacility": "Fishing Facility",
+        "therapeuticGarden": "Therapeutic Garden",
+        "venueBooking": "Venue for Booking",
+        "wellnessProvider": "Wellness Provider"
+      },
+      "regions": {
+        "central": "Central",
+        "east": "East",
+        "north": "North",
+        "south": "South",
+        "west": "West",
+        "offshoreIslands": "Offshore islands"
+      }
+    }
   }
 }

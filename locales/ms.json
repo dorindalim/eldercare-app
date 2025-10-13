@@ -391,5 +391,85 @@
       "5": "J",
       "6": "S"
     }
-  }
+  },
+  "walking": {
+    "title": "Laluan Berjalan",
+    "loading": "Memuatkan taman...",
+    "error": "Gagal memuatkan taman",
+    "retry": "Cuba Semula",
+    "search": {
+      "button": "Cari Taman",
+      "placeholder": "Cari taman mengikut nama, aktiviti, kemudahan, atau wilayah...",
+      "action": "Cari"
+    },
+    "filter": {
+      "button": "Tapis Taman",
+      "clearAll": "Bersihkan Semua", 
+      "apply": "Gunakan Penapis"
+    },
+    "parks": {
+      "hours": "Waktu Operasi",
+      "region": "Wilayah",
+      "activities": "aktivit{{count}}i",
+      "amenities": "kemudaha{{count}}n",
+      "available": "{{activities}} dan {{amenities}} tersedia",
+      "learnMore": "Ketahui lebih lanjut di NParks.gov.sg",
+      "getDirections": "Dapatkan Arahan",
+      "emptySearch": "Tiada taman yang sepadan dengan carian anda",
+      "emptyDatabase": "Tiada taman ditemui dalam pangkalan data",
+      "tryAgain": "Cuba Lagi"
+    },
+    "location": {
+      "away": "{{distance}} jaraknya"
+    }
+  },
+    "filters": {
+      "categories": {
+        "activity": "Aktiviti",
+        "amenity": "Kemudahan",
+        "region": "Wilayah"
+      },
+      "activities": {
+        "barbecuing": "Barbeku",
+        "birdwatching": "Memerhati Burung",
+        "camping": "Berkhemah",
+        "contemplativeLandscape": "Pemandangan Kontemplatif",
+        "cycling": "Berbasikal atau Luncur Roda",
+        "dining": "Makan",
+        "fishing": "Memancing",
+        "fitnessStudio": "Studio Kecergasan",
+        "funWithChildren": "Berseronok dengan Kanak-kanak",
+        "funWithDog": "Berseronok dengan Anjing Anda",
+        "hiking": "Mendaki",
+        "natureWalks": "Jalan-jalan Alam Semula jadi atau Lawatan",
+        "photography": "Fotografi",
+        "shopping": "Membeli-belah",
+        "therapeuticGardens": "Taman Terapeutik",
+        "wellness": "Kesejahteraan"
+      },
+      "amenities": {
+        "restrooms": "Tandas",
+        "parking": "Tempat Letak Kereta",
+        "picnicArea": "Kawasan Berkelah",
+        "walkingTrails": "Denai Berjalan",
+        "drinkingFountain": "Pancutan Minuman",
+        "allotmentGarden": "Taman Peruntukan",
+        "artSpace": "Ruang Seni atau Pameran",
+        "birdPerch": "Tempat Bertenggek Burung",
+        "communityGarden": "Taman Komuniti",
+        "dining": "Makan",
+        "fishingFacility": "Kemudahan Memancing",
+        "therapeuticGarden": "Taman Terapeutik",
+        "venueBooking": "Tempat untuk Tempahan",
+        "wellnessProvider": "Penyedia Kesejahteraan"
+      },
+      "regions": {
+        "central": "Tengah",
+        "east": "Timur",
+        "north": "Utara",
+        "south": "Selatan",
+        "west": "Barat",
+        "offshoreIslands": "Pulau-pulau Luar Pesisir"
+      }
+    }
 }

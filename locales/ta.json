@@ -391,5 +391,96 @@
       "5": "வெ",
       "6": "ச"
     }
+  },
+  "walking": {
+    "title": "நடை பாதைகள்",
+    "loading": "பூங்காக்கள் ஏற்றப்படுகின்றன...",
+    "error": "பூங்காக்களை ஏற்ற முடியவில்லை",
+    "retry": "மீண்டும் முயல்க",
+    "search": {
+      "button": "பூங்காக்களை தேடுங்கள்",
+      "placeholder": "பெயர், செயல்பாடு, வசதி அல்லது பிராந்தியத்தின் படி பூங்காக்களை தேடுங்கள்...",
+      "action": "தேடு"
+    },
+    "filter": {
+      "button": "பூங்காக்களை வடிகட்டுங்கள்",
+      "clearAll": "அனைத்தையும் அழி",
+      "apply": "வடிகட்டிகளை பயன்படுத்துக"
+    },
+    "parks": {
+      "hours": "செயல்பாட்டு நேரம்",
+      "region": "பிராந்தியம்",
+      "activities": "செயல்பாடு{{count}}கள்",
+      "amenities": "வசதி{{count}}கள்",
+      "available": "{{activities}} மற்றும் {{amenities}} உள்ளன",
+      "learnMore": "NParks.gov.sg இல் மேலும் அறிக",
+      "getDirections": "வழிகாட்டலை பெறுக",
+      "emptySearch": "உங்கள் தேடல் அளவுகோல்களுடன் பொருந்தக்கூடிய பூங்காக்கள் இல்லை",
+      "emptyDatabase": "தரவுத்தளத்தில் பூங்காக்கள் காணப்படவில்லை",
+      "tryAgain": "மீண்டும் முயல்க"
+    },
+    "location": {
+      "away": "{{distance}} தொலைவில்"
+    },
+    "tabs": {
+      "navigation": "வழிநடத்தல்",
+      "walking": "நடை பாதைகள்",
+      "home": "முகப்பு",
+      "ccActivities": "சமூக மைய செயல்பாடுகள்",
+      "clinics": "மருத்துவமனைகள்"
+    },
+    "parkDetails": {
+      "open24Hours": "24 மணி நேரம் திறந்தது",
+      "learnMore": "NParks.gov.sg இல் மேலும் அறிக"
+    },
+    "filters": {
+      "categories": {
+        "activity": "செயல்பாடு",
+        "amenity": "வசதி",
+        "region": "பிராந்தியம்"
+      },
+      "activities": {
+        "barbecuing": "பார்பிக்யூ",
+        "birdwatching": "பறவை காணல்",
+        "camping": "முகாம்",
+        "contemplativeLandscape": "சிந்தனை தரும் காட்சி",
+        "cycling": "சைக்கிள் ஓட்டுதல் அல்லது இன்லைன் ஸ்கேட்டிங்",
+        "dining": "சாப்பாடு",
+        "fishing": "மீன் பிடித்தல்",
+        "fitnessStudio": "உடற்தகுதி ஸ்டுடியோ",
+        "funWithChildren": "குழந்தைகளுடன் வேடிக்கை",
+        "funWithDog": "உங்கள் நாயுடன் வேடிக்கை",
+        "hiking": "ஏறுதல்",
+        "natureWalks": "இயற்கை நடை அல்லது சுற்றுப்பயணங்கள்",
+        "photography": "புகைப்படம்",
+        "shopping": "ஷாப்பிங்",
+        "therapeuticGardens": "சிகிச்சை தோட்டங்கள்",
+        "wellness": "நல்வாழ்வு"
+      },
+      "amenities": {
+        "restrooms": "கழிப்பறைகள்",
+        "parking": "பார்க்கிங்",
+        "picnicArea": "பிக்னிக் பகுதி",
+        "walkingTrails": "நடை பாதைகள்",
+        "drinkingFountain": "குடிநீர் குழாய்",
+        "allotmentGarden": "ஒதுக்கீடு தோட்டம்",
+        "artSpace": "கலை அல்லது கண்காட்சி இடம்",
+        "birdPerch": "பறவை உட்காரும் இடம்",
+        "communityGarden": "சமூக தோட்டம்",
+        "dining": "சாப்பாடு",
+        "fishingFacility": "மீன் பிடிக்கும் வசதி",
+        "therapeuticGarden": "சிகிச்சை தோட்டம்",
+        "venueBooking": "மண்டபம் பதிவு",
+        "wellnessProvider": "நல்வாழ்வு சேவை வழங்குநர்"
+      },
+      "regions": {
+        "central": "மத்திய",
+        "east": "கிழக்கு",
+        "north": "வடக்கு",
+        "south": "தெற்கு",
+        "west": "மேற்கு",
+        "offshoreIslands": "கடல்கடந்த தீவுகள்"
+      }
+    }
   }
 }
