@@ -47,26 +47,22 @@ export default function ElderlyHome() {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // SOS state
   const [sosVisible, setSosVisible] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
-  // EC cache
   const ecRef = useRef<{ name: string | null; phoneIntl: string | null }>({
     name: null,
     phoneIntl: null,
   });
 
-  // Auto-call after SMS composer closes
   const awaitingReturnRef = useRef(false);
   const pendingCallRef = useRef<string | null>(null);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active" && awaitingReturnRef.current && pendingCallRef.current) {
-        // App is back from SMS composer → place the call
         callNumber(pendingCallRef.current);
         awaitingReturnRef.current = false;
         pendingCallRef.current = null;
@@ -143,10 +139,8 @@ export default function ElderlyHome() {
     try {
       const available = await SMS.isAvailableAsync();
       if (available) {
-        // This opens the native Messages UI
         await SMS.sendSMSAsync([to], body);
       } else {
-        // Fallback
         await Linking.openURL(`sms:${to}?body=${encodeURIComponent(body)}`);
       }
     } catch {
@@ -154,14 +148,12 @@ export default function ElderlyHome() {
     }
   };
 
-  // Opens Messages with text, then calls the EC when the app returns
   const sendSmsThenAutoCall = async (phoneIntl: string, message: string) => {
     awaitingReturnRef.current = true;
     pendingCallRef.current = phoneIntl;
 
     await openSmsComposer(phoneIntl, message);
 
-    // Extra nudge for Android cases where app is already active immediately
     setTimeout(() => {
       if (awaitingReturnRef.current && pendingCallRef.current) {
         callNumber(pendingCallRef.current);
@@ -198,7 +190,6 @@ export default function ElderlyHome() {
       (mapsUrl ? `Live location: ${mapsUrl}\n` : "") +
       `Time: ${timeStr}`;
 
-    // If you also want to place an emergency services call after EC, you could queue EMERGENCY_SERVICES.
     await sendSmsThenAutoCall(phoneIntl, message);
   };
 
@@ -223,7 +214,7 @@ export default function ElderlyHome() {
         if (c <= 1) {
           clearInterval(timerRef.current!);
           setSosVisible(false);
-          performSOS(); // opens Messages, then auto-calls on return
+          performSOS(); 
           return 0;
         }
         return c - 1;
@@ -235,7 +226,6 @@ export default function ElderlyHome() {
     if (timerRef.current) clearInterval(timerRef.current);
     setSosVisible(false);
     progressAnim.stopAnimation();
-    // clear any pending auto-call intent just in case
     awaitingReturnRef.current = false;
     pendingCallRef.current = null;
   };
@@ -330,7 +320,7 @@ export default function ElderlyHome() {
         </View>
       </ScrollView>
 
-      {/* SOS overlay: only Cancel */}
+      {/* SOS overlay */}
       {sosVisible && (
         <View style={s.overlay}>
           <View style={s.modal}>
@@ -341,7 +331,6 @@ export default function ElderlyHome() {
               {t("sos.subtitle")}
             </AppText>
 
-            {/* Big countdown */}
             <View style={s.countdownWrap}>
               <AppText variant="h1" weight="900" style={s.countdownNumber}>
                 {countdown}
@@ -351,7 +340,6 @@ export default function ElderlyHome() {
               </AppText>
             </View>
 
-            {/* Progress bar */}
             <View style={s.progressTrack}>
               <Animated.View
                 style={[
@@ -437,7 +425,6 @@ const s = StyleSheet.create({
   },
   progressFill: { height: "100%", backgroundColor: "#EF4444" },
 
-  // Single red cancel button
   btnRowSingle: { marginTop: 14, width: "100%" },
   cancelOnlyBtn: {
     backgroundColor: "#EF4444",

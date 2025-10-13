@@ -5,7 +5,9 @@
     "cancel": "Cancel",
     "notLoggedIn": "Not logged in",
     "pleaseLoginAgain": "Please log in again.",
-    "save": "Save"
+    "save": "Save",
+    "hide": "Hide",
+    "show": "Show"
   },
   "alerts": {
     "noAccountTitle": "No account found",
@@ -157,6 +159,7 @@
       "setReminder": "Set Reminder"
     },
     "search": {
+      "placeholder": "Search address or place",
       "permissionTitle": "Location permission needed",
       "permissionBody": "Please enable location services to navigate.",
       "enterTitle": "Enter a destination",
@@ -169,8 +172,12 @@
       "stopNav": "Stop Navigation",
       "started": "Navigation started.",
       "stopped": "Navigation stopped.",
-      "eta": "ETA: {{duration}} ({{distance}})",
+      "eta": "Estimated Time & Distance: {{duration}} ({{distance}})",
       "nextStep": "Next: {{step}}",
+      "nextStepShort": "Next",
+      "then": "Then:",
+      "repeat": "Repeat",
+      "skip": "Skip",
       "arrived": "Arrived",
       "requesting": "Requesting location access…",
       "loading": "Loading…",
@@ -185,8 +192,7 @@
         "walking": "Walking",
         "bicycling": "Bicycling",
         "transit": "Transit"
-      },
-      "placeholder": "Search address or place"
+      }
     },
     "reminders": {
       "permTitle": "Allow Notifications",

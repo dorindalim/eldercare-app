@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   FlatList,
-  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -79,14 +78,18 @@ export default function NavigationScreen() {
   const [location, setLocation] = useState<LatLng | null>(null);
   const [query, setQuery] = useState("");
   const [destination, setDestination] = useState<LatLng | null>(null);
+
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
   const [steps, setSteps] = useState<
     { id: string; html: string; dist: string; endLoc: { lat: number; lng: number } }[]
   >([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [stepDistanceM, setStepDistanceM] = useState<number | null>(null);
   const [eta, setEta] = useState<{ duration: string; distance: string } | null>(null);
   const [mode, setMode] = useState<"driving" | "walking" | "bicycling" | "transit">("driving");
   const [navigating, setNavigating] = useState(false);
+  const [showAllSteps, setShowAllSteps] = useState(false);
+
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
 
   const [category, setCategory] = useState<CategoryKey>("search");
@@ -108,6 +111,10 @@ export default function NavigationScreen() {
 
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef<Record<string, MapMarker | null>>({});
+  const lastRouteRefreshRef = useRef(0);
+
+  // remember the previous POI category so we can restore it after stopping nav
+  const prevCategoryRef = useRef<CategoryKey>("search");
 
   const isExpoGo = Constants.appOwnership === "expo";
   const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE;
@@ -136,19 +143,25 @@ export default function NavigationScreen() {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted") {
           sub = await Location.watchPositionAsync(
-            { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
+            { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 5 },
             (pos) => {
               const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
               setLocation(coords);
-              if (destination) fetchDirections(coords, destination, /*speak*/ false);
-              checkStepProgress(coords);
+
+              // RATE-LIMIT route refresh to avoid quota blowups
+              if (destination && Date.now() - lastRouteRefreshRef.current > 15000) {
+                lastRouteRefreshRef.current = Date.now();
+                fetchDirections(coords, destination, /*speak*/ false);
+              }
+
+              updateStepProgress(coords);
             }
           );
         }
       })();
     }
     return () => sub && sub.remove();
-  }, [navigating, destination, mode]);
+  }, [navigating, destination, mode, steps, currentStepIndex]);
 
   useEffect(() => {
     if (presetQuery && !autoRanRef.current) {
@@ -163,14 +176,15 @@ export default function NavigationScreen() {
       if (query.length > 2 && location) {
         fetchAutocompleteSuggestions(query);
       }
-    }, 500);
-
+    }, 400);
     return () => clearTimeout(debounce);
   }, [query, location]);
 
   const fetchAutocompleteSuggestions = async (input: string) => {
     try {
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_WEB_API_KEY}&location=${location.latitude}%2C${location.longitude}&radius=10000`;
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+        input
+      )}&key=${GOOGLE_WEB_API_KEY}&location=${location?.latitude ?? 1.3521}%2C${location?.longitude ?? 103.8198}&radius=10000`;
       const res = await fetch(url);
       const data = await res.json();
       setSuggestions(data.predictions || []);
@@ -206,10 +220,7 @@ export default function NavigationScreen() {
 
   function extractFromDescription(desc?: string, key?: string) {
     if (!desc || !key) return undefined;
-    const re = new RegExp(
-      `<th>\\s*${key}\\s*<\\/th>\\s*<td>(.*?)<\\/td>`,
-      "i"
-    );
+    const re = new RegExp(`<th>\\s*${key}\\s*<\\/th>\\s*<td>(.*?)<\\/td>`, "i");
     const m = desc.match(re);
     return m?.[1]?.replace(/<[^>]+>/g, "").trim();
   }
@@ -338,6 +349,7 @@ export default function NavigationScreen() {
     } catch {}
   }, [location, navigating]);
 
+  /** ---------------- SEARCH ---------------- */
   const searchDestination = async (override?: string) => {
     const q = (override ?? query).trim();
     if (!q) return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
@@ -357,6 +369,7 @@ export default function NavigationScreen() {
     }
   };
 
+  /** ---------------- ROUTING + TURN PROGRESS ---------------- */
   const fetchDirections = async (origin: LatLng, dest: LatLng, speak = true) => {
     try {
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&mode=${mode}&key=${GOOGLE_WEB_API_KEY}`;
@@ -371,36 +384,68 @@ export default function NavigationScreen() {
 
       const leg = route.legs[0];
       setEta({ duration: leg.duration.text, distance: leg.distance.text });
-      setSteps(
-        leg.steps.map((s: any, idx: number) => ({
-          id: String(idx),
-          html: s.html_instructions,
-          dist: s.distance.text,
-          endLoc: s.end_location,
-        }))
+
+      const mappedSteps = leg.steps.map((s: any, idx: number) => ({
+        id: String(idx),
+        html: s.html_instructions,
+        dist: s.distance?.text ?? "",
+        endLoc: {
+          lat: s.end_location.lat,
+          lng: s.end_location.lng,
+        },
+      }));
+      setSteps(mappedSteps);
+
+      // reset current step distance display
+      setStepDistanceM(
+        distanceMeters(origin, { latitude: mappedSteps[0].endLoc.lat, longitude: mappedSteps[0].endLoc.lng })
       );
 
-      if (speak && mapRef.current) {
+      if (speak && mappedSteps.length) {
+        Speech.speak(stripHtml(mappedSteps[0].html));
+      }
+
+      // fit once when route (re)computed
+      if (mapRef.current && coords.length) {
         mapRef.current.fitToCoordinates(coords, {
           edgePadding: { top: 80, right: 40, bottom: 220, left: 40 },
           animated: true,
         });
-        Speech.speak(`Route ready. ETA ${leg.duration.text}, distance ${leg.distance.text}`);
       }
     } catch (e) {
       Alert.alert(t("common.error"), String(e));
     }
   };
 
-  const checkStepProgress = (pos: LatLng) => {
+  const updateStepProgress = (pos: LatLng) => {
     if (!steps.length) return;
+
     const step = steps[currentStepIndex];
     const dist = distanceMeters(pos, { latitude: step.endLoc.lat, longitude: step.endLoc.lng });
-    if (dist < 30 && currentStepIndex < steps.length - 1) {
-      const next = steps[currentStepIndex + 1];
-      setCurrentStepIndex((i) => i + 1);
-      Speech.speak(stripHtml(next.html));
+    setStepDistanceM(dist);
+
+    // advance when close to the end of this instruction
+    const THRESHOLD_M = 25; // tweak as you like
+    if (dist < THRESHOLD_M) {
+      if (currentStepIndex < steps.length - 1) {
+        const nextIndex = currentStepIndex + 1;
+        setCurrentStepIndex(nextIndex);
+        setTimeout(() => {
+          const next = steps[nextIndex];
+          Speech.speak(stripHtml(next.html));
+        }, 100);
+      } else {
+        // arrived — fully clear nav state
+        Speech.speak(t("navigation.search.arrived"));
+        clearNavigation({ restoreCategory: true });
+      }
     }
+  };
+
+  const fmtMeters = (m?: number | null) => {
+    if (m == null) return "";
+    if (m < 1000) return `${Math.max(1, Math.round(m))} m`;
+    return `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`;
   };
 
   const distanceMeters = (a: LatLng, b: LatLng) => {
@@ -425,6 +470,7 @@ export default function NavigationScreen() {
     setRouteCoords([]);
     setSteps([]);
     setEta(null);
+    setStepDistanceM(null);
 
     if (mapRef.current) {
       if (location) {
@@ -434,11 +480,19 @@ export default function NavigationScreen() {
         });
       } else {
         mapRef.current.animateToRegion(
-          { latitude: dest.latitude, longitude: dest.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+          {
+            latitude: dest.latitude,
+            longitude: dest.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
           500
         );
       }
     }
+
+    // remember what category was active before switching to the "search" view
+    prevCategoryRef.current = category;
     setCategory("search");
   };
 
@@ -447,10 +501,44 @@ export default function NavigationScreen() {
       return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
     setNavigating(true);
     setCurrentStepIndex(0);
+    lastRouteRefreshRef.current = 0; // ensure we refresh immediately
     fetchDirections(location, destination, /*speak*/ true);
     Speech.speak(t("navigation.search.started"));
   };
 
+  /** fully clear nav + UI and optionally restore previous POI category */
+  const clearNavigation = (opts?: { restoreCategory?: boolean }) => {
+    setNavigating(false);
+    setDestination(null);
+    setRouteCoords([]);
+    setSteps([]);
+    setCurrentStepIndex(0);
+    setEta(null);
+    setStepDistanceM(null);
+    setShowAllSteps(false);
+    setShowPoiOptions(false);
+    setSheetOpen(false);
+    setSuggestions([]);
+    setQuery("");
+
+    if (opts?.restoreCategory) {
+      setCategory(prevCategoryRef.current);
+    }
+
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        500
+      );
+    }
+  };
+
+  /** ---------------- CC events (unchanged) ---------------- */
   const parseEventStart = (evt: CCEvent): Date | null => {
     if (!evt.start_date) return null;
     const [y, m, d] = evt.start_date.split("-").map(Number);
@@ -485,11 +573,6 @@ export default function NavigationScreen() {
 
     const triggerDate = new Date(startsAt.getTime() - 60 * 60 * 1000);
     if (triggerDate.getTime() <= Date.now()) return;
-
-    const when = `${triggerDate.toLocaleDateString()} ${triggerDate.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
 
     const notifId = await Notifications.scheduleNotificationAsync({
       content: {
@@ -567,18 +650,6 @@ export default function NavigationScreen() {
       case "parks":
         return t("navigation.search.filter.parks");
     }
-  };
-
-  const openInGoogleMaps = () => {
-    if (!destination) return;
-    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-    const latLng = `${destination.latitude},${destination.longitude}`;
-    const label = query || 'Destination';
-    const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`
-    });
-    Linking.openURL(url);
   };
 
   return (
@@ -716,11 +787,7 @@ export default function NavigationScreen() {
         onRegionChangeStart={closeSheetsForMapInteraction}
       >
         {destination && category === "search" && (
-          <Marker
-            coordinate={destination}
-            title={t("navigation.search.destination")}
-            pinColor="#007AFF"
-          />
+          <Marker coordinate={destination} title={t("navigation.search.destination")} pinColor="#007AFF" />
         )}
 
         {activePOIs.map((p) => (
@@ -743,11 +810,105 @@ export default function NavigationScreen() {
           </Marker>
         ))}
 
-        {routeCoords.length > 0 && (
-          <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#007AFF" />
-        )}
+        {routeCoords.length > 0 && <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#007AFF" />}
       </MapView>
 
+      {/* NAV OVERLAY (step-by-step) */}
+      {navigating && (
+        <View style={s.navOverlay}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <AppText variant="label" weight="900">
+              {eta ? t("navigation.search.eta", { duration: eta.duration, distance: eta.distance }) : t("navigation.search.loading")}
+            </AppText>
+
+            <TouchableOpacity onPress={() => setShowAllSteps((v) => !v)} style={{ padding: 6 }}>
+              <AppText variant="button" weight="800" color="#007AFF">
+                {showAllSteps ? t("common.hide") : t("common.show")}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+
+          {/* CURRENT STEP CARD */}
+          {steps[currentStepIndex] && (
+            <View style={s.currentStepCard}>
+              <AppText variant="label" color="#007AFF" weight="900" style={{ marginBottom: 4 }}>
+                {fmtMeters(stepDistanceM)} · {t("navigation.search.nextStepShort")}
+              </AppText>
+              <AppText variant="body" weight="900">
+                {stripHtml(steps[currentStepIndex].html)}
+              </AppText>
+              {steps[currentStepIndex + 1] && (
+                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+                  {t("navigation.search.then")} {stripHtml(steps[currentStepIndex + 1].html)}
+                </AppText>
+              )}
+
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                <TouchableOpacity
+                  style={[s.pillBtn, { backgroundColor: "#F3F4F6" }]}
+                  onPress={() => Speech.speak(stripHtml(steps[currentStepIndex].html))}
+                >
+                  <Ionicons name="volume-high" size={16} color="#111827" />
+                  <AppText variant="button" weight="800" style={{ marginLeft: 6 }}>
+                    {t("navigation.search.repeat")}
+                  </AppText>
+                </TouchableOpacity>
+
+                {currentStepIndex < steps.length - 1 && (
+                  <TouchableOpacity
+                    style={[s.pillBtn, { backgroundColor: "#E5F2FF" }]}
+                    onPress={() => {
+                      const nextIdx = Math.min(currentStepIndex + 1, steps.length - 1);
+                      setCurrentStepIndex(nextIdx);
+                      const nxt = steps[nextIdx];
+                      Speech.speak(stripHtml(nxt.html));
+                    }}
+                  >
+                    <Ionicons name="play-skip-forward" size={16} color="#007AFF" />
+                    <AppText variant="button" weight="800" color="#007AFF" style={{ marginLeft: 6 }}>
+                      {t("navigation.search.skip")}
+                    </AppText>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[s.pillBtn, { backgroundColor: "#FFEBEB" }]}
+                  onPress={() => {
+                    Speech.stop();
+                    Speech.speak(t("navigation.search.stopped"));
+                    clearNavigation({ restoreCategory: true });
+                  }}
+                >
+                  <Ionicons name="stop" size={16} color="#FF3B30" />
+                  <AppText variant="button" weight="800" color="#FF3B30" style={{ marginLeft: 6 }}>
+                    {t("navigation.search.stopNav")}
+                  </AppText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* FULL LIST (toggle) */}
+          {showAllSteps && (
+            <FlatList
+              data={steps}
+              keyExtractor={(it) => it.id}
+              style={s.stepList}
+              renderItem={({ item, index }) => (
+                <AppText
+                  variant="body"
+                  weight={index === currentStepIndex ? "900" : "700"}
+                  style={index === currentStepIndex ? s.stepActive : undefined}
+                >
+                  • {stripHtml(item.html)} ({item.dist})
+                </AppText>
+              )}
+            />
+          )}
+        </View>
+      )}
+
+      {/* Start bar */}
       {destination && !navigating && (
         <View style={s.bottomBar}>
           <AppText variant="label" weight="800" style={{ marginBottom: 8 }}>
@@ -761,6 +922,7 @@ export default function NavigationScreen() {
         </View>
       )}
 
+      {/* Recenter */}
       {location && (
         <TouchableOpacity
           style={s.recenterBtn}
@@ -781,57 +943,6 @@ export default function NavigationScreen() {
         >
           <Ionicons name="locate" size={18} color="#007AFF" />
         </TouchableOpacity>
-      )}
-
-      {navigating && eta && (
-        <View style={s.instructions}>
-          <AppText variant="label" weight="900" style={{ marginBottom: 6 }}>
-            {t("navigation.search.eta", { duration: eta.duration, distance: eta.distance })}
-          </AppText>
-          <AppText variant="label" color="#007AFF" weight="800" style={{ marginBottom: 8 }}>
-            {t("navigation.search.nextStep", {
-              step: steps[currentStepIndex]
-                ? stripHtml(steps[currentStepIndex].html)
-                : t("navigation.search.arrived"),
-            })}
-          </AppText>
-
-          <FlatList
-            data={steps}
-            keyExtractor={(it) => it.id}
-            renderItem={({ item, index }) => (
-              <AppText
-                variant="body"
-                weight={index === currentStepIndex ? "900" : "700"}
-                style={index === currentStepIndex ? s.stepActive : undefined}
-              >
-                • {stripHtml(item.html)} ({item.dist})
-              </AppText>
-            )}
-            style={s.stepList}
-          />
-          <View style={s.navActions}>
-            <TouchableOpacity
-              style={s.stopBtn}
-              onPress={() => {
-                setNavigating(false);
-                setRouteCoords([]);
-                setSteps([]);
-                setEta(null);
-                Speech.speak(t("navigation.search.stopped"));
-              }}
-            >
-              <AppText variant="button" weight="800" color="#FFF">
-                {t("navigation.search.stopNav")}
-              </AppText>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.openGpsBtn} onPress={openInGoogleMaps}>
-              <AppText variant="button" weight="800" color="#FFF">
-                Open In Google Maps
-              </AppText>
-            </TouchableOpacity>
-          </View>
-        </View>
       )}
 
       {!permissionGranted && (
@@ -1119,7 +1230,7 @@ const s = StyleSheet.create({
   },
   startBtn: { backgroundColor: "#007AFF", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
 
-  instructions: {
+  navOverlay: {
     position: "absolute",
     bottom: 0,
     left: 0,
@@ -1128,13 +1239,25 @@ const s = StyleSheet.create({
     padding: 14,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    maxHeight: 280,
   },
-  stepList: { maxHeight: 150, marginBottom: 10 },
+  currentStepCard: {
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  pillBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+  },
+
+  stepList: { maxHeight: 160, marginTop: 8, marginBottom: 4 },
   stepActive: { fontWeight: "900", color: "#007AFF" },
-  navActions: { flexDirection: "row", gap: 10, marginTop: 10 },
-  stopBtn: { backgroundColor: "#FF3B30", paddingVertical: 12, borderRadius: 10, alignItems: "center", flex: 1 },
-  openGpsBtn: { backgroundColor: "#007AFF", borderRadius: 10, paddingVertical: 12, paddingHorizontal: 10, alignItems: "center", flex: 1 },
 
   overlay: {
     position: "absolute",
@@ -1215,6 +1338,7 @@ const s = StyleSheet.create({
   },
   grabber: { width: 36, height: 4, borderRadius: 999, backgroundColor: "#E5E7EB", marginBottom: 8 },
   optionsHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+
   optBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: "center" },
 
   pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#F3F4F6" },

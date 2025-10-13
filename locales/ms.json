@@ -5,13 +5,15 @@
     "cancel": "Batal",
     "notLoggedIn": "Belum log masuk",
     "pleaseLoginAgain": "Sila log masuk semula.",
-    "save": "Simpan"
+    "save": "Simpan",
+    "hide": "Sembunyi",
+    "show": "Tunjuk"
   },
   "alerts": {
-    "noAccountTitle": "Akaun tidak dijumpai",
+    "noAccountTitle": "Akaun tidak ditemui",
     "noAccountBody": "Anda akan dialihkan untuk mendaftar.",
     "codeSentTitle": "Kod dihantar",
-    "codeSentBody": "Gunakan 123456 buat masa ini (olokan).",
+    "codeSentBody": "Buat masa ini guna 123456 (olokan).",
     "invalidCodeTitle": "Kod tidak sah",
     "invalidCodeBody": "Sila semak dan cuba lagi.",
     "signupInvalidTitle": "Semak butiran",
@@ -27,7 +29,7 @@
       "title": "Selamat kembali",
       "subtitle": "Sila masukkan nombor telefon anda",
       "phoneLabel": "Nombor telefon",
-      "phonePH": "+65 9123 4567",
+      "phonePH": "+65 91234567",
       "getCode": "Dapatkan kod",
       "codeLabel": "Kod pengesahan",
       "codePH": "Masukkan kod 6 digit",
@@ -37,9 +39,9 @@
     },
     "signup": {
       "title": "Cipta akaun anda",
-      "subtitle": "Daftar menggunakan nombor telefon",
+      "subtitle": "Gunakan nombor telefon untuk mendaftar",
       "phoneLabel": "Nombor telefon",
-      "phonePH": "+65 9123 4567",
+      "phonePH": "+65 91234567",
       "passwordLabel": "Kata laluan",
       "passwordPH": "Cipta kata laluan",
       "confirmLabel": "Sahkan kata laluan",
@@ -56,13 +58,13 @@
     "notLoggedInBody": "Sila log masuk semula.",
     "restore": {
       "restoredTitle": "Akaun dipulihkan",
-      "restoredBody": "Kami membatalkan pemadaman tertunda anda dan memulihkan akses."
+      "restoredBody": "Kami batalkan pemadaman tertunda anda dan memulihkan akses."
     }
   },
   "home": {
     "navigation": "Navigasi",
     "walkingRoutes": "Laluan Berjalan",
-    "homeTab": "Laman Utama",
+    "homeTab": "Utama",
     "ccActivities": "Aktiviti CC",
     "clinics": "Klinik",
     "profile": "Profil",
@@ -70,18 +72,18 @@
     "sos": "SOS",
     "imActive": "Saya Aktif",
     "tapToCheckIn": "Ketuk untuk daftar masuk",
-    "checkedIn": "Telah daftar masuk hari ini!"
+    "checkedIn": "Anda telah daftar masuk hari ini!"
   },
   "sos": {
     "title": "Menghantar SOS",
     "titleShort": "SOS",
-    "subtitle": "Kami akan mesej dan menelefon kenalan kecemasan anda.",
-    "autoCalling": "Memanggil {{name}} secara automatik dalam {{seconds}}s",
+    "subtitle": "Kami akan mesej dan menghubungi kenalan kecemasan anda.",
+    "autoCalling": "Panggilan automatik {{name}} dalam {{seconds}}s",
     "cancel": "Batal",
-    "callNowBtn": "Telefon {{name}} sekarang",
+    "callNowBtn": "Hubungi {{name}} sekarang",
     "ecFallback": "Kenalan Kecemasan",
-    "yourLovedOne": "Orang tersayang anda",
-    "callConfirm": "Adakah anda mahu menelefon {{name}}?"
+    "yourLovedOne": "Orang tersayang",
+    "callConfirm": "Adakah anda mahu menghubungi {{name}}?"
   },
   "community": {
     "title": "Aktiviti CC",
@@ -100,13 +102,13 @@
       "timing": "Masa",
       "distance": "Jarak",
       "price": "Harga",
-      "reset": "Tetapkan semula",
+      "reset": "Tetap semula",
       "apply": "Guna"
     },
     "timing": {
-      "today": "Hari Ini",
-      "week": "Minggu Ini",
-      "upcoming": "Akan Datang"
+      "today": "Hari ini",
+      "week": "Minggu ini",
+      "upcoming": "Akan datang"
     },
     "price": {
       "all": "Semua",
@@ -121,27 +123,27 @@
       "artsCulture": "Seni & Budaya",
       "activeAging": "Penuaan Aktif",
       "parentingEducation": "Keibubapaan & Pendidikan",
-      "exhibitionFair": "Pameran & Jualan",
+      "exhibitionFair": "Pameran & Pesta",
       "neighbourhoodEvents": "Acara Kejiranan",
-      "celebrationFestivity": "Perayaan & Keraian",
+      "celebrationFestivity": "Perayaan & Pesta",
       "kopiTalksDialogues": "Sembang Kopi & Dialog",
       "charityVolunteerism": "Amal & Sukarelawan",
-      "overseasOutingsTours": "Lawatan/Percutian Luar Negara"
+      "overseasOutingsTours": "Lawatan & Pakej Luar Negara"
     },
     "sortSummary": {
-      "default": "Semua kategori · Akan Datang · Mana-mana jarak · Harga: Semua"
+      "default": "Semua kategori · Akan datang · Apa-apa jarak · Harga: Semua"
     },
     "distance": {
-      "any": "Mana-mana",
+      "any": "Apa-apa",
       "le2": "≤ 2 km",
       "le5": "≤ 5 km",
       "le10": "≤ 10 km",
-      "anyDistance": "Mana-mana jarak"
+      "anyDistance": "Apa-apa jarak"
     },
     "notifs": {
       "panelTitle": "Pemberitahuan & Peringatan",
-      "clearAll": "Padam Semua Pemberitahuan",
-      "inAppUpcoming": "Peringatan CC akan datang (dalam aplikasi)",
+      "clearAll": "Kosongkan Semua Pemberitahuan",
+      "inAppUpcoming": "Peringatan CC Akan Datang (dalam aplikasi)",
       "deviceScheduled": "Pemberitahuan Tempatan Dijadualkan (peranti)",
       "noneScheduled": "Tiada yang dijadualkan.",
       "event": "Acara",
@@ -157,20 +159,25 @@
       "setReminder": "Tetapkan Peringatan"
     },
     "search": {
-      "permissionTitle": "Perlu kebenaran lokasi",
-      "permissionBody": "Sila hidupkan perkhidmatan lokasi untuk menavigasi.",
+      "placeholder": "Cari alamat atau tempat",
+      "permissionTitle": "Kebenaran lokasi diperlukan",
+      "permissionBody": "Sila aktifkan perkhidmatan lokasi untuk navigasi.",
       "enterTitle": "Masukkan destinasi",
       "enterBody": "Taip alamat atau nama tempat untuk mencari.",
       "notFoundTitle": "Tidak ditemui",
-      "notFoundBody": "Cuba nama tempat yang lebih khusus.",
+      "notFoundBody": "Cuba nama tempat yang lebih spesifik.",
       "destination": "Destinasi",
       "destinationSet": "Destinasi ditetapkan",
-      "startNav": "Mulakan Navigasi",
-      "stopNav": "Hentikan Navigasi",
-      "started": "Navigasi bermula.",
+      "startNav": "Mula Navigasi",
+      "stopNav": "Henti Navigasi",
+      "started": "Navigasi dimulakan.",
       "stopped": "Navigasi dihentikan.",
       "eta": "ETA: {{duration}} ({{distance}})",
       "nextStep": "Seterusnya: {{step}}",
+      "nextStepShort": "Seterusnya",
+      "then": "Kemudian:",
+      "repeat": "Ulang",
+      "skip": "Langkau",
       "arrived": "Tiba",
       "requesting": "Meminta akses lokasi…",
       "loading": "Memuatkan…",
@@ -185,8 +192,7 @@
         "walking": "Berjalan",
         "bicycling": "Berbasikal",
         "transit": "Pengangkutan awam"
-      },
-      "placeholder": "Cari alamat atau tempat"
+      }
     },
     "reminders": {
       "permTitle": "Benarkan Pemberitahuan",
@@ -194,11 +200,11 @@
       "invalidTime": "Acara ini tiada masa mula.",
       "tooSoonTitle": "Terlalu lewat untuk dijadualkan",
       "tooSoonBody": "Masa peringatan telah berlalu.",
-      "notifTitle": "Aktiviti akan datang",
-      "notifBody": "“{{title}}” bermula kira-kira 1 jam lagi.",
-      "scheduledTitle": "Peringatan Dijadualkan",
+      "notifTitle": "Aktiviti akan bermula",
+      "notifBody": "“{{title}}” akan bermula dalam kira-kira 1 jam.",
+      "scheduledTitle": "Peringatan Dit set",
       "scheduledBody": "Kami akan mengingatkan anda pada {{when}}.",
-      "untitled": "Tanpa tajuk",
+      "untitled": "Tiada tajuk",
       "fireBody": "Aktiviti anda bermula dalam 1 jam."
     }
   },
@@ -236,22 +242,22 @@
       "ntuc5": {
         "title": "Baucar NTUC FairPrice $5",
         "desc": "Guna di cawangan NTUC FairPrice yang mengambil bahagian.",
-        "terms": "Hanya untuk pembelian dalam kedai. Sekali guna sahaja. Tiada baki dipulangkan. Tidak boleh ditebus tunai. Sah selama 6 bulan dari tarikh penebusan."
+        "terms": "Hanya untuk pembelian dalam kedai. Sekali guna. Tiada baki dikembalikan. Tidak boleh ditukar wang tunai. Sah 6 bulan dari tarikh tebus."
       },
       "ntuc10": {
         "title": "Baucar NTUC FairPrice $10",
         "desc": "Guna di cawangan NTUC FairPrice yang mengambil bahagian.",
-        "terms": "Hanya untuk pembelian dalam kedai. Sekali guna sahaja. Tiada baki dipulangkan. Tidak boleh ditebus tunai. Sah selama 6 bulan dari tarikh penebusan."
+        "terms": "Hanya untuk pembelian dalam kedai. Sekali guna. Tiada baki dikembalikan. Tidak boleh ditukar wang tunai. Sah 6 bulan dari tarikh tebus."
       },
       "kopitiam5": {
         "title": "Nilai Tersimpan Kopitiam $5",
-        "desc": "Nikmati hidangan di medan selera Kopitiam yang mengambil bahagian.",
-        "terms": "Tebus di gerai yang mengambil bahagian. Sekali guna sahaja. Tidak boleh ditebus tunai. Sah selama 6 bulan dari tarikh penebusan."
+        "desc": "Nikmati makanan di medan selera Kopitiam yang mengambil bahagian.",
+        "terms": "Tebus di gerai yang mengambil bahagian. Sekali guna. Tidak boleh ditukar wang tunai. Sah 6 bulan dari tarikh tebus."
       },
       "guardian5": {
         "title": "Baucar Guardian $5",
         "desc": "Guna di kedai Guardian yang mengambil bahagian.",
-        "terms": "Hanya untuk pembelian dalam kedai. Sekali guna sahaja. Tiada baki dipulangkan. Tidak boleh ditebus tunai. Sah selama 6 bulan dari tarikh penebusan."
+        "terms": "Hanya untuk pembelian dalam kedai. Sekali guna. Tiada baki dikembalikan. Tidak boleh ditukar wang tunai. Sah 6 bulan dari tarikh tebus."
       }
     }
   },
@@ -262,7 +268,7 @@
     "conditionPH": "Nama keadaan (cth., Hipertensi)",
     "doctorPH": "Doktor (pilihan)",
     "clinicPH": "Klinik/Hospital (pilihan)",
-    "appointmentsPH": "Temu janji / nota akan datang (pilihan)",
+    "appointmentsPH": "Janji temu akan datang / nota (pilihan)",
     "noMedicationsForThis": "Tiada ubat untuk keadaan ini",
     "medsLabel": "Ubat-ubatan",
     "medNamePH": "Nama ubat",
@@ -276,9 +282,9 @@
       "hearing_aid": "Alat bantu pendengaran",
       "glasses": "Cermin mata",
       "other": "Lain-lain",
-      "otherPH": "Huraikan keperluan bantuan lain"
+      "otherPH": "Huraikan keperluan lain"
     },
-    "drugAllergiesPH": "Alergi ubat (pilihan)",
+    "drugAllergiesPH": "Alahan ubat (pilihan)",
     "publicNotePH": "Nota umum untuk penyelamat pertama (pilihan)",
     "finish": "Simpan & Teruskan",
     "errors": {
@@ -290,36 +296,36 @@
   "elderlyOnboarding": {
     "title": "Maklumat Asas",
     "namePH": "Nama penuh",
-    "yobPH": "Tahun lahir (e.g. 2000)",
+    "yobPH": "Tahun lahir (cth. 2000)",
     "genderLabel": "Jantina",
     "male": "Lelaki",
     "female": "Perempuan",
     "na": "Tidak mahu nyatakan",
-    "emergencySectionTitle": "Orang untuk Dihubungi Kecemasan",
-    "ecNamePH": "Nama orang hubungan",
+    "emergencySectionTitle": "Kenalan Kecemasan",
+    "ecNamePH": "Nama kenalan",
     "ecRelationPH": "Hubungan (cth., Anak perempuan)",
-    "ecPhonePH": "Telefon orang hubungan",
-    "ecEmailPH": "E-mel orang hubungan (pilihan)",
+    "ecPhonePH": "Telefon kenalan",
+    "ecEmailPH": "Emel kenalan (pilihan)",
     "finish": "Simpan & Teruskan",
-    "alertIncompleteTitle": "Sila lengkapkan semua medan yang diperlukan.",
+    "alertIncompleteTitle": "Sila lengkapkan semua ruangan wajib.",
     "saveErrorTitle": "Tidak dapat menyimpan",
-    "saveErrorMsg": "Ralat semasa menyimpan profil anda. Sila cuba lagi."
+    "saveErrorMsg": "Terdapat masalah semasa menyimpan profil anda. Sila cuba lagi."
   },
   "profile": {
     "title": "Profil",
     "basicInfo": "Maklumat Asas",
     "editBasic": "Edit butiran asas",
     "healthCard": "Kad Kesihatan Kecemasan",
-    "emergencyContacts": "Orang hubungan kecemasan",
-    "drugAllergy": "Alergi ubat",
+    "emergencyContacts": "Kenalan kecemasan",
+    "drugAllergy": "Alahan ubat",
     "assistive": "Keperluan bantuan",
     "publicNote": "Nota umum",
-    "sharePortal": "Kongsi Portal Orang Hubungan Kecemasan",
+    "sharePortal": "Kongsi Portal Kenalan Kecemasan",
     "noPortalTitle": "Tiada pautan portal lagi",
-    "noPortalBody": "Profil anda mungkin belum lengkap atau pautan belum dibuat. Sila pastikan anda telah mengisi orang hubungan kecemasan dan menyimpan.",
+    "noPortalBody": "Profil anda mungkin tidak lengkap atau pautan belum dicipta. Pastikan anda telah mengisi Kenalan Kecemasan dan menyimpan.",
     "conditions": "Keadaan Perubatan",
     "activity": "Aktiviti & Ganjaran",
-    "streak": "Rentetan Harian",
+    "streak": "Siri Harian",
     "coins": "Syiling",
     "accessibility": "Kebolehcapaian",
     "textSize": "Saiz teks",
@@ -329,32 +335,32 @@
       "status": {
         "granted": "Dibenarkan",
         "denied": "Ditolak",
-        "askMe": "Tanya lain kali"
+        "askMe": "Tanya saya lain kali"
       },
       "servicesOff": "Perkhidmatan lokasi dimatikan",
       "turnOnServicesTitle": "Hidupkan Perkhidmatan Lokasi",
-      "turnOnServicesBody": "Sila hidupkan Perkhidmatan Lokasi dalam Tetapan peranti anda.",
+      "turnOnServicesBody": "Sila aktifkan Perkhidmatan Lokasi dalam Tetapan peranti.",
       "openSettings": "Buka Tetapan",
-      "needAccessTitle": "Perlu kebenaran lokasi",
-      "needAccessBody": "Sila benarkan akses lokasi untuk ciri seperti Navigasi.",
+      "needAccessTitle": "Kebenaran lokasi diperlukan",
+      "needAccessBody": "Sila benarkan lokasi untuk ciri seperti Navigasi.",
       "requestError": "Tidak dapat meminta kebenaran lokasi.",
       "allowedTitle": "Lokasi sudah dibenarkan",
-      "allowedBody": "Untuk menukarnya, urus kebenaran dalam Tetapan peranti."
+      "allowedBody": "Untuk menukar, uruskan kebenaran dalam Tetapan peranti."
     },
     "delete": {
       "title": "Padam Akaun",
-      "cardExplain": "Jadualkan pemadaman akaun anda. Data akan dipadam secara kekal selepas 14 hari.",
+      "cardExplain": "Jadualkan pemadaman akaun anda. Data anda akan dipadam secara kekal selepas 14 hari.",
       "button": "Jadualkan pemadaman",
       "modalTitle": "Sahkan pemadaman akaun",
-      "modalExplain": "Ini akan menjadualkan akaun anda untuk dipadam dalam 14 hari. Anda boleh membatalkannya sebelum itu melalui sokongan.",
-      "optionalReason": "(Pilihan) Beritahu mengapa anda pergi",
+      "modalExplain": "Ini akan menjadualkan pemadaman akaun dalam 14 hari. Anda boleh membatalkan sebelum itu melalui sokongan.",
+      "optionalReason": "(Pilihan) Beritahu kami mengapa anda keluar",
       "reasonPH_modal": "Taip sebab ringkas (pilihan)",
       "confirmStepTitle": "Taip untuk sahkan",
       "typeToConfirm": "Taip \"{{phrase}}\" untuk meneruskan.",
       "typePH": "DELETE MY ACCOUNT",
       "confirmDeletion": "Sahkan pemadaman",
       "confirmStepCheckbox": "Saya faham tindakan ini adalah kekal.",
-      "explain": "Portal dilumpuhkan semasa akaun menunggu pemadaman."
+      "explain": "Portal dinyahdaya sementara akaun menunggu pemadaman."
     }
   },
   "delete": {
@@ -373,17 +379,17 @@
   "checkins": {
     "trackerLabel": "Penjejak daftar masuk mingguan",
     "status": {
-      "checked": "telah daftar masuk",
-      "notChecked": "belum daftar masuk"
+      "checked": "telah daftar",
+      "notChecked": "belum daftar"
     },
     "dowShort": {
-      "0": "Ah",
-      "1": "Isn",
-      "2": "Sel",
-      "3": "Rab",
-      "4": "Kha",
-      "5": "Jum",
-      "6": "Sab"
+      "0": "A",
+      "1": "I",
+      "2": "S",
+      "3": "R",
+      "4": "K",
+      "5": "J",
+      "6": "S"
     }
   }
 }
