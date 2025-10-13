@@ -113,7 +113,6 @@ export default function NavigationScreen() {
   const markerRefs = useRef<Record<string, MapMarker | null>>({});
   const lastRouteRefreshRef = useRef(0);
 
-  // remember the previous POI category so we can restore it after stopping nav
   const prevCategoryRef = useRef<CategoryKey>("search");
 
   const isExpoGo = Constants.appOwnership === "expo";
@@ -148,7 +147,6 @@ export default function NavigationScreen() {
               const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
               setLocation(coords);
 
-              // RATE-LIMIT route refresh to avoid quota blowups
               if (destination && Date.now() - lastRouteRefreshRef.current > 15000) {
                 lastRouteRefreshRef.current = Date.now();
                 fetchDirections(coords, destination, /*speak*/ false);
@@ -369,7 +367,6 @@ export default function NavigationScreen() {
     }
   };
 
-  /** ---------------- ROUTING + TURN PROGRESS ---------------- */
   const fetchDirections = async (origin: LatLng, dest: LatLng, speak = true) => {
     try {
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&mode=${mode}&key=${GOOGLE_WEB_API_KEY}`;
@@ -396,7 +393,6 @@ export default function NavigationScreen() {
       }));
       setSteps(mappedSteps);
 
-      // reset current step distance display
       setStepDistanceM(
         distanceMeters(origin, { latitude: mappedSteps[0].endLoc.lat, longitude: mappedSteps[0].endLoc.lng })
       );
@@ -405,7 +401,6 @@ export default function NavigationScreen() {
         Speech.speak(stripHtml(mappedSteps[0].html));
       }
 
-      // fit once when route (re)computed
       if (mapRef.current && coords.length) {
         mapRef.current.fitToCoordinates(coords, {
           edgePadding: { top: 80, right: 40, bottom: 220, left: 40 },
@@ -424,8 +419,7 @@ export default function NavigationScreen() {
     const dist = distanceMeters(pos, { latitude: step.endLoc.lat, longitude: step.endLoc.lng });
     setStepDistanceM(dist);
 
-    // advance when close to the end of this instruction
-    const THRESHOLD_M = 25; // tweak as you like
+    const THRESHOLD_M = 25;
     if (dist < THRESHOLD_M) {
       if (currentStepIndex < steps.length - 1) {
         const nextIndex = currentStepIndex + 1;
@@ -435,7 +429,6 @@ export default function NavigationScreen() {
           Speech.speak(stripHtml(next.html));
         }, 100);
       } else {
-        // arrived — fully clear nav state
         Speech.speak(t("navigation.search.arrived"));
         clearNavigation({ restoreCategory: true });
       }
@@ -491,7 +484,6 @@ export default function NavigationScreen() {
       }
     }
 
-    // remember what category was active before switching to the "search" view
     prevCategoryRef.current = category;
     setCategory("search");
   };
@@ -501,12 +493,11 @@ export default function NavigationScreen() {
       return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
     setNavigating(true);
     setCurrentStepIndex(0);
-    lastRouteRefreshRef.current = 0; // ensure we refresh immediately
+    lastRouteRefreshRef.current = 0; 
     fetchDirections(location, destination, /*speak*/ true);
     Speech.speak(t("navigation.search.started"));
   };
 
-  /** fully clear nav + UI and optionally restore previous POI category */
   const clearNavigation = (opts?: { restoreCategory?: boolean }) => {
     setNavigating(false);
     setDestination(null);
@@ -538,7 +529,6 @@ export default function NavigationScreen() {
     }
   };
 
-  /** ---------------- CC events (unchanged) ---------------- */
   const parseEventStart = (evt: CCEvent): Date | null => {
     if (!evt.start_date) return null;
     const [y, m, d] = evt.start_date.split("-").map(Number);
@@ -813,7 +803,7 @@ export default function NavigationScreen() {
         {routeCoords.length > 0 && <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#007AFF" />}
       </MapView>
 
-      {/* NAV OVERLAY (step-by-step) */}
+      {/* Navigation Overlay */}
       {navigating && (
         <View style={s.navOverlay}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -828,7 +818,6 @@ export default function NavigationScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* CURRENT STEP CARD */}
           {steps[currentStepIndex] && (
             <View style={s.currentStepCard}>
               <AppText variant="label" color="#007AFF" weight="900" style={{ marginBottom: 4 }}>
@@ -888,7 +877,6 @@ export default function NavigationScreen() {
             </View>
           )}
 
-          {/* FULL LIST (toggle) */}
           {showAllSteps && (
             <FlatList
               data={steps}
