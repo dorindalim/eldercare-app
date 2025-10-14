@@ -46,13 +46,11 @@ export default function EditBasic() {
   const ecPhoneRef = useRef<TextInput>(null);
   const ecEmailRef = useRef<TextInput>(null);
 
-  // Language switch for TopBar
   const setLanguage = async (code: LangCode) => {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
   };
 
-  // Prefill from Supabase
   useEffect(() => {
     if (!session?.userId) return;
     (async () => {
@@ -123,6 +121,8 @@ export default function EditBasic() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
       <TopBar
+        leftMode="back"
+        backTo="/tabs/Profile"     
         language={i18n.language as LangCode}
         setLanguage={setLanguage}
         title={t("profile.editBasic")}

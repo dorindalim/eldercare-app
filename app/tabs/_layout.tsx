@@ -66,6 +66,7 @@ export default function ElderlyTabs() {
       <Tabs.Screen name="Community" options={{ href: null }} />
       <Tabs.Screen name="Profile" options={{ href: null }} />
       <Tabs.Screen name="Rewards" options={{ href: null }} />
+      <Tabs.Screen name="ActivityChat" options={{ href: null }} />
     </Tabs>
   );
 }

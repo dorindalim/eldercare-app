@@ -501,10 +501,12 @@ export default function CommunityScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
       <TopBar
+        leftMode="back"
+        backTo="/tabs/Activities"     
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
         bgColor="#FFEE8C"
-        includeTopInset={true}
+        includeTopInset
         barHeight={44}
         topPadding={2}
         title={t("community.title")}
