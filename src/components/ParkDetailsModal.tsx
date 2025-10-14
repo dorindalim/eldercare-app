@@ -140,45 +140,34 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
             </AppText>
           </View>
 
-          {/* Activities */}
           {park.activities && park.activities.length > 0 && (
-            <View style={styles.section}>
-              <AppText variant="title" weight="700" style={styles.sectionTitle}>
-                Activities ({park.activities.length})
-              </AppText>
-              <View style={styles.itemsContainer}>
-                {park.activities.map((activity, index) => (
-                  <View key={index} style={styles.itemCard}>
-                    <AppText variant="body" weight="700" style={styles.itemTitle}>
-                      {activity.title}
-                    </AppText>
-                    
-                    {activity.description && (
-                      <AppText variant="caption" weight="400" style={styles.itemDescription}>
-                        {activity.description}
-                      </AppText>
-                    )}
-                    {activity.category && (
-                      <View style={styles.categoryBadge}>
-                        <AppText variant="caption" weight="600" style={styles.categoryText}>
-                          {activity.category}
-                        </AppText>
-                      </View>
-                    )}
-                    {activity.etiquette_link && (
-                      <TouchableOpacity 
-                        onPress={() => handleEtiquettePress(activity.etiquette_link)}
-                        style={styles.etiquetteLink}
-                      >
-                        <AppText variant="caption" weight="600" style={styles.etiquetteText}>
-                          📚 View Activity Etiquette
-                        </AppText>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ))}
-              </View>
+          <View style={styles.section}>
+            <AppText variant="title" weight="700" style={styles.sectionTitle}>
+              Activities ({park.activities.length})
+            </AppText>
+            {/* Add this description */}
+            <AppText variant="caption" weight="400" style={styles.sectionDescription}>
+              Tap the 📚  icon to view activity etiquette guidelines
+            </AppText>
+
+            <View style={styles.chipsContainer}>
+              {park.activities.map((activity, index) => (
+                <View key={index} style={styles.chip}>
+                  <AppText variant="caption" weight="600" style={styles.chipText}>
+                    {activity.title}
+                  </AppText>
+                  {activity.etiquette_link && (
+                    <TouchableOpacity 
+                      onPress={() => handleEtiquettePress(activity.etiquette_link)}
+                      style={styles.etiquetteIcon}
+                    >
+                      <AppText>📚</AppText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
             </View>
+          </View>
           )}
 
           {/* Amenities */}
@@ -190,20 +179,6 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
               <View style={styles.itemsContainer}>
                 {park.amenities.map((amenity, index) => (
                   <View key={index} style={styles.itemCard}>
-                    {/* Amenity Image */}
-                    {amenity.image ? (
-                      <Image 
-                        source={{ uri: amenity.image }} 
-                        style={styles.amenityImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={[styles.amenityImage, styles.noAmenityImage]}>
-                        <AppText variant="caption" weight="400" style={styles.noImageText}>
-                          No Image
-                        </AppText>
-                      </View>
-                    )}
                     <AppText variant="body" weight="700" style={styles.itemTitle}>
                       {amenity.title}
                     </AppText>
@@ -254,6 +229,34 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
 };
 
 const styles = StyleSheet.create({
+  chipsContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E7F3FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  chipText: {
+    color: '#007AFF',
+    fontSize: 12,
+  },
+  etiquetteIcon: {
+    marginLeft: 4,
+  },
+  sectionDescription: {
+  color: '#6B7280',
+  fontSize: 14,
+  marginBottom: 12,
+  fontStyle: 'italic',
+},
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',

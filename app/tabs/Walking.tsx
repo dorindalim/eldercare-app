@@ -3,11 +3,13 @@ import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import Pagination from '../../src/components/Pagination';
 import ParkDetailsModal from "../../src/components/ParkDetailsModal";
+import SearchBar from '../../src/components/SearchBar';
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
@@ -67,8 +69,16 @@ export default function WalkingScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
+  const [currentPage, setCurrentPage] = useState(1);
   
   const flatListRef = useRef<FlatList>(null);
+  const scrollToTop = () => {
+  flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });};
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    scrollToTop(); // Scroll to top when page changes
+  };
   
   const setLang = async (code: string) => {
     await i18n.changeLanguage(code);
@@ -80,14 +90,11 @@ export default function WalkingScreen() {
   const [selectedPark, setSelectedPark] = useState<ParkLocation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentTab, setCurrentTab] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number; longitude: number} | null>(null);
   const [showParkDetails, setShowParkDetails] = useState(false);
-  // Add these to your existing state
-  const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
 
   // Filter categories
@@ -562,163 +569,12 @@ export default function WalkingScreen() {
   );
 
   // Calculate tabs data based on filtered parks
-  const parksPerTab = 10;
-  const totalTabs = Math.ceil(filteredParks.length / parksPerTab);
+  const parksPerPage = 10;
+  const totalPages = Math.ceil(filteredParks.length / parksPerPage);
   const currentParks = filteredParks.slice(
-    currentTab * parksPerTab,
-    (currentTab + 1) * parksPerTab
+    (currentPage - 1) * parksPerPage,
+    currentPage * parksPerPage
   );
-
-  // Calculate visible page range (max 3 pages at a time)
-  const getVisiblePages = () => {
-    if (totalTabs <= 3) {
-      return Array.from({ length: totalTabs }, (_, i) => i);
-    }
-
-    if (currentTab === 0) {
-      return [0, 1, 2];
-    } else if (currentTab === totalTabs - 1) {
-      return [totalTabs - 3, totalTabs - 2, totalTabs - 1];
-    } else {
-      return [currentTab - 1, currentTab, currentTab + 1];
-    }
-  };
-
-  const visiblePages = getVisiblePages();
-
-  // Scroll to top function
-  const scrollToTop = () => {
-    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-  };
-
-  // Navigation handlers
-  const goToFirstPage = () => {
-    setCurrentTab(0);
-    scrollToTop();
-  };
-
-  const goToLastPage = () => {
-    setCurrentTab(totalTabs - 1);
-    scrollToTop();
-  };
-
-  const goToPreviousPage = () => {
-    setCurrentTab(prev => Math.max(0, prev - 1));
-    scrollToTop();
-  };
-
-  const goToNextPage = () => {
-    setCurrentTab(prev => Math.min(totalTabs - 1, prev + 1));
-    scrollToTop();
-  };
-
-  const handleTabChange = (tabIndex: number) => {
-    setCurrentTab(tabIndex);
-    scrollToTop();
-  };
-
-  const renderTabButtons = () => {
-    if (totalTabs <= 1) return null;
-    
-    return (
-      <View style={s.tabContainer}>
-        {/* Left Navigation Arrows */}
-        <View style={s.navButtons}>
-          <TouchableOpacity
-            style={[
-              s.navButton,
-              currentTab === 0 && s.navButtonDisabled
-            ]}
-            onPress={goToFirstPage}
-            disabled={currentTab === 0}
-          >
-            <AppText style={[
-              s.navButtonText,
-              currentTab === 0 && s.navButtonTextDisabled
-            ]}>
-              {'<<'}
-            </AppText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              s.navButton,
-              currentTab === 0 && s.navButtonDisabled
-            ]}
-            onPress={goToPreviousPage}
-            disabled={currentTab === 0}
-          >
-            <AppText style={[
-              s.navButtonText,
-              currentTab === 0 && s.navButtonTextDisabled
-            ]}>
-              {'<'}
-            </AppText>
-          </TouchableOpacity>
-        </View>
-
-        {/* Page Numbers */}
-        <View style={s.pageNumbers}>
-          {visiblePages.map((pageIndex) => (
-            <TouchableOpacity
-              key={pageIndex}
-              style={[
-                s.tabButton,
-                currentTab === pageIndex && s.activeTabButton
-              ]}
-              onPress={() => handleTabChange(pageIndex)}
-            >
-              <AppText 
-                variant="caption" 
-                weight="700" 
-                style={[
-                  s.tabButtonText,
-                  currentTab === pageIndex && s.activeTabButtonText
-                ]}
-              >
-                {pageIndex + 1}
-              </AppText>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Right Navigation Arrows */}
-        <View style={s.navButtons}>
-          <TouchableOpacity
-            style={[
-              s.navButton,
-              currentTab === totalTabs - 1 && s.navButtonDisabled
-            ]}
-            onPress={goToNextPage}
-            disabled={currentTab === totalTabs - 1}
-          >
-            <AppText style={[
-              s.navButtonText,
-              currentTab === totalTabs - 1 && s.navButtonTextDisabled
-            ]}>
-              {'>'}
-            </AppText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              s.navButton,
-              currentTab === totalTabs - 1 && s.navButtonDisabled
-            ]}
-            onPress={goToLastPage}
-            disabled={currentTab === totalTabs - 1}
-          >
-            <AppText style={[
-              s.navButtonText,
-              currentTab === totalTabs - 1 && s.navButtonTextDisabled
-            ]}>
-              {'>>'}
-            </AppText>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
 
   if (loading) {
     return (
@@ -794,57 +650,21 @@ export default function WalkingScreen() {
           router.replace("/Authentication/LogIn");
         }}
       />
-
-      {/* Top Action Buttons */}
-      <View style={s.topActionsContainer}>
-        <TouchableOpacity 
-          style={s.actionButton}
-          onPress={() => {
-            clearAllSearchAndFilters();
-            setShowSearchPanel(!showSearchPanel);
-            setShowFilterPanel(false);
-          }}
-        >
-          <AppText style={s.actionButtonText}>Search Parks</AppText>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={s.actionButton}
-          onPress={() => {
-            clearAllSearchAndFilters();
+      {/* Combined Search and Filter Bar */}
+      <View style={s.searchBarContainer}>
+        <SearchBar
+          value={searchQuery}
+          placeholder="Search parks by name/activity/region"
+          onChangeText={handleSearch}
+          onSubmit={handleSearchButton}
+          onPressFilter={() => {
             setShowFilterPanel(!showFilterPanel);
-            setShowSearchPanel(false);
           }}
-        >
-          <AppText style={s.actionButtonText}>Filter Parks</AppText>
-        </TouchableOpacity>
+          style={s.searchBar}
+        />
       </View>
 
-      {/* Search Panel */}
-      {showSearchPanel && (
-        <View style={s.panelContainer}>
-          <View style={s.searchPanel}>
-            <View style={s.searchInputContainer}>
-              <TextInput
-                style={s.searchInput}
-                placeholder="Search keywords"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearchButton}
-              />
-              <TouchableOpacity 
-                style={s.searchButton}
-                onPress={() => {
-                  handleSearchButton();
-                  setShowSearchPanel(false);
-                }}
-              >
-                <AppText style={s.searchButtonText}>Search</AppText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+ 
 
       {/* Filter Panel */}
       {showFilterPanel && (
@@ -887,7 +707,7 @@ export default function WalkingScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
-                </View>
+                </View>               
               ))}
             </ScrollView>
             
@@ -926,25 +746,32 @@ export default function WalkingScreen() {
             tintColor="#007AFF"
           />
         }
-        ListEmptyComponent={
-          <View style={s.emptyContainer}>
-            <AppText variant="body" weight="400" style={s.emptyText}>
-              {searchQuery || filters.some(cat => cat.selected.length > 0) 
-                ? "No parks match your search criteria" 
-                : "No parks found in database"
-              }
-            </AppText>
-            <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
-              <AppText variant="button" weight="700" style={s.retryButtonText}>
-                Try Again
-              </AppText>
-            </TouchableOpacity>
-          </View>
+         ListFooterComponent={
+          filteredParks.length > 0 ? (
+            <Pagination 
+              page={currentPage}
+              total={totalPages}
+              onChange={handlePageChange}
+            />
+          ) : null
         }
-      />
-
-      {/* Tab Buttons at Bottom Only */}
-      {totalTabs > 1 && renderTabButtons()}
+        ListFooterComponentStyle={{ padding: 16 }}
+              ListEmptyComponent={
+                <View style={s.emptyContainer}>
+                  <AppText variant="body" weight="400" style={s.emptyText}>
+                    {searchQuery || filters.some(cat => cat.selected.length > 0) 
+                      ? "No parks match your search criteria" 
+                      : "No parks found in database"
+                    }
+                  </AppText>
+                  <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
+                    <AppText variant="button" weight="700" style={s.retryButtonText}>
+                      Try Again
+                    </AppText>
+                  </TouchableOpacity>
+                </View>
+              }
+            />
 
       {/* Park Details Modal */}
       <ParkDetailsModal
@@ -1014,6 +841,14 @@ const s = StyleSheet.create({
   },
 
   // Search Input
+  searchBarContainer: {
+  padding: 16,
+  backgroundColor: "#FFF",
+  borderBottomWidth: 1,
+  borderBottomColor: "#E9ECEF",
+  },
+  searchBar: {},
+
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",

@@ -275,7 +275,7 @@ export default function ElderlyHome() {
           onPressRewards={() => router.push("/tabs/Rewards")}
         />
 
-        {/* Row 1 */}
+        {/* Row 1: Navigatioon + All Activities */}
         <View style={s.row}>
           <Pressable style={s.rect} onPress={() => router.push("/tabs/Navigation")}>
             <Ionicons name="navigate-outline" size={28} color="#222" />
@@ -284,15 +284,15 @@ export default function ElderlyHome() {
             </AppText>
           </Pressable>
 
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Community")}>
-            <Ionicons name="people-outline" size={28} color="#222" />
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Activities")}>
+            <Ionicons name="calendar-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.ccActivities")}
+              {t("home.allActivities")}
             </AppText>
           </Pressable>
         </View>
 
-        {/* Row 2: Clinic + Walking Routes */}
+        {/* Row 2: Clinic + Bulletin Board */}
         <View style={s.row}>
           <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
             <Ionicons name="medkit-outline" size={28} color="#222" />
@@ -301,10 +301,10 @@ export default function ElderlyHome() {
             </AppText>
           </Pressable>
 
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Walking")}>
-            <Ionicons name="walk-outline" size={28} color="#222" />
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Bulletin")}>
+            <Ionicons name="newspaper-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.walkingRoutes")}
+              {t("home.bulletinBoard")}
             </AppText>
           </Pressable>
         </View>
@@ -396,7 +396,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  rectText: { marginTop: 8, textAlign: "center" },
+  rectText: { marginTop: 8, textAlign: "center", lineHeight: 20, height: 25, includeFontPadding: false,},
 
   sosWrap: { alignItems: "center", marginTop: 20, marginBottom: 12 },
   sos: {
@@ -433,4 +433,5 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   cancelOnlyText: { color: "#fff" },
+  
 });

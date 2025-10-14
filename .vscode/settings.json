@@ -19,7 +19,14 @@
   "i18n-ally.extract.autoDetect": true, //autodetect hardcoded text
   "i18n-ally.namespace": true, //support json structure
   "i18n-ally.sortKeys": true, // keep json files organised
-  "i18n-ally.translate.engines": [ "google"]
+  "i18n-ally.translate.engines": [ "google"],
+  
+  // Auto-create missing keys
+  "i18n-ally.enableAutoCompletion": true,
+  "i18n-ally.enableFluent": false,
+  
+  // Optional: Auto-detect and prompt for new keys
+  "i18n-ally.detectHardcodedStrings": true
 }
 
 
