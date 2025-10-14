@@ -301,7 +301,6 @@ export default function CommunityScreen() {
       if (from) query = query.gte("start_date", from);
       if (to) query = query.lte("start_date", to);
 
-      // pricing (no extra toggle)
       if (pricingFilter === "free") {
         query = query.or("fee.is.null,fee.ilike.*free*");
       } else if (pricingFilter === "paid") {
