@@ -1,16 +1,16 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View, TextInput, Linking } from "react-native";
+import { ActivityIndicator, FlatList, Linking, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Location from 'expo-location';
 
+import CHASClinics from '../../assets/data/CHASClinics.json';
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
-import CHASClinics from '../../assets/data/CHASClinics.json';
 
 const datasetId = "d_9d0bbe366aee923a6e202f80bb356bb9";
 const url = `https://data.gov.sg/api/action/datastore_search?resource_id=${datasetId}`;

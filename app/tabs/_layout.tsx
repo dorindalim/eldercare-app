@@ -21,15 +21,17 @@ export default function ElderlyTabs() {
           ),
         }}
       />
+
       <Tabs.Screen
-        name="Walking"
+        name="Activities"
         options={{
-          title: t("home.walkingRoutes"),
+          title: t("home.allActivities"),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="walk-outline" color={color} size={size} />
+            <Ionicons name="calendar-outline" color={color} size={size} />
           ),
         }}
       />
+
       <Tabs.Screen
         name="HomePage"
         options={{
@@ -39,15 +41,7 @@ export default function ElderlyTabs() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="Community"
-        options={{
-          title: t("home.ccActivities"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" color={color} size={size} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="Clinic"
         options={{
@@ -57,20 +51,21 @@ export default function ElderlyTabs() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="Bulletin"
         options={{
-          title: t("Bulletin Board"),
+          title: t("home.bulletinBoard"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="newspaper-outline" color={color} size={size} />
           ),
         }}
       />
 
-      {/* Hidden screens */}
+      <Tabs.Screen name="Walking" options={{ href: null }} />
+      <Tabs.Screen name="Community" options={{ href: null }} />
       <Tabs.Screen name="Profile" options={{ href: null }} />
       <Tabs.Screen name="Rewards" options={{ href: null }} />
     </Tabs>
   );
 }
-

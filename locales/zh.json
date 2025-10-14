@@ -67,12 +67,19 @@
     "homeTab": "首页",
     "ccActivities": "社区俱乐部活动",
     "clinics": "诊所",
+    "allActivities": "所有活动",
+    "bulletinBoard": "公告栏",
     "profile": "个人资料",
     "rewards": "奖励",
     "sos": "SOS",
     "imActive": "我很活跃",
     "tapToCheckIn": "点击签到",
     "checkedIn": "你今天已签到！"
+  },
+  "activities": {
+    "prompt": "你想做什么？",
+    "parks": "公园",
+    "ccActivities": "社区俱乐部活动"
   },
   "sos": {
     "title": "正在发送 SOS",

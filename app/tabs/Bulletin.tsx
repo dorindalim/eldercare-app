@@ -29,8 +29,6 @@ import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
-/* ---------------------- helpers & local identity ---------------------- */
-
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type LatLng = { latitude: number; longitude: number };
 
@@ -53,7 +51,6 @@ const LAST_SEEN_KEY = "bulletin:last_seen_ts_v1";
 async function getDeviceId(): Promise<string> {
   const cur = await AsyncStorage.getItem(DEVICE_ID_KEY);
   if (cur) return cur;
-  // quick random id
   const id = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   await AsyncStorage.setItem(DEVICE_ID_KEY, id);
   return id;
@@ -73,8 +70,6 @@ async function notifyNow(title: string, body?: string) {
   });
 }
 
-/* ------------------------------- types -------------------------------- */
-
 const CATS: { key: string; label: string; icon: IconName }[] = [
   { key: "kopi",     label: "Kopi & Chat",        icon: "chatbubbles-outline" },
   { key: "mahjong",  label: "Mahjong & Games",    icon: "grid-outline" },
@@ -88,7 +83,7 @@ const CATS: { key: string; label: string; icon: IconName }[] = [
 type ActivityRow = {
   id: string;
   user_id: string | null;
-  owner_device_id: string | null; // NEW
+  owner_device_id: string | null; 
   title: string;
   description: string | null;
   category: string;
@@ -139,7 +134,6 @@ const GOOGLE_PLACES_KEY: string | undefined =
 
 const MY_IDS_KEY = "my_activity_ids_v1";
 
-/* -------------------------------- Screen ------------------------------- */
 
 export default function Bulletin() {
   const router = useRouter();
@@ -150,7 +144,6 @@ export default function Bulletin() {
   const [deviceId, setDeviceId] = useState<string>("");
   useEffect(() => { getDeviceId().then(setDeviceId); }, []);
 
-  // For anon users, track IDs created on this device
   const [myIds, setMyIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     AsyncStorage.getItem(MY_IDS_KEY).then((raw) => {
@@ -166,7 +159,6 @@ export default function Bulletin() {
     await AsyncStorage.setItem(MY_IDS_KEY, JSON.stringify(Array.from(next)));
   }
 
-  // Location (for distance sort)
   const [myLoc, setMyLoc] = useState<LatLng | null>(null);
   useEffect(() => {
     (async () => {
@@ -180,13 +172,11 @@ export default function Bulletin() {
     })();
   }, []);
 
-  // Data
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<ActivityRow[]>([]);
   const [filterCat, setFilterCat] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Form (create & edit share same state)
   const [creating, setCreating] = useState(false);
   const [editingRow, setEditingRow] = useState<ActivityRow | null>(null);
   const [title, setTitle] = useState("");
@@ -205,10 +195,8 @@ export default function Bulletin() {
   const [contact, setContact] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // “My interested activities” set for update notifications
   const [myInterestedIds, setMyInterestedIds] = useState<Set<string>>(new Set());
 
-  /* --------------------- fetch activities + interests --------------------- */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -239,7 +227,6 @@ export default function Bulletin() {
     return () => { cancelled = true; };
   }, [myLoc, refreshKey]);
 
-  // Load my interested list (for update alerts)
   useEffect(() => {
     (async () => {
       if (!deviceId) return;
@@ -254,7 +241,6 @@ export default function Bulletin() {
     })();
   }, [deviceId, hasSession, session, refreshKey]);
 
-  /* -------------------- Google Places suggestions flow -------------------- */
   useEffect(() => {
     const q = placeQuery.trim();
     if (!GOOGLE_PLACES_KEY || !q) {
@@ -295,8 +281,6 @@ export default function Bulletin() {
       setPlacePreds([]);
     } catch {}
   }
-
-  /* -------------------------- Create / Edit submit ------------------------ */
 
   async function submitCreate() {
     if (!title.trim() || !placeChosen?.name || !date) {
@@ -366,7 +350,6 @@ export default function Bulletin() {
       const { error } = await supabase.from("community_activities").update(upd).eq("id", editingRow.id);
       if (error) throw error;
 
-      // Interested devices will receive a realtime UPDATE and self-notify.
       Alert.alert("Saved", "Your activity has been updated.");
       setEditingRow(null);
       resetForm();
@@ -387,11 +370,9 @@ export default function Bulletin() {
     setContact("");
   }
 
-  /* ------------------------ Mark Interested (RPC) ------------------------- */
 
   async function markInterested(row: ActivityRow) {
     try {
-      // Who’s interested? Grab name if available from profile (optional).
       let interestedName: string | null = null;
       try {
         if (hasSession && session?.userId) {
@@ -404,7 +385,6 @@ export default function Bulletin() {
         }
       } catch {}
 
-      // Insert an interest row (so the owner’s device can be notified)
       const interest = {
         activity_id: row.id,
         owner_user_id: row.user_id,
@@ -417,11 +397,9 @@ export default function Bulletin() {
       const { error: insErr } = await supabase.from("activity_interests").insert([interest]);
       if (insErr) throw insErr;
 
-      // Bump the visible count (race-safe)
       const { error } = await supabase.rpc("bump_interest", { p_id: row.id });
       if (error) throw error;
 
-      // Optionally let the interested user contact creator immediately
       if (row.contact_phone) {
         const msg = `Hello! I'm keen to join "${row.title}" on ${new Date(row.starts_at)
           .toLocaleString("en-SG", { hour12: false })}.`;
@@ -436,9 +414,7 @@ export default function Bulletin() {
     }
   }
 
-  /* --------------------- Realtime & “when you come back” ------------------- */
 
-  // Realtime: notify creators on new interests
   useEffect(() => {
     if (!deviceId) return;
     const ch = supabase
@@ -462,7 +438,6 @@ export default function Bulletin() {
     return () => { supabase.removeChannel(ch); };
   }, [deviceId, hasSession, session]);
 
-  // Realtime: notify interested users on activity updates
   useEffect(() => {
     const ch = supabase
       .channel("activity_updates")
@@ -480,7 +455,6 @@ export default function Bulletin() {
     return () => { supabase.removeChannel(ch); };
   }, [myInterestedIds]);
 
-  // On app resume → check for any new interests (for me) & updates (for my interests) since last_seen
   const appStateRef = useRef(AppState.currentState);
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (next) => {
@@ -489,7 +463,6 @@ export default function Bulletin() {
           const lastSeenRaw = (await AsyncStorage.getItem(LAST_SEEN_KEY)) || "1970-01-01T00:00:00Z";
           const since = new Date(lastSeenRaw).toISOString();
 
-          // New interests for me (owner)
           const q1 = supabase
             .from("activity_interests")
             .select("interested_name, activity_title, owner_user_id, owner_device_id, created_at")
@@ -505,7 +478,6 @@ export default function Bulletin() {
             }
           }
 
-          // Updates to activities I’m interested in
           if (myInterestedIds.size) {
             const ids = Array.from(myInterestedIds);
             const { data: ups } = await supabase
@@ -520,13 +492,10 @@ export default function Bulletin() {
         } catch {}
       }
       appStateRef.current = next;
-      // record last seen
       await AsyncStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
     });
     return () => sub.remove();
   }, [deviceId, hasSession, session, myInterestedIds]);
-
-  /* -------------------------------- filtering ------------------------------ */
 
   const filtered = useMemo(() => {
     const base = filterCat ? rows.filter((e) => e.category === filterCat) : rows;
@@ -553,8 +522,6 @@ export default function Bulletin() {
   }, [filtered, hasSession, session, myIds, deviceId]);
 
   const setLang = async (code: string) => {};
-
-  /* --------------------------------- render -------------------------------- */
 
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
@@ -600,7 +567,6 @@ export default function Bulletin() {
                   myLoc={myLoc}
                   isMine
                   onEdit={() => {
-                    // load into form
                     setEditingRow(row);
                     setTitle(row.title);
                     setDesc(row.description || "");
@@ -778,8 +744,6 @@ export default function Bulletin() {
   );
 }
 
-/* ------------------------------- UI bits ------------------------------- */
-
 function Section({ title }: { title: string }) {
   return (
     <View style={{ paddingHorizontal: 4, paddingTop: 12, paddingBottom: 6 }}>
@@ -882,8 +846,6 @@ function ActivityCard({
     </View>
   );
 }
-
-/* ------------------------------- styles ------------------------------- */
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#F8FAFC" },

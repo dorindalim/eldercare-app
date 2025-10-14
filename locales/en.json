@@ -67,12 +67,19 @@
     "homeTab": "Home",
     "ccActivities": "CC Activities",
     "clinics": "Clinics",
+    "allActivities": "All Activities",
+    "bulletinBoard": "Bulletin Board",
     "profile": "Profile",
     "rewards": "Rewards",
     "sos": "SOS",
     "imActive": "I'm Active",
     "tapToCheckIn": "Tap to check in",
     "checkedIn": "You have Checked In today!"
+  },
+  "activities": {
+    "prompt": "What would you like to do?",
+    "parks": "Parks",
+    "ccActivities": "Community Centre Activities"
   },
   "sos": {
     "title": "Sending SOS",
