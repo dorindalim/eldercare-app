@@ -67,12 +67,19 @@
     "homeTab": "Utama",
     "ccActivities": "Aktiviti CC",
     "clinics": "Klinik",
+    "allActivities": "Semua Aktiviti",
+    "bulletinBoard": "Papan Buletin",
     "profile": "Profil",
     "rewards": "Ganjaran",
     "sos": "SOS",
     "imActive": "Saya Aktif",
     "tapToCheckIn": "Ketuk untuk daftar masuk",
     "checkedIn": "Anda telah daftar masuk hari ini!"
+  },
+  "activities": {
+    "prompt": "Apa yang anda ingin lakukan?",
+    "parks": "Taman",
+    "ccActivities": "Aktiviti Pusat Komuniti"
   },
   "sos": {
     "title": "Menghantar SOS",

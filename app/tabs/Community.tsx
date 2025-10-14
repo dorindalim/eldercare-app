@@ -1,4 +1,3 @@
-// app/tabs/Community.tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -302,7 +301,6 @@ export default function CommunityScreen() {
       if (from) query = query.gte("start_date", from);
       if (to) query = query.lte("start_date", to);
 
-      // pricing (no extra toggle)
       if (pricingFilter === "free") {
         query = query.or("fee.is.null,fee.ilike.*free*");
       } else if (pricingFilter === "paid") {
@@ -395,7 +393,6 @@ export default function CommunityScreen() {
 
   const selectedCatsLabel = categories.length > 0 ? categories.map((c) => catLabel(c as any, t)).join(", ") : t("community.all");
 
-  // summary shows the chosen filters; static, non-interactive
   const summaryItems = [
     selectedCatsLabel,
     timingText(timeFilter),
@@ -452,7 +449,6 @@ export default function CommunityScreen() {
     );
   };
 
-  // FilterSheet sections (no toggle)
   const filterSections: FilterSection[] = [
     {
       id: "categories",
@@ -505,17 +501,18 @@ export default function CommunityScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
       <TopBar
+        leftMode="back"
+        backTo="/tabs/Activities"     
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
         bgColor="#FFEE8C"
-        includeTopInset={true}
+        includeTopInset
         barHeight={44}
         topPadding={2}
         title={t("community.title")}
         onLogout={async () => { await logout(); router.replace("/Authentication/LogIn"); }}
       />
 
-      {/* Notifications Panel */}
       <View style={styles.notifWrap}>
         <Pressable style={styles.notifBar} onPress={() => { smoothLayout(); setNotifPanelOpen((v) => { const next = !v; if (next) refreshNotifications(); return next; }); }} accessibilityRole="button">
           <AppText variant="label" weight="800">{t("community.notifs.panelTitle")}</AppText>
@@ -573,7 +570,6 @@ export default function CommunityScreen() {
         )}
       </View>
 
-      {/* Search + static summary */}
       <View style={{ padding: 12 }}>
         <SearchBar
           value={keyword}
@@ -592,7 +588,6 @@ export default function CommunityScreen() {
         <SummaryChip items={summaryItems} variant="indigo" style={{ marginTop: 8 }} />
       </View>
 
-      {/* List */}
       <FlatList
         ref={listRef}
         data={events}
@@ -612,7 +607,6 @@ export default function CommunityScreen() {
         }
       />
 
-      {/* Filters */}
       <FilterSheet
         visible={filtersOpen}
         onClose={() => setFiltersOpen(false)}
@@ -635,7 +629,6 @@ export default function CommunityScreen() {
         labels={{ reset: t("community.filters.reset"), apply: t("community.filters.apply") }}
       />
 
-      {/* Details Modal */}
       <Modal
         visible={detailsOpen && !!selectedEvent}
         transparent
@@ -648,7 +641,6 @@ export default function CommunityScreen() {
 
         {selectedEvent && (
           <View style={[styles.detailsCard, { height: sheetHeight }]}>
-            {/* Pinned header (measure) */}
             <View
               style={styles.detailsHeader}
               onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}
@@ -694,7 +686,6 @@ export default function CommunityScreen() {
               )}
             </View>
 
-            {/* Scrollable content; the inner View measures content height */}
             <ScrollView
               style={styles.detailsScroll}
               contentContainerStyle={styles.detailsScrollContent}
@@ -708,7 +699,6 @@ export default function CommunityScreen() {
               </View>
             </ScrollView>
 
-            {/* Pinned footer (measure) */}
             <View
               style={styles.detailsFooter}
               onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}

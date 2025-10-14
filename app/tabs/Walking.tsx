@@ -780,6 +780,8 @@ export default function WalkingScreen() {
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
       {/* Top Bar */}
       <TopBar
+        leftMode="back"
+        backTo="/tabs/Activities"     
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
         bgColor="#D9D991"
