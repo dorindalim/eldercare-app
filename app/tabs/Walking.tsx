@@ -416,20 +416,44 @@ export default function WalkingScreen() {
   };
 
   const handleGetDirections = (park: ParkLocation) => {
+  try {
     setShowParkDetails(false);
     setSelectedPark(null);
     
-    router.push({
-      pathname: "/tabs/Navigation",
-      params: { 
-        presetQuery: park.title,
-      // Add coordinates if available for more accurate navigation
-      ...(park.latitude && park.longitude && {
-        presetLat: park.latitude.toString(),
-        presetLng: park.longitude.toString()
-      })
+    console.log('Navigating to Navigation with park:', park.title);
+
+
+    if (!park.title) {
+      Alert.alert('Error', 'Park name is required for directions');
+      return;
     }
-  });
+    
+    // Build the href with proper URL encoding
+    let href = `/tabs/Navigation?presetQuery=${encodeURIComponent(park.title.trim())}`;
+    
+    // Add coordinates if available
+    if (park.latitude && park.longitude) {
+      href += `&presetLat=${park.latitude}&presetLng=${park.longitude}`;
+    }
+    
+    console.log('Navigating to:', href);
+    router.push({
+       pathname: "/tabs/Navigation",
+       params: { 
+        presetQuery: park.title.trim(),
+        freshStart: "true",
+        fillOnly: "true",
+        ...(park.latitude && park.longitude && {
+          presetLat: park.latitude.toString(),
+          presetLng: park.longitude.toString()
+        })
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error navigating to directions:', error);
+    Alert.alert('Error', 'Failed to open navigation');
+    }
   };
 
   const handleUrlPress = async (url: string) => {

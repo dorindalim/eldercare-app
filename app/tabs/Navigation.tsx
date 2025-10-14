@@ -13,6 +13,7 @@ import {
   FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -120,11 +121,125 @@ export default function NavigationScreen() {
 
   const params = useLocalSearchParams();
   const presetQuery = params.presetQuery as string | undefined;
+  const [searchInput, setSearchInput] = useState(presetQuery || '');
   const autoRanRef = useRef(false);
   const presetLat = params.presetLat ? parseFloat(params.presetLat as string) : null;
   const presetLng = params.presetLng ? parseFloat(params.presetLng as string) : null;
 
-  const [searchInput, setSearchInput] = useState(presetQuery || '');
+  const prevPresetQueryRef = useRef<string | undefined>(undefined);
+  const freshStart = params.freshStart == "true";
+  const fillOnly = params.fillOnly === "true"; 
+  const [userSelectedMode, setUserSelectedMode] = useState<"driving" | "walking" | "bicycling" | "transit" | null>(null);
+
+  const fetchDirections = async (origin: LatLng, dest: LatLng, speak = true) => {
+  try {
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&mode=${mode}&key=${GOOGLE_WEB_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.routes?.length) return;
+
+    const route = data.routes[0];
+    const pts = polyline.decode(route.overview_polyline.points);
+    const coords = pts.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+    setRouteCoords(coords);
+
+    const leg = route.legs[0];
+    setEta({ duration: leg.duration.text, distance: leg.distance.text });
+
+    const mappedSteps = leg.steps.map((s: any, idx: number) => ({
+      id: String(idx),
+      html: s.html_instructions,
+      dist: s.distance?.text ?? "",
+      endLoc: {
+        lat: s.end_location.lat,
+        lng: s.end_location.lng,
+      },
+    }));
+    setSteps(mappedSteps);
+
+    setStepDistanceM(
+      distanceMeters(origin, { latitude: mappedSteps[0].endLoc.lat, longitude: mappedSteps[0].endLoc.lng })
+    );
+
+    if (speak && mappedSteps.length) {
+      Speech.speak(stripHtml(mappedSteps[0].html));
+    }
+
+    if (mapRef.current && coords.length) {
+      mapRef.current.fitToCoordinates(coords, {
+        edgePadding: { top: 80, right: 40, bottom: 220, left: 40 },
+        animated: true,
+      });
+    }
+  } catch (e) {
+    Alert.alert(t("common.error"), String(e));
+    }
+  };
+  const resetNavigationState = () => {
+  
+  // Clear all navigation state
+  setNavigating(false);
+  setDestination(null);
+  setRouteCoords([]);
+  setSteps([]);
+  setCurrentStepIndex(0);
+  setEta(null);
+  setStepDistanceM(null);
+  setShowAllSteps(false);
+  
+  // Clear search and UI state
+  setQuery("");
+  setSearchInput("");
+  setSuggestions([]);
+  setShowPoiOptions(false);
+  setSheetOpen(false);
+  setCatMenuOpen(false);
+  
+  // Reset timers
+  lastRouteRefreshRef.current = 0;
+  
+  // Stop any speech
+  Speech.stop();
+  
+  // Reset to default category
+  setCategory("search");
+  
+  // Reset map view to current location
+  if (location && mapRef.current) {
+    mapRef.current.animateToRegion(
+      {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
+      500
+      );
+    }
+  };
+
+  const updateStepProgress = (pos: LatLng) => {
+    if (!steps.length) return;
+
+    const step = steps[currentStepIndex];
+    const dist = distanceMeters(pos, { latitude: step.endLoc.lat, longitude: step.endLoc.lng });
+    setStepDistanceM(dist);
+
+    const THRESHOLD_M = 25;
+    if (dist < THRESHOLD_M) {
+      if (currentStepIndex < steps.length - 1) {
+        const nextIndex = currentStepIndex + 1;
+        setCurrentStepIndex(nextIndex);
+        setTimeout(() => {
+          const next = steps[nextIndex];
+          Speech.speak(stripHtml(next.html));
+        }, 100);
+      } else {
+        Speech.speak(t("navigation.search.arrived"));
+        clearNavigation({ restoreCategory: true });
+      }
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -139,52 +254,74 @@ export default function NavigationScreen() {
     })();
   }, [i18n.language]);
 
+  // Fix for the navigation useEffect
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        setPermissionGranted(true);
-        const pos = await Location.getCurrentPositionAsync({});
-        setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      } else {
-        Alert.alert(t("navigation.search.permissionTitle"), t("navigation.search.permissionBody"));
-      }
-    })();
-  }, [i18n.language]);
-
-  useEffect(() => {
+    let isMounted = true;
     let sub: Location.LocationSubscription | null = null;
-    if (navigating) {
-      (async () => {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted") {
-          sub = await Location.watchPositionAsync(
-            { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 5 },
-            (pos) => {
-              const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-              setLocation(coords);
 
-              if (destination && Date.now() - lastRouteRefreshRef.current > 15000) {
-                lastRouteRefreshRef.current = Date.now();
-                fetchDirections(coords, destination, /*speak*/ false);
-              }
+    const setupLocationWatch = async () => {
+      if (!navigating || !isMounted) return;
+      
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted" && isMounted) {
+        sub = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 5 },
+          (pos) => {
+            if (!isMounted || !navigating) return;
+            const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+            setLocation(coords);
 
-              updateStepProgress(coords);
-            }
-          );
+          //only recalculate if we're actively navigating AND have a destination
+          if (navigating && destination && Date.now() - lastRouteRefreshRef.current > 15000) {
+            lastRouteRefreshRef.current = Date.now();
+            fetchDirections(coords, destination, false);
+          }
+          if (navigating) updateStepProgress(coords);
         }
-      })();
+        );
+      }
+    };
+
+  setupLocationWatch();
+
+  return () => {
+    isMounted = false;
+    if (sub) {
+      sub.remove();
+      sub = null;
     }
-    return () => sub && sub.remove();
-  }, [navigating, destination, mode, steps, currentStepIndex]);
+  };
+}, [navigating, destination, mode, steps, currentStepIndex, fetchDirections, updateStepProgress]);
 
   useEffect(() => {
-    if (presetQuery && !autoRanRef.current) {
-      autoRanRef.current = true;
-      setQuery(presetQuery);
-      searchDestination(presetQuery);
+  
+  if (presetQuery && presetQuery !== prevPresetQueryRef.current) {
+    console.log('Processing presetQuery:', presetQuery);
+    prevPresetQueryRef.current = presetQuery;
+    
+    // Completely reset state 
+    resetNavigationState();
+
+    // Set the text in the search bar
+    setQuery(presetQuery);
+    setSearchInput(presetQuery);
+    
+    // Only show suggestions, don't auto-search when fillOnly is true
+    if (fillOnly && location) {
+      console.log('Fill only mode - showing suggestions for:', presetQuery);
+      setTimeout(() => {
+        fetchAutocompleteSuggestions(presetQuery);
+      }, 300);
+    } 
+    // Auto-search only if NOT fillOnly (backward compatibility)
+    else if (!fillOnly && location) {
+      console.log('Auto-searching for:', presetQuery);
+      setTimeout(() => {
+        searchDestination(presetQuery);
+        }, 300);
+      }
     }
-  }, [presetQuery]);
+  }, [presetQuery, fillOnly]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -209,19 +346,26 @@ export default function NavigationScreen() {
   };
 
   const handleSuggestionPress = async (suggestion: any) => {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${suggestion.place_id}&key=${GOOGLE_WEB_API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.result) {
-        const loc = data.result.geometry.location;
-        const dest = { latitude: loc.lat, longitude: loc.lng };
-        setQuery(suggestion.description);
-        setSuggestions([]);
-        setDestinationOnly(dest);
-      }
-    } catch (e) {
-      console.error(e);
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${suggestion.place_id}&key=${GOOGLE_WEB_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.result) {
+      const loc = data.result.geometry.location;
+      const dest = { latitude: loc.lat, longitude: loc.lng };
+      
+      // Update search bar with selected suggestion
+      setQuery(suggestion.description);
+      setSearchInput(suggestion.description);
+      
+      // Clear suggestions immediately
+      setSuggestions([]);
+      
+      // Automatically set destination and search
+      setDestinationOnly(dest);
+    }
+  } catch (e) {
+    console.error(e);
     }
   };
 
@@ -384,73 +528,20 @@ export default function NavigationScreen() {
     }
   };
 
-  const fetchDirections = async (origin: LatLng, dest: LatLng, speak = true) => {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&mode=${mode}&key=${GOOGLE_WEB_API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.routes?.length) return;
-
-      const route = data.routes[0];
-      const pts = polyline.decode(route.overview_polyline.points);
-      const coords = pts.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
-      setRouteCoords(coords);
-
-      const leg = route.legs[0];
-      setEta({ duration: leg.duration.text, distance: leg.distance.text });
-
-      const mappedSteps = leg.steps.map((s: any, idx: number) => ({
-        id: String(idx),
-        html: s.html_instructions,
-        dist: s.distance?.text ?? "",
-        endLoc: {
-          lat: s.end_location.lat,
-          lng: s.end_location.lng,
-        },
-      }));
-      setSteps(mappedSteps);
-
-      setStepDistanceM(
-        distanceMeters(origin, { latitude: mappedSteps[0].endLoc.lat, longitude: mappedSteps[0].endLoc.lng })
-      );
-
-      if (speak && mappedSteps.length) {
-        Speech.speak(stripHtml(mappedSteps[0].html));
-      }
-
-      if (mapRef.current && coords.length) {
-        mapRef.current.fitToCoordinates(coords, {
-          edgePadding: { top: 80, right: 40, bottom: 220, left: 40 },
-          animated: true,
-        });
-      }
-    } catch (e) {
-      Alert.alert(t("common.error"), String(e));
-    }
-  };
-
-  const updateStepProgress = (pos: LatLng) => {
-    if (!steps.length) return;
-
-    const step = steps[currentStepIndex];
-    const dist = distanceMeters(pos, { latitude: step.endLoc.lat, longitude: step.endLoc.lng });
-    setStepDistanceM(dist);
-
-    const THRESHOLD_M = 25;
-    if (dist < THRESHOLD_M) {
-      if (currentStepIndex < steps.length - 1) {
-        const nextIndex = currentStepIndex + 1;
-        setCurrentStepIndex(nextIndex);
-        setTimeout(() => {
-          const next = steps[nextIndex];
-          Speech.speak(stripHtml(next.html));
-        }, 100);
-      } else {
-        Speech.speak(t("navigation.search.arrived"));
-        clearNavigation({ restoreCategory: true });
-      }
-    }
-  };
+  const handleModeChange = (newMode: "driving" | "walking" | "bicycling" | "transit") => {
+  
+  // Set the new mode
+  setMode(newMode);
+  
+  // Track that the user made a selection
+  setUserSelectedMode(newMode);
+  
+  // If already navigating, recalculate the route with the new mode
+  if (navigating && location && destination) {fetchDirections(location, destination, false);}
+  
+  // Close any open sheets
+  closeSheetsForMapInteraction();
+};
 
   const fmtMeters = (m?: number | null) => {
     if (m == null) return "";
@@ -508,6 +599,10 @@ export default function NavigationScreen() {
   const startNavigation = () => {
     if (!location || !destination)
       return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
+    //Set mode to walking if none was selected by user
+    const navigationMode = userSelectedMode || "walking";
+    setMode(navigationMode);
+
     setNavigating(true);
     setCurrentStepIndex(0);
     lastRouteRefreshRef.current = 0; 
@@ -516,33 +611,10 @@ export default function NavigationScreen() {
   };
 
   const clearNavigation = (opts?: { restoreCategory?: boolean }) => {
-    setNavigating(false);
-    setDestination(null);
-    setRouteCoords([]);
-    setSteps([]);
-    setCurrentStepIndex(0);
-    setEta(null);
-    setStepDistanceM(null);
-    setShowAllSteps(false);
-    setShowPoiOptions(false);
-    setSheetOpen(false);
-    setSuggestions([]);
-    setQuery("");
-
-    if (opts?.restoreCategory) {
-      setCategory(prevCategoryRef.current);
-    }
-
-    if (location && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        },
-        500
-      );
+  resetNavigationState();
+  
+  if (opts?.restoreCategory) {
+    setCategory(prevCategoryRef.current);
     }
   };
 
@@ -727,10 +799,25 @@ export default function NavigationScreen() {
               style={s.input}
               placeholder={t("navigation.search.placeholder")}
               value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={() => searchDestination()}
-              returnKeyType="search"
-            />
+              onChangeText={(text) => {
+              setQuery(text);
+              setSearchInput(text);
+              // Show suggestions as user types
+              if (text.length > 2) {
+                fetchAutocompleteSuggestions(text);
+              } else {
+                setSuggestions([]);
+              }
+            }}
+            onSubmitEditing={() => {
+              // Only search when user manually submits
+              if (query.trim()) {
+                searchDestination();
+              }
+            }}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
 
             {/* Right icon: search or clear */}
             {query.trim().length === 0 ? (
@@ -756,24 +843,6 @@ export default function NavigationScreen() {
               style={s.suggestionsContainer}
             />
           )}
-
-          {/* Travel mode */}
-          <View style={[s.modeRow, { marginTop: 8 }]} pointerEvents="auto">
-            {(["driving", "walking", "bicycling", "transit"] as const).map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={[s.modeBtn, mode === m && s.modeBtnActive]}
-                onPress={() => {
-                  closeSheetsForMapInteraction();
-                  setMode(m);
-                }}
-              >
-                <AppText variant="button" weight="800" color={mode === m ? "#FFF" : "#333"}>
-                  {t(`navigation.search.modes.${m}`)}
-                </AppText>
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
       )}
 
@@ -803,6 +872,11 @@ export default function NavigationScreen() {
             coordinate={p.coords}
             title={p.name}
             pinColor={activeColor}
+            tracksViewChanges={false} // Improves Android performance
+            onPress={(e) => {
+              e.stopPropagation(); // Prevent map from handling the press
+              openPoiOptions(p);
+            }}
             ref={(r) => {
               markerRefs.current[p.id] = r as MapMarker | null;
             }}
@@ -834,6 +908,31 @@ export default function NavigationScreen() {
               </AppText>
             </TouchableOpacity>
           </View>
+
+        {/* ADD TRAVEL MODE SELECTOR HERE */}
+        <View style={s.modeSelectorContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.modeScrollContent}
+          >
+            {(["driving", "walking", "bicycling", "transit"] as const).map((m) => (
+              <TouchableOpacity
+                key={m}
+                style={[s.modeSelectorBtn, mode === m && s.modeSelectorBtnActive]}
+                onPress={() => handleModeChange(m)}
+              >
+                <AppText 
+                  variant="button" 
+                  weight="800" 
+                  color={mode === m ? "#FFF" : "#333"}
+                >
+                  {t(`navigation.search.modes.${m}`)}
+                </AppText>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
           {steps[currentStepIndex] && (
             <View style={s.currentStepCard}>
@@ -1187,6 +1286,28 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
+  modeSelectorContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  modeScrollContent: {
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  modeSelectorBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    minWidth: 80,
+    alignItems: "center",
+  },
+  modeSelectorBtnActive: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
 
   input: { flex: 1, paddingVertical: 8, paddingHorizontal: 8 },
 
@@ -1278,7 +1399,7 @@ const s = StyleSheet.create({
   recenterBtn: {
     position: "absolute",
     left: 12,
-    top: TOP_OFFSET + 104,
+    top: TOP_OFFSET + 65,
     backgroundColor: "#FFF",
     width: 40,
     height: 40,
@@ -1341,6 +1462,8 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     elevation: 10,
   },
+
+  
   grabber: { width: 36, height: 4, borderRadius: 999, backgroundColor: "#E5E7EB", marginBottom: 8 },
   optionsHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
 

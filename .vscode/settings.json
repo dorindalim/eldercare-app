@@ -4,8 +4,24 @@
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
   },
-  "deno.enable": false
+  "deno.enable": false,
+  "i18n-ally.localesPaths": [
+    "app/locales"
+  ],
+
+  // other settings for i18n extension
+  "i18n-ally.enabled": true, //turn on extension
+  "i18n-ally.enabledParsers": ["json"], 
+  "i18n-ally.keystyle": "nested", //use nested style keys
+  "i18n-ally.sourceLanguage": "en", 
+  "i18n-ally.displayLanguage": "en", 
+  "i18n-ally.enabledFrameworks": ["react"], //optimised for react/react native
+  "i18n-ally.extract.autoDetect": true, //autodetect hardcoded text
+  "i18n-ally.namespace": true, //support json structure
+  "i18n-ally.sortKeys": true, // keep json files organised
+  "i18n-ally.translate.engines": [ "google"]
 }
+
 
 
 
