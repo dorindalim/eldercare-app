@@ -124,7 +124,7 @@ export default function Bulletin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const currentUserId = session?.userId ?? null;
   const [myName, setMyName] = useState<string | null>(null);
   useEffect(() => {
@@ -493,7 +493,14 @@ export default function Bulletin() {
         setLanguage={setLang}
         includeTopInset
         title="Bulletin Board"
+        barHeight={44}
+        topPadding={2}
+        onLogout={async () => {
+          await logout();             
+          router.replace("/Authentication/LogIn"); 
+        }}
       />
+
 
       <View style={s.headerRow}>
         <Pressable
