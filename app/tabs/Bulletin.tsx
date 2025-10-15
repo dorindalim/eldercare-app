@@ -197,22 +197,37 @@ async function getTokensForUser(userId: string | null, deviceId: string | null) 
   return (data || []).map((r: any) => r.expo_push_token).filter(Boolean);
 }
 
+type MsgRow = {
+  id: string;
+  activity_id: string;
+  sender_user_id: string | null;
+  sender_device_id: string | null;
+  created_at: string;
+};
+
+function identityKeyFor(currentUserId: string | null, deviceId: string) {
+  return currentUserId ? `u:${currentUserId}` : `d:${deviceId}`;
+}
+function lastReadStorageKey(activityId: string, identityKey: string) {
+  return `activity:lastread:${activityId}:${identityKey}`;
+}
+
 export default function Bulletin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
-  const locale = (i18n.language as string) || undefined; 
+  const locale = (i18n.language as string) || undefined;
 
   const [lang, setLangState] = useState<LangCode>(
     (i18n.language as LangCode) || "en"
   );
 
   const setLang = async (code: LangCode) => {
-    setLangState(code);                        
+    setLangState(code);
     if (i18n.language !== code) {
-      await i18n.changeLanguage(code);        
+      await i18n.changeLanguage(code);
     }
-    await AsyncStorage.setItem("lang", code);  
+    await AsyncStorage.setItem("lang", code);
   };
 
   useEffect(() => {
@@ -230,7 +245,6 @@ export default function Bulletin() {
     const cur = (i18n.language as LangCode) || "en";
     if (cur !== lang) setLangState(cur);
   }, [i18n.language]);
-
 
   const { session, logout } = useAuth();
   const currentUserId = session?.userId ?? null;
@@ -705,6 +719,85 @@ export default function Bulletin() {
 
   const catLabel = (k: string) => t(`bulletin.categories.${k}`);
 
+  const identityKey = useMemo(() => identityKeyFor(currentUserId, deviceId), [currentUserId, deviceId]);
+  const [unreadByActivity, setUnreadByActivity] = useState<Record<string, number>>({});
+  const [lastReadByActivity, setLastReadByActivity] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!rows.length || !deviceId) return;
+    (async () => {
+      const keys = rows.map(r => lastReadStorageKey(r.id, identityKey));
+      const kv = await AsyncStorage.multiGet(keys);
+      const map: Record<string, number> = {};
+      kv.forEach(([k, v]) => {
+        const parts = k.split(":");
+        const id = parts[2];
+        const ms = v ? Number(v) : 0;
+        map[id] = Number.isFinite(ms) ? ms : 0;
+      });
+      setLastReadByActivity(map);
+    })();
+  }, [rows, identityKey, deviceId]);
+
+  useEffect(() => {
+    if (!rows.length) return;
+    (async () => {
+      const entries = await Promise.all(
+        rows.map(async (r) => {
+          const sinceMs = lastReadByActivity[r.id] ?? 0;
+          if (!sinceMs) return [r.id, 0] as [string, number];
+
+          let q = supabase
+            .from("activity_messages")
+            .select("*", { count: "exact", head: true })
+            .eq("activity_id", r.id)
+            .gt("created_at", new Date(sinceMs).toISOString());
+
+          if (currentUserId) q = q.neq("sender_user_id", currentUserId);
+          else q = q.neq("sender_device_id", deviceId);
+
+          const { count } = await q;
+          return [r.id, count || 0] as [string, number];
+        })
+      );
+      setUnreadByActivity(Object.fromEntries(entries));
+    })();
+  }, [rows, lastReadByActivity, currentUserId, deviceId]);
+
+  useEffect(() => {
+    if (!rows.length) return;
+    const ch = supabase
+      .channel("broadcast_unread_counts")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "activity_messages" },
+        (payload) => {
+          const m = payload.new as MsgRow;
+          const isVisible = rows.some(r => r.id === m.activity_id);
+          if (!isVisible) return;
+
+          if (currentUserId ? m.sender_user_id === currentUserId : m.sender_device_id === deviceId) return;
+
+          const createdMs = new Date(m.created_at).getTime();
+          const last = lastReadByActivity[m.activity_id] ?? 0;
+          if (createdMs <= last) return;
+
+          setUnreadByActivity(prev => ({ ...prev, [m.activity_id]: (prev[m.activity_id] || 0) + 1 }));
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(ch); };
+  }, [rows, lastReadByActivity, currentUserId, deviceId]);
+
+  async function markActivityReadNow(activityId: string) {
+    const now = Date.now();
+    const key = lastReadStorageKey(activityId, identityKey);
+    await AsyncStorage.setItem(key, String(now));
+    setLastReadByActivity(prev => ({ ...prev, [activityId]: now }));
+    setUnreadByActivity(prev => ({ ...prev, [activityId]: 0 }));
+  }
+
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
@@ -787,6 +880,7 @@ export default function Bulletin() {
                       );
                       return;
                     }
+                    await markActivityReadNow(row.id);
                     setChatFor({ id: row.id, title: row.title });
                     setChatOpen(true);
                   }}
@@ -805,6 +899,7 @@ export default function Bulletin() {
                   isMine
                   onViewInterested={() => openInterested(row)}
                   onEdit={() => startEdit(row)}
+                  unreadCount={unreadByActivity[row.id] || 0}
                 />
               ))}
               <Section title={t("bulletin.sections.nearby")} />
@@ -827,6 +922,7 @@ export default function Bulletin() {
                   );
                   return;
                 }
+                await markActivityReadNow(item.id);
                 setChatFor({ id: item.id, title: item.title });
                 setChatOpen(true);
               }}
@@ -844,6 +940,7 @@ export default function Bulletin() {
               }}
               onInterested={() => markInterested(item)}
               alreadyInterested={interestedSet.has(item.id)}
+              unreadCount={unreadByActivity[item.id] || 0}
             />
           )}
           ListEmptyComponent={
@@ -1217,6 +1314,7 @@ function ActivityCard({
   onViewInterested,
   onEdit,
   alreadyInterested,
+  unreadCount = 0,
 }: {
   row: ActivityRow;
   myLoc: LatLng | null;
@@ -1227,6 +1325,7 @@ function ActivityCard({
   onViewInterested?: () => void;
   onEdit?: () => void;
   alreadyInterested?: boolean;
+  unreadCount?: number;
 }) {
   const { t } = useTranslation();
   const when = new Date(row.starts_at);
@@ -1300,7 +1399,12 @@ function ActivityCard({
       )}
 
       <View style={stylesCard.actionsRow}>
-        <IconCircle onPress={onChat} icon="chatbubble-ellipses-outline" label={t("bulletin.actions.chat")} />
+        <IconCircle
+          onPress={onChat}
+          icon="chatbubble-ellipses-outline"
+          label={t("bulletin.actions.chat")}
+          badge={unreadCount}
+        />
         <IconCircle onPress={onDirections} icon="navigate-outline" label={t("bulletin.actions.go")} />
         {!isMine && !!onInterested && (
           <Pressable
@@ -1332,20 +1436,30 @@ function IconCircle({
   icon,
   label,
   filled = false,
+  badge,
 }: {
   onPress: () => void;
   icon: IconName;
   label: string;
   filled?: boolean;
+  badge?: number;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={[stylesCard.circleBtn, filled && { backgroundColor: "#16A34A" }]}
-      accessibilityLabel={label}
-    >
-      <Ionicons name={icon} size={18} color={filled ? "#fff" : "#0F172A"} />
-    </Pressable>
+    <View style={stylesCard.iconWrap}>
+      <Pressable
+        onPress={onPress}
+        style={[stylesCard.circleBtn, filled && { backgroundColor: "#16A34A" }]}
+        accessibilityLabel={label}
+      >
+        <Ionicons name={icon} size={18} color={filled ? "#fff" : "#0F172A"} />
+      </Pressable>
+
+      {typeof badge === "number" && badge > 0 && (
+        <View style={stylesCard.badge}>
+          <Text style={stylesCard.badgeText}>{badge > 99 ? "99+" : badge}</Text>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -1576,14 +1690,6 @@ const stylesCard = StyleSheet.create({
     gap: 10,
     marginTop: 10,
   },
-  circleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F1F5F9",
-  },
   iconBtnGhost: { padding: 6, borderRadius: 10 },
   minePill: {
     paddingHorizontal: 10,
@@ -1593,4 +1699,41 @@ const stylesCard = StyleSheet.create({
     marginLeft: 4,
   },
   mineText: { color: "#166534", fontWeight: "900", fontSize: 12 },
+  badgeBelow: {
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: "#EF4444",
+    minWidth: 24,
+    alignItems: "center",
+  },
+    iconWrap: {
+    position: "relative",
+    width: 40,
+    height: 40,
+  },
+  circleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1F5F9",
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: "#EF4444",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  badgeText: { color: "#fff", fontSize: 10, fontWeight: "900" },
 });

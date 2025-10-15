@@ -503,7 +503,8 @@
     "hostBadge": "· 发起者",
     "hostColon": "· 发起者：",
     "typing": "正在输入…",
-    "placeholder": "留言…"
+    "placeholder": "留言…",
+    "unread": "未读消息"
   },
   "errors": {
     "permissionTitle": "需要权限",

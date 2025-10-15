@@ -503,7 +503,8 @@
     "hostBadge": "· ஒருங்கிணைப்பாளர்",
     "hostColon": "· ஒருங்கிணைப்பாளர்:",
     "typing": "தட்டச்சு செய்கிறார்…",
-    "placeholder": "செய்தி…"
+    "placeholder": "செய்தி…",
+    "unread": "படிக்கப்படாத செய்திகள்"
   },
   "errors": {
     "permissionTitle": "அனுமதி தேவை",

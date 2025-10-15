@@ -503,7 +503,8 @@
     "hostBadge": "· Penganjur",
     "hostColon": "· Penganjur:",
     "typing": "menaip…",
-    "placeholder": "Mesej…"
+    "placeholder": "Mesej…",
+    "unread": "Mesej belum dibaca"
   },
   "errors": {
     "permissionTitle": "Kebenaran diperlukan",

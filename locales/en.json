@@ -503,7 +503,8 @@
     "hostBadge": "· Host",
     "hostColon": "· Host:",
     "typing": "typing…",
-    "placeholder": "Message…"
+    "placeholder": "Message…",
+    "unread": "Unread messages"
   },
   "errors": {
     "permissionTitle": "Permission needed",
