@@ -14,6 +14,7 @@ type Props = {
   dense?: boolean;
   style?: ViewStyle;
   accessibilityLabel?: string;
+  onItemPress?: (item: string) => void; 
 };
 
 const palette: Record<Variant, { bg: string; border: string; text: string }> = {
@@ -32,6 +33,7 @@ export default function SummaryChip({
   dense = false,
   style,
   accessibilityLabel,
+  onItemPress,
 }: Props) {
   const content = (items?.length ? items.filter(Boolean).join(separator) : text) ?? "";
   const colors = palette[variant];

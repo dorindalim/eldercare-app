@@ -18,7 +18,7 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppText from "../../src/components/AppText";
@@ -635,86 +635,92 @@ export default function ActivityChat({
   const showJump = listData.length > 0 && !atBottom;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable onPress={() => { markReadNow().finally(onClose); }} hitSlop={8} style={{ padding: 6 }}>
-          <Ionicons name="chevron-back" size={24} color="#111827" />
-        </Pressable>
-        <AppText variant="label" weight="800" color="#111827" style={styles.title}>
-          {headerTitle}{ownerName ? ` ${t("chat.hostColon")} ${ownerName}` : ""}
-        </AppText>
-        <View style={{ width: 30 }} />
-      </View>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.select({ ios: 0, android: 0 })}
+    >
+      <SafeAreaView style={styles.safe}>
+          <View style={styles.header}>
+            <Pressable onPress={() => { markReadNow().finally(onClose); }} hitSlop={8} style={{ padding: 6 }}>
+              <Ionicons name="chevron-back" size={24} color="#111827" />
+            </Pressable>
+            <AppText variant="label" weight="800" color="#111827" style={styles.title}>
+              {headerTitle}{ownerName ? ` ${t("chat.hostColon")} ${ownerName}` : ""}
+            </AppText>
+            <View style={{ width: 30 }} />
+          </View>
 
-      {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator />
-        </View>
-      ) : (
-        <>
-          <FlatList
-            ref={listRef}
-            data={listData}
-            keyExtractor={(it) => it.key}
-            renderItem={renderItem}
-            contentContainerStyle={{ padding: 12, paddingBottom: 10 }}
-            onScroll={handleScroll}
-            scrollEventThrottle={80}
-            onScrollToIndexFailed={onScrollToIndexFailed}
-            getItemLayout={(_, index) => {
-              const SEP_H = 36;
-              const AVG_MSG_H = 84;
-              const item = listData[index];
-              const length = item?.type === "sep" ? SEP_H : AVG_MSG_H;
-              return { length, offset: length * index, index };
-            }}
-          />
+          {loading ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+              <ActivityIndicator />
+            </View>
+          ) : (
+            <>
+              <FlatList
+                ref={listRef}
+                data={listData}
+                keyExtractor={(it) => it.key}
+                renderItem={renderItem}
+                contentContainerStyle={{ padding: 12, paddingBottom: 10 }}
+                onScroll={handleScroll}
+                scrollEventThrottle={80}
+                onScrollToIndexFailed={onScrollToIndexFailed}
+                getItemLayout={(_, index) => {
+                  const SEP_H = 36;
+                  const AVG_MSG_H = 84;
+                  const item = listData[index];
+                  const length = item?.type === "sep" ? SEP_H : AVG_MSG_H;
+                  return { length, offset: length * index, index };
+                }}
+                keyboardDismissMode="interactive"
+                keyboardShouldPersistTaps="handled"
+              />
 
-          {showJump && (
-            <View pointerEvents="box-none" style={styles.fabContainer}>
-              <Pressable
-                onPress={scrollToBottom}
-                style={[styles.fab, newSinceScroll && styles.fabNew]}
-                accessibilityLabel="Jump to latest messages"
-              >
-                <Ionicons name="arrow-down" size={20} color="#fff" />
-              </Pressable>
-              {newSinceScroll && <View style={styles.fabBadge} />}
+              {showJump && (
+                <View pointerEvents="box-none" style={styles.fabContainer}>
+                  <Pressable
+                    onPress={scrollToBottom}
+                    style={[styles.fab, newSinceScroll && styles.fabNew]}
+                    accessibilityLabel="Jump to latest messages"
+                  >
+                    <Ionicons name="arrow-down" size={20} color="#fff" />
+                  </Pressable>
+                  {newSinceScroll && <View style={styles.fabBadge} />}
+                </View>
+              )}
+            </>
+          )}
+
+          {Object.keys(typingPeers).length > 0 && (
+            <View style={{ paddingHorizontal: 12, paddingBottom: 6 }}>
+              <View style={{ alignSelf: "flex-start", backgroundColor: "#E5E7EB", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}>
+                <AppText variant="body" weight="600" color="#111827">
+                  {Object.values(typingPeers).map((ti) => ti.name || t("chat.neighbour")).slice(0, 2).join(", ")}
+                  {Object.keys(typingPeers).length > 2 ? " +…" : ""} {t("chat.typing")}
+                </AppText>
+              </View>
             </View>
           )}
-        </>
-      )}
 
-      {Object.keys(typingPeers).length > 0 && (
-        <View style={{ paddingHorizontal: 12, paddingBottom: 6 }}>
-          <View style={{ alignSelf: "flex-start", backgroundColor: "#E5E7EB", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}>
-            <AppText variant="body" weight="600" color="#111827">
-              {Object.values(typingPeers).map((ti) => ti.name || t("chat.neighbour")).slice(0, 2).join(", ")}
-              {Object.keys(typingPeers).length > 2 ? " +…" : ""} {t("chat.typing")}
-            </AppText>
+          <View style={styles.composerRow}>
+            <Pressable onPress={pickAndSendImage} style={styles.addBtn} hitSlop={8}>
+              <Ionicons name="add" size={22} color="#111827" />
+            </Pressable>
+            <TextInput
+              value={text}
+              onChangeText={(v) => { setText(v); broadcastTyping(); }}
+              onFocus={() => setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0)}
+              placeholder={t("chat.placeholder")}
+              style={styles.input}
+              multiline
+            />
+            <Pressable onPress={send} disabled={sending || !text.trim()} style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}>
+              <Ionicons name="send" size={18} color="#fff" />
+            </Pressable>
           </View>
-        </View>
-      )}
-
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={52}>
-        <View style={styles.composerRow}>
-          <Pressable onPress={pickAndSendImage} style={styles.addBtn} hitSlop={8}>
-            <Ionicons name="add" size={22} color="#111827" />
-          </Pressable>
-          <TextInput
-            value={text}
-            onChangeText={(v) => { setText(v); broadcastTyping(); }}
-            onFocus={() => setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0)}
-            placeholder={t("chat.placeholder")}
-            style={styles.input}
-            multiline
-          />
-          <Pressable onPress={send} disabled={sending || !text.trim()} style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}>
-            <Ionicons name="send" size={18} color="#fff" />
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

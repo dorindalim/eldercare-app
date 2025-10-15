@@ -3,13 +3,15 @@ import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import FilterSheet, { type FilterSection } from "../../src/components/FilterSheet";
 import Pagination from '../../src/components/Pagination';
 import ParkDetailsModal from "../../src/components/ParkDetailsModal";
 import SearchBar from '../../src/components/SearchBar';
+import SummaryChip from "../../src/components/SummaryChip";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
@@ -37,12 +39,6 @@ type ParkLocation = {
   latitude: number | null;
   longitude: number | null;
   scraped_at: string;
-};
-
-type FilterCategory = {
-  name: string;
-  options: string[];
-  selected: string[];
 };
 
 type LatLng = {
@@ -73,7 +69,8 @@ export default function WalkingScreen() {
   
   const flatListRef = useRef<FlatList>(null);
   const scrollToTop = () => {
-  flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });};
+    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -88,38 +85,20 @@ export default function WalkingScreen() {
   const [parks, setParks] = useState<ParkLocation[]>([]);
   const [filteredParks, setFilteredParks] = useState<ParkLocation[]>([]);
   const [selectedPark, setSelectedPark] = useState<ParkLocation | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number; longitude: number} | null>(null);
   const [showParkDetails, setShowParkDetails] = useState(false);
+
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-
-  // Filter categories
-  const [filters, setFilters] = useState<FilterCategory[]>([]);
-
-  // Update filters when language changes
-  useEffect(() => {
-    setFilters([
-      {
-        name: "activity",
-        options: Object.values(t('walking.filters.activities', { returnObjects: true })),
-        selected: []
-      },
-      {
-        name: "amenity", 
-        options: Object.values(t('walking.filters.amenities', { returnObjects: true })),
-        selected: []
-      },
-      {
-        name: "region",
-        options: Object.values(t('walking.filters.regions', { returnObjects: true })),
-        selected: []
-      }
-    ]);
-  }, [t, i18n.language]); // Re-run when language changes
+  const [tempFilters, setTempFilters] = useState({
+    activities: [] as string[],
+    amenities: [] as string[], 
+    regions: [] as string[],
+  });
+  const [selectedFilterItems, setSelectedFilterItems] = useState<string[]>([]);
 
   // Get user's current location
   const getUserLocation = async (): Promise<{latitude: number; longitude: number} | null> => {
@@ -139,6 +118,131 @@ export default function WalkingScreen() {
       console.warn('Could not get user location:', error);
       return null;
     }
+  };
+
+  // Update selected filter items for SummaryChip
+  const updateSelectedFilterItems = () => {
+    const items: string[] = [];
+    Object.values(tempFilters).forEach(category => {
+      items.push(...category);
+    });
+    setSelectedFilterItems(items);
+  };
+
+  // Apply filters function
+  const applyFilters = (parkList: ParkLocation[], filters: typeof tempFilters) => {
+    const hasActiveFilters = Object.values(filters).some(category => category.length > 0);
+    
+    if (!hasActiveFilters) {
+      setFilteredParks(parkList);
+      return;
+    }
+
+    const scoredParks = parkList.map(park => {
+      let score = 0;
+      
+      // Activity filters
+      filters.activities.forEach(selectedActivity => {
+        if (Array.isArray(park.activities)) {
+          park.activities.forEach(activity => {
+            if (activity?.title === selectedActivity) {
+              score += 1;
+            }
+          });
+        }
+      });
+      
+      // Amenity filters
+      filters.amenities.forEach(selectedAmenity => {
+        if (Array.isArray(park.amenities)) {
+          park.amenities.forEach(amenity => {
+            if (amenity?.title === selectedAmenity) {
+              score += 1;
+            }
+          });
+        }
+      });
+      
+      // Region filters
+      filters.regions.forEach(selectedRegion => {
+        if (park.region === selectedRegion) {
+          score += 1;
+        }
+      });
+      
+      return { park, score };
+    });
+
+    const sortedParks = scoredParks
+      .filter(item => item.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        return parkList.indexOf(a.park) - parkList.indexOf(b.park);
+      })
+      .map(item => item.park);
+
+    setFilteredParks(sortedParks);
+  };
+
+  // Handle opening filter panel
+  const handleOpenFilters = () => {
+    setShowFilterPanel(true);
+  };
+
+  // Handle applying filters
+  const handleApplyFilters = () => {
+    applyFilters(
+      searchQuery ? parks.filter(park => {
+        const searchTerm = searchQuery.toLowerCase();
+        const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+        const activityMatch = Array.isArray(park.activities) && 
+          park.activities.some(activity => 
+            activity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const amenityMatch = Array.isArray(park.amenities) &&
+          park.amenities.some(amenity => 
+            amenity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+        return titleMatch || activityMatch || amenityMatch || regionMatch;
+      }) : parks,
+      tempFilters
+    );
+    setShowFilterPanel(false);
+    updateSelectedFilterItems();
+  };
+
+  // Handle resetting filters
+  const handleResetFilters = () => {
+    setTempFilters({
+      activities: [],
+      amenities: [],
+      regions: [],
+    });
+  };
+
+  // Handle clearing all filters (for SummaryChip)
+  const clearAllFilters = () => {
+    handleResetFilters();
+    setSelectedFilterItems([]);
+    setFilteredParks(searchQuery ? 
+      parks.filter(park => {
+        const searchTerm = searchQuery.toLowerCase();
+        const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
+        const activityMatch = Array.isArray(park.activities) && 
+          park.activities.some(activity => 
+            activity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const amenityMatch = Array.isArray(park.amenities) &&
+          park.amenities.some(amenity => 
+            amenity?.title?.toLowerCase().includes(searchTerm)
+          );
+        const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
+        return titleMatch || activityMatch || amenityMatch || regionMatch;
+      }) : parks
+    );
   };
 
   // Sort parks by proximity to user location
@@ -171,18 +275,16 @@ export default function WalkingScreen() {
     return [...sortedParksWithLocation, ...parksWithoutLocation];
   };
 
-  const [locationLoading, setLocationLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Fetch parks from Supabase
   const fetchParks = async () => {
     try {
       setLoading(true);
-      setLocationLoading(true);
       setError(null);
 
       // Try to get user location first
       const userLoc = await getUserLocation();
-      setLocationLoading(false);
       if (userLoc) {
         setUserLocation(userLoc);
       }
@@ -222,41 +324,38 @@ export default function WalkingScreen() {
         setFilteredParks(sortedData);
       }
     } catch (err) {
-      setLocationLoading(false);
       console.error('Error fetching parks:', err);
       setError('Failed to load parks');
       Alert.alert('Error', 'Failed to load parks from database');
     } finally {
+      setInitialLoading(false);
       setLoading(false);
       setRefreshing(false);
     }
   };
 
   // Clear screen each time
-   const clearAllSearchAndFilters = () => {
+  const clearAllSearchAndFilters = () => {
     // Clear search query
     setSearchQuery("");
   
     // Clear all filter selections
-    const resetFilters = filters.map(category => ({
-      ...category,
-      selected: []
-    }));
-    setFilters(resetFilters);
+    handleResetFilters();
+    setSelectedFilterItems([]);
     
     // Reset to show all parks
     setFilteredParks(parks);
-    };
+  };
 
   // Search functionality
   const performSearch = (query: string) => {
-  if (!query.trim()) {
-    // If search is empty, reset to all parks
-    applyFilters(parks, filters);
-    return;
-  }
+    if (!query.trim()) {
+      // If search is empty, reset to all parks
+      applyFilters(parks, tempFilters);
+      return;
+    }
 
-  const searchTerm = query.toLowerCase().trim();
+    const searchTerm = query.toLowerCase().trim();
 
     const filtered = parks.filter(park => {
       // Check park title (with safe fallback)
@@ -280,7 +379,7 @@ export default function WalkingScreen() {
       return titleMatch || activityMatch || amenityMatch || regionMatch;
     });
     
-    applyFilters(filtered, filters);
+    applyFilters(filtered, tempFilters);
   };
 
   const handleSearch = (query: string) => {
@@ -292,123 +391,19 @@ export default function WalkingScreen() {
     performSearch(searchQuery);
   };
 
-
-  // Filter functionality
-  const toggleFilterOption = (categoryIndex: number, option: string) => {
-    const updatedFilters = [...filters];
-    const category = updatedFilters[categoryIndex];
-    
-    if (category.selected.includes(option)) {
-      category.selected = category.selected.filter(item => item !== option);
-    } else {
-      category.selected.push(option);
-    }
-    
-    setFilters(updatedFilters);
-  };
-
-  const applyFilters = (parkList: ParkLocation[], filterList: FilterCategory[]) => {
-    const hasActiveFilters = filterList.some(category => category.selected.length > 0);
-    
-    if (!hasActiveFilters) {
-      setFilteredParks(parkList);
-      return;
-    }
-
-    const scoredParks = parkList.map(park => {
-      let score = 0;
-      
-      filterList.forEach(category => {
-        category.selected.forEach(selectedOption => {
-          if (category.name === 'activity' && Array.isArray(park.activities)) {
-            park.activities.forEach(activity => {
-              if (activity?.title === selectedOption) {
-                score += 1;
-              }
-            });
-          } else if (category.name === 'amenity' && Array.isArray(park.amenities)) {
-            park.amenities.forEach(amenity => {
-              if (amenity?.title === selectedOption) {
-                score += 1;
-              }
-            });
-          } else if (category.name === 'region' && park.region === selectedOption) {
-            score += 1;
-          }
-        });
-      });
-      
-      return { park, score };
-    });
-
-    // Sort by score descending, then maintain original proximity/title order
-    const sortedParks = scoredParks
-      .filter(item => item.score > 0)
-      .sort((a, b) => {
-        if (b.score !== a.score) {
-          return b.score - a.score;
-        }
-        // Maintain original order for parks with same score
-        return parkList.indexOf(a.park) - parkList.indexOf(b.park);
-      })
-      .map(item => item.park);
-
-    setFilteredParks(sortedParks);
-  };
-
-  const handleApplyFilters = () => {
-    applyFilters(
-      searchQuery ? parks.filter(park => {
-        const searchTerm = searchQuery.toLowerCase();
-        const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
-        const activityMatch = Array.isArray(park.activities) && 
-          park.activities.some(activity => 
-            activity?.title?.toLowerCase().includes(searchTerm)
-          );
-        const amenityMatch = Array.isArray(park.amenities) &&
-          park.amenities.some(amenity => 
-            amenity?.title?.toLowerCase().includes(searchTerm)
-          );
-        const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
-        return titleMatch || activityMatch || amenityMatch || regionMatch;
-      }) : parks,
-      filters
-    );
-    setShowFilters(false);
-  };
-
-  const handleClearFilters = () => {
-    const resetFilters = filters.map(category => ({
-      ...category,
-      selected: []
-    }));
-    setFilters(resetFilters);
-    setFilteredParks(searchQuery ? 
-      parks.filter(park => {
-        const searchTerm = searchQuery.toLowerCase();
-        const titleMatch = park.title?.toLowerCase().includes(searchTerm) || false;
-        const activityMatch = Array.isArray(park.activities) && 
-          park.activities.some(activity => 
-            activity?.title?.toLowerCase().includes(searchTerm)
-          );
-        const amenityMatch = Array.isArray(park.amenities) &&
-          park.amenities.some(amenity => 
-            amenity?.title?.toLowerCase().includes(searchTerm)
-          );
-        const regionMatch = park.region?.toLowerCase().includes(searchTerm) || false;
-        return titleMatch || activityMatch || amenityMatch || regionMatch;
-      }) : parks
-    );
-  };
-
   // Pull to refresh handler
   const onRefresh = () => {
     setRefreshing(true);
+    setLoading(true);
     fetchParks();
   };
 
   useEffect(() => {
-    fetchParks();
+  const loadData = async () => {
+    setInitialLoading(true);
+    await fetchParks();
+  };
+  loadData();
   }, []);
 
   // Updated park selection handler
@@ -423,43 +418,42 @@ export default function WalkingScreen() {
   };
 
   const handleGetDirections = (park: ParkLocation) => {
-  try {
-    setShowParkDetails(false);
-    setSelectedPark(null);
-    
-    console.log('Navigating to Navigation with park:', park.title);
+    try {
+      setShowParkDetails(false);
+      setSelectedPark(null);
+      
+      console.log('Navigating to Navigation with park:', park.title);
 
-
-    if (!park.title) {
-      Alert.alert('Error', 'Park name is required for directions');
-      return;
-    }
-    
-    // Build the href with proper URL encoding
-    let href = `/tabs/Navigation?presetQuery=${encodeURIComponent(park.title.trim())}`;
-    
-    // Add coordinates if available
-    if (park.latitude && park.longitude) {
-      href += `&presetLat=${park.latitude}&presetLng=${park.longitude}`;
-    }
-    
-    console.log('Navigating to:', href);
-    router.push({
-       pathname: "/tabs/Navigation",
-       params: { 
-        presetQuery: park.title.trim(),
-        freshStart: "true",
-        fillOnly: "true",
-        ...(park.latitude && park.longitude && {
-          presetLat: park.latitude.toString(),
-          presetLng: park.longitude.toString()
-        })
+      if (!park.title) {
+        Alert.alert('Error', 'Park name is required for directions');
+        return;
       }
-    });
-    
-  } catch (error) {
-    console.error('Error navigating to directions:', error);
-    Alert.alert('Error', 'Failed to open navigation');
+      
+      // Build the href with proper URL encoding
+      let href = `/tabs/Navigation?presetQuery=${encodeURIComponent(park.title.trim())}`;
+      
+      // Add coordinates if available
+      if (park.latitude && park.longitude) {
+        href += `&presetLat=${park.latitude}&presetLng=${park.longitude}`;
+      }
+      
+      console.log('Navigating to:', href);
+      router.push({
+        pathname: "/tabs/Navigation",
+        params: { 
+          presetQuery: park.title.trim(),
+          freshStart: "true",
+          fillOnly: "true",
+          ...(park.latitude && park.longitude && {
+            presetLat: park.latitude.toString(),
+            presetLng: park.longitude.toString()
+          })
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error navigating to directions:', error);
+      Alert.alert('Error', 'Failed to open navigation');
     }
   };
 
@@ -476,6 +470,61 @@ export default function WalkingScreen() {
     } catch (err) {
       Alert.alert('Error', 'Failed to open URL');
     }
+  };
+
+  // Create filter sections for FilterSheet
+  const getFilterSections = (): FilterSection[] => {
+    const activityOptions = Object.values(t('walking.filters.activities', { returnObjects: true }));
+    const amenityOptions = Object.values(t('walking.filters.amenities', { returnObjects: true }));
+    const regionOptions = Object.values(t('walking.filters.regions', { returnObjects: true }));
+
+    return [
+      {
+        id: "activities",
+        type: "chips-multi",
+        title: "Activities",
+        options: activityOptions.map(option => ({ key: option, label: option })),
+        selected: tempFilters.activities,
+        onToggle: (key) => {
+          setTempFilters(prev => ({
+            ...prev,
+            activities: prev.activities.includes(key) 
+              ? prev.activities.filter(item => item !== key)
+              : [...prev.activities, key]
+          }));
+        },
+      },
+      {
+        id: "amenities",
+        type: "chips-multi", 
+        title: "Amenities",
+        options: amenityOptions.map(option => ({ key: option, label: option })),
+        selected: tempFilters.amenities,
+        onToggle: (key) => {
+          setTempFilters(prev => ({
+            ...prev,
+            amenities: prev.amenities.includes(key)
+              ? prev.amenities.filter(item => item !== key)
+              : [...prev.amenities, key]
+          }));
+        },
+      },
+      {
+        id: "regions",
+        type: "chips-multi",
+        title: "Regions", 
+        options: regionOptions.map(option => ({ key: option, label: option })),
+        selected: tempFilters.regions,
+        onToggle: (key) => {
+          setTempFilters(prev => ({
+            ...prev,
+            regions: prev.regions.includes(key)
+              ? prev.regions.filter(item => item !== key)
+              : [...prev.regions, key]
+          }));
+        },
+      },
+    ];
   };
 
   const renderParkItem = ({ item }: { item: ParkLocation }) => (
@@ -557,15 +606,15 @@ export default function WalkingScreen() {
       )}
       
       {/* Get Directions Button - Make it a separate TouchableOpacity */}
-    <TouchableOpacity 
-      style={s.directionButton}
-      onPress={() => handleGetDirections(item)}
-    >
-      <AppText variant="button" weight="400" style={s.directionButtonText}>
-        Get Directions
-      </AppText>
+      <TouchableOpacity 
+        style={s.directionButton}
+        onPress={() => handleGetDirections(item)}
+      >
+        <AppText variant="button" weight="400" style={s.directionButtonText}>
+          Get Directions
+        </AppText>
+      </TouchableOpacity>
     </TouchableOpacity>
-  </TouchableOpacity>
   );
 
   // Calculate tabs data based on filtered parks
@@ -575,32 +624,6 @@ export default function WalkingScreen() {
     (currentPage - 1) * parksPerPage,
     currentPage * parksPerPage
   );
-
-  if (loading) {
-    return (
-      <SafeAreaView style={s.safe}>
-        <TopBar
-          language={i18n.language as LangCode}
-          setLanguage={setLang as (c: LangCode) => void}
-          bgColor="#D9D991"
-          title={t("walkingRoutes.title")}
-          includeTopInset={true}
-          barHeight={44}
-          topPadding={2}
-          onLogout={async () => {
-            await logout();
-            router.replace("/Authentication/LogIn");
-          }}
-        />
-        <View style={s.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <AppText variant="body" weight="400" style={s.loadingText}>
-            Loading parks...
-          </AppText>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   if (error) {
     return (
@@ -650,6 +673,7 @@ export default function WalkingScreen() {
           router.replace("/Authentication/LogIn");
         }}
       />
+
       {/* Combined Search and Filter Bar */}
       <View style={s.searchBarContainer}>
         <SearchBar
@@ -657,79 +681,59 @@ export default function WalkingScreen() {
           placeholder="Search parks by name/activity/region"
           onChangeText={handleSearch}
           onSubmit={handleSearchButton}
-          onPressFilter={() => {
-            setShowFilterPanel(!showFilterPanel);
-          }}
+          onPressFilter={handleOpenFilters}
           style={s.searchBar}
         />
       </View>
 
- 
-
-      {/* Filter Panel */}
-      {showFilterPanel && (
-        <View style={s.panelContainer}>
-          <View style={s.filterPanel}>
-            <ScrollView style={s.filterPanelContent}>
-              {filters.map((category, categoryIndex) => (
-                <View key={category.name} style={s.filterCategory}>
-                  <AppText variant="title" weight="700" style={s.categoryTitle}>
-                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                  </AppText>
-                  <View style={s.optionsContainer}>
-                    {category.options.map((option) => (
-                      <TouchableOpacity
-                        key={option}
-                        style={[
-                          s.optionButton,
-                          category.selected.includes(option) && s.optionButtonSelected
-                        ]}
-                        onPress={() => toggleFilterOption(categoryIndex, option)}
-                      >
-                        <AppText 
-                          variant="body" 
-                          weight="400" 
-                          style={[
-                            s.optionText,
-                            category.selected.includes(option) && s.optionTextSelected
-                          ]}
-                        >
-                          {option}
-                        </AppText>
-                        <View style={[
-                          s.checkbox,
-                          category.selected.includes(option) && s.checkboxSelected
-                        ]}>
-                          {category.selected.includes(option) && (
-                            <AppText style={s.checkmark}>✓</AppText>
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>               
-              ))}
-            </ScrollView>
-            
-            <View style={s.panelFooter}>
-              <TouchableOpacity onPress={handleClearFilters} style={s.clearButton}>
-                <AppText variant="button" weight="700" style={s.clearButtonText}>
-                  Clear All
-                </AppText>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => {
-                handleApplyFilters();
-                setShowFilterPanel(false);
-              }} style={s.applyButton}>
-                <AppText variant="button" weight="700" style={s.applyButtonText}>
-                  Apply Filters
-                </AppText>
-              </TouchableOpacity>
-            </View>
+      {/* Selected Filters Summary */}
+      {selectedFilterItems.length > 0 && (
+        <View style={s.summaryChipContainer}>
+          <View style={s.summaryChipHeader}>
+            <AppText variant="caption" weight="600" style={s.summaryChipTitle}>
+              Active Filters:
+            </AppText>
+            <TouchableOpacity 
+              onPress={clearAllFilters}
+              style={s.clearAllButton}
+            >
+              <AppText variant="caption" weight="600" style={s.clearAllText}>
+                Clear All
+              </AppText>
+            </TouchableOpacity>
+          </View>
+          <View style={s.summaryChipsRow}>
+            <SummaryChip
+              items={selectedFilterItems}
+              variant="indigo"
+              dense={true}
+              onItemPress={(item) => {
+                // Remove individual filter item
+                setTempFilters(prev => ({
+                  activities: prev.activities.filter(i => i !== item),
+                  amenities: prev.amenities.filter(i => i !== item),
+                  regions: prev.regions.filter(i => i !== item),
+                }));
+              }}
+            />
           </View>
         </View>
       )}
 
+      {/* Filter Sheet */}
+      <FilterSheet
+        visible={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        sections={getFilterSections()}
+        onReset={handleResetFilters}
+        onApply={handleApplyFilters}
+        title="Filter Parks"
+        labels={{
+          reset: "Reset Filters",
+          apply: "Apply Filters"
+        }}
+      />
+      
       {/* Parks List */}
       <FlatList
         ref={flatListRef}
@@ -746,7 +750,7 @@ export default function WalkingScreen() {
             tintColor="#007AFF"
           />
         }
-         ListFooterComponent={
+        ListFooterComponent={
           filteredParks.length > 0 ? (
             <Pagination 
               page={currentPage}
@@ -756,33 +760,44 @@ export default function WalkingScreen() {
           ) : null
         }
         ListFooterComponentStyle={{ padding: 16 }}
-              ListEmptyComponent={
-                <View style={s.emptyContainer}>
-                  <AppText variant="body" weight="400" style={s.emptyText}>
-                    {searchQuery || filters.some(cat => cat.selected.length > 0) 
-                      ? "No parks match your search criteria" 
-                      : "No parks found in database"
-                    }
-                  </AppText>
-                  <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
-                    <AppText variant="button" weight="700" style={s.retryButtonText}>
-                      Try Again
-                    </AppText>
-                  </TouchableOpacity>
-                </View>
-              }
-            />
+        ListEmptyComponent={
+        <View style={s.emptyContainer}>
+          {initialLoading ? (
+            <>
+              <ActivityIndicator size="small" color="#007AFF" />
+              <AppText variant="body" weight="400" style={s.emptyText}>
+                Loading parks...
+              </AppText>
+            </>
+          ) : (
+            <>
+              <AppText variant="body" weight="400" style={s.emptyText}>
+                {searchQuery || selectedFilterItems.length > 0 
+                  ? "No parks match your search criteria" 
+                  : "No parks found in database"
+                }
+              </AppText>
+              <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
+                <AppText variant="button" weight="700" style={s.retryButtonText}>
+                  Try Again
+                </AppText>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      }
+      />
 
       {/* Park Details Modal */}
       <ParkDetailsModal
-      park={selectedPark}
-      visible={showParkDetails}
-      onClose={handleCloseParkDetails}
-      userLocation={userLocation}
-      onGetDirections={handleGetDirections}
-      distanceMeters={distanceMeters}
-      kmStr={kmStr}
-    />
+        park={selectedPark}
+        visible={showParkDetails}
+        onClose={handleCloseParkDetails}
+        userLocation={userLocation}
+        onGetDirections={handleGetDirections}
+        distanceMeters={distanceMeters}
+        kmStr={kmStr}
+      />
     </SafeAreaView>
   );
 }
@@ -793,224 +808,14 @@ const s = StyleSheet.create({
     backgroundColor: "#F8F9FA" 
   },
 
-  // Top Action Buttons
-  topActionsContainer: {
-    flexDirection: "row",
-    padding: 16,
-    backgroundColor: "#FFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  actionButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-
-  // Panels
-  panelContainer: {
-    backgroundColor: "#FFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
-  },
-  searchPanel: {
-    padding: 16,
-  },
-  filterPanel: {
-    maxHeight: 400,
-  },
-  filterPanelContent: {
-    maxHeight: 300,
-    padding: 16,
-  },
-  panelFooter: {
-    flexDirection: "row",
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E9ECEF",
-    gap: 12,
-  },
-
   // Search Input
   searchBarContainer: {
-  padding: 16,
-  backgroundColor: "#FFF",
-  borderBottomWidth: 1,
-  borderBottomColor: "#E9ECEF",
-  },
-  searchBar: {},
-
-  searchInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  searchInput: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: "#FFF",
-  },
-  searchButton: {
-    backgroundColor: "#28A745",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 80,
-    alignItems: "center",
-  },
-  searchButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-
-  // Filter Styles (keep these for the filter panel)
-  filterCategory: {
-    marginBottom: 24,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    marginBottom: 12,
-    color: "#2C3E50",
-  },
-  optionsContainer: {
-    gap: 8,
-  },
-  optionButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#F8F9FA",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  optionButtonSelected: {
-    backgroundColor: "#E7F3FF",
-    borderColor: "#007AFF",
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-  },
-  optionTextSelected: {
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#6C757D",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxSelected: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  checkmark: {
-    color: "#FFF",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  clearButton: {
-    flex: 1,
-    backgroundColor: "#6C757D",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  clearButtonText: {
-    color: "#FFF",
-  },
-  applyButton: {
-    flex: 1,
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  applyButtonText: {
-    color: "#FFF",
-  },
-  
-  // Tab System (Bottom Only)
-  tabContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     padding: 16,
     backgroundColor: "#FFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E9ECEF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
   },
-  navButtons: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  navButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F8F9FA",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  navButtonDisabled: {
-    backgroundColor: "#F8F9FA",
-    borderColor: "#E9ECEF",
-    opacity: 0.5,
-  },
-  navButtonText: {
-    fontSize: 16,
-  },
-  navButtonTextDisabled: {
-    opacity: 0.5,
-  },
-  pageNumbers: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  tabButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F8F9FA",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  activeTabButton: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  tabButtonText: {
-    color: "#6C757D",
-    fontSize: 12,
-  },
-  activeTabButtonText: {
-    color: "#FFF",
-  },
+  searchBar: {},
 
   // List
   listContainer: {
@@ -1067,21 +872,11 @@ const s = StyleSheet.create({
     color: "#28A745",
     marginBottom: 2,
   },
-  hoursText: {
-    color: "#495057",
-  },
   regionContainer: {
     marginBottom: 12,
   },
   regionText: {
     color: "#495057",
-  },
-  countContainer: {
-    marginBottom: 8,
-  },
-  countLabel: {
-    color: "#6C757D",
-    fontSize: 14,
   },
   urlContainer: {
     marginBottom: 12,
@@ -1145,16 +940,45 @@ const s = StyleSheet.create({
     color: "#6C757D",
   },
   combinedCountContainer: {
-  marginBottom: 8,
-  padding: 6,
-  backgroundColor: '#E7F3FF',
-  borderRadius: 6,
-  borderWidth: 1,
-  borderColor: '#007AFF',
-  alignSelf: 'flex-start',
+    marginBottom: 8,
+    padding: 6,
+    backgroundColor: '#E7F3FF',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    alignSelf: 'flex-start',
   },
   combinedCountText: {
     color: '#007AFF',
     fontSize: 12,
+  },
+  // Summary Chip Styles
+  summaryChipContainer: {
+    backgroundColor: "#FFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
+  },
+  summaryChipHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  summaryChipTitle: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  clearAllButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearAllText: {
+    color: "#EF4444",
+    fontSize: 14,
+  },
+  summaryChipsRow: {
+    flexDirection: "row",
   },
 });
