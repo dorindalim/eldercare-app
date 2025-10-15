@@ -3,8 +3,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -32,6 +34,21 @@ import ActivityChat from "../tabs/ActivityChat";
 
 const TABLE = "community_activities";
 const VISIBLE_AFTER_START_HOURS = 3;
+const DEVICE_ID_KEY = "bulletin:device_id_v1";
+
+const PROJECT_ID: string | undefined =
+  (Constants?.expoConfig?.extra as any)?.eas?.projectId ||
+  (Constants as any)?.easConfig?.projectId;
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true as any,
+    shouldShowList: true as any,
+  }),
+});
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type LatLng = { latitude: number; longitude: number };
@@ -50,7 +67,6 @@ function distanceMeters(a: LatLng, b: LatLng) {
 const kmStr = (m?: number | null) =>
   m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`;
 
-const DEVICE_ID_KEY = "bulletin:device_id_v1";
 async function getDeviceId(): Promise<string> {
   const cur = await AsyncStorage.getItem(DEVICE_ID_KEY);
   if (cur) return cur;
@@ -61,14 +77,14 @@ async function getDeviceId(): Promise<string> {
   return id;
 }
 
-const CATS: { key: string; label: string; icon: IconName }[] = [
-  { key: "kopi", label: "Kopi", icon: "chatbubbles-outline" },
-  { key: "mahjong", label: "Mahjong", icon: "grid-outline" },
-  { key: "crafts", label: "Crafts", icon: "color-palette-outline" },
-  { key: "stretch", label: "Stretch", icon: "body-outline" },
-  { key: "walks", label: "Walks", icon: "walk-outline" },
-  { key: "learning", label: "Learning", icon: "school-outline" },
-  { key: "volunteer", label: "Volunteer", icon: "hand-left-outline" },
+const CATS: { key: string; icon: IconName }[] = [
+  { key: "kopi", icon: "chatbubbles-outline" },
+  { key: "mahjong", icon: "grid-outline" },
+  { key: "crafts", icon: "color-palette-outline" },
+  { key: "stretch", icon: "body-outline" },
+  { key: "walks", icon: "walk-outline" },
+  { key: "learning", icon: "school-outline" },
+  { key: "volunteer", icon: "hand-left-outline" },
 ];
 
 type ActivityRow = {
@@ -88,7 +104,7 @@ type ActivityRow = {
   created_at: string;
   updated_at: string;
   owner_device_id: string | null;
-  user_id?: string | null; 
+  user_id?: string | null;
   distance_m?: number | null;
 };
 
@@ -120,15 +136,110 @@ const GOOGLE_PLACES_KEY: string | undefined =
   (Constants?.expoConfig?.extra as any)?.GOOGLE_PLACES_KEY ||
   (Constants as any)?.manifest2?.extra?.GOOGLE_PLACES_KEY;
 
+async function registerForPushToken(): Promise<string | null> {
+  const settings = await Notifications.getPermissionsAsync();
+  let status = settings.status;
+  if (status !== "granted") {
+    const req = await Notifications.requestPermissionsAsync();
+    status = req.status;
+  }
+  if (status !== "granted") return null;
+
+  const tokenResp = await Notifications.getExpoPushTokenAsync(
+    PROJECT_ID ? { projectId: PROJECT_ID } : undefined
+  );
+  return tokenResp.data ?? null;
+}
+
+async function upsertPushToken({
+  token,
+  userId,
+  deviceId,
+}: {
+  token: string;
+  userId: string | null;
+  deviceId: string;
+}) {
+  await supabase.from("push_tokens").upsert(
+    {
+      user_id: userId ?? null,
+      device_id: deviceId,
+      expo_push_token: token,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "device_id" }
+  );
+}
+
+async function pushToTokens(tokens: string[], title: string, body: string, data?: Record<string, any>) {
+  if (!tokens.length) return;
+  try {
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tokens.map((to) => ({ to, title, body, data }))),
+    });
+  } catch {}
+}
+
+async function getTokensForUser(userId: string | null, deviceId: string | null) {
+  if (!userId && !deviceId) return [];
+  const or = [
+    userId ? `user_id.eq.${userId}` : null,
+    deviceId ? `device_id.eq.${deviceId}` : null,
+  ]
+    .filter(Boolean)
+    .join(",");
+  const { data } = await supabase
+    .from("push_tokens")
+    .select("expo_push_token")
+    .or(or);
+  return (data || []).map((r: any) => r.expo_push_token).filter(Boolean);
+}
+
 export default function Bulletin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
+  const locale = (i18n.language as string) || undefined; 
+
+  const [lang, setLangState] = useState<LangCode>(
+    (i18n.language as LangCode) || "en"
+  );
+
+  const setLang = async (code: LangCode) => {
+    setLangState(code);                        
+    if (i18n.language !== code) {
+      await i18n.changeLanguage(code);        
+    }
+    await AsyncStorage.setItem("lang", code);  
+  };
+
+  useEffect(() => {
+    (async () => {
+      const saved = (await AsyncStorage.getItem("lang")) as LangCode | null;
+      const target = saved || ((i18n.language as LangCode) || "en");
+      if (i18n.language !== target) {
+        await i18n.changeLanguage(target);
+      }
+      if (target !== lang) setLangState(target);
+    })();
+  }, []);
+
+  useEffect(() => {
+    const cur = (i18n.language as LangCode) || "en";
+    if (cur !== lang) setLangState(cur);
+  }, [i18n.language]);
+
 
   const { session, logout } = useAuth();
   const currentUserId = session?.userId ?? null;
   const [myName, setMyName] = useState<string | null>(null);
   useEffect(() => {
-    if (!currentUserId) { setMyName(null); return; }
+    if (!currentUserId) {
+      setMyName(null);
+      return;
+    }
     (async () => {
       const { data } = await supabase
         .from("elderly_profiles")
@@ -143,6 +254,14 @@ export default function Bulletin() {
   useEffect(() => {
     getDeviceId().then(setDeviceId);
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!deviceId) return;
+      const token = await registerForPushToken();
+      if (token) await upsertPushToken({ token, userId: currentUserId, deviceId });
+    })();
+  }, [deviceId, currentUserId]);
 
   const [myLoc, setMyLoc] = useState<LatLng | null>(null);
   useEffect(() => {
@@ -195,6 +314,22 @@ export default function Bulletin() {
   const [interestedList, setInterestedList] = useState<InterestRow[]>([]);
   const [interestedLoading, setInterestedLoading] = useState(false);
 
+  const [interestedSet, setInterestedSet] = useState<Set<string>>(new Set());
+  async function refreshMyInterests() {
+    if (!deviceId && !currentUserId) return;
+    const or = [
+      currentUserId ? `interested_user_id.eq.${currentUserId}` : null,
+      deviceId ? `interested_device_id.eq.${deviceId}` : null,
+    ]
+      .filter(Boolean)
+      .join(",");
+    const { data } = await supabase
+      .from("activity_interests")
+      .select("activity_id")
+      .or(or);
+    setInterestedSet(new Set((data || []).map((r: any) => r.activity_id)));
+  }
+
   async function loadActivities() {
     setLoading(true);
     try {
@@ -233,11 +368,12 @@ export default function Bulletin() {
 
       setRows(out);
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Could not load activities.");
+      Alert.alert(t("common.error"), t("bulletin.errors.loadFailed"));
       setRows([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      refreshMyInterests();
     }
   }
 
@@ -352,8 +488,8 @@ export default function Bulletin() {
     const placeName = (placeChosen?.name || placeQuery || "").trim();
     if (!title.trim() || !startDate || !placeName) {
       Alert.alert(
-        "Missing info",
-        "Please fill in Title, Date/Time and Location."
+        t("bulletin.alerts.missingInfoTitle"),
+        t("bulletin.alerts.missingInfoBody")
       );
       return;
     }
@@ -378,10 +514,47 @@ export default function Bulletin() {
       setCreating(false);
       resetForm();
       loadActivities();
-      Alert.alert("Posted!", "Your neighbour activity is now visible.");
-    } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Could not post activity.");
+      Alert.alert(t("bulletin.alerts.postedTitle"), t("bulletin.alerts.postedBody"));
+    } catch {
+      Alert.alert(t("common.error"), t("bulletin.errors.postFailed"));
     }
+  }
+
+  async function notifyInterestedUsersOnUpdate(activityId: string, titleForPush: string) {
+    try {
+      const { data: subs } = await supabase
+        .from("activity_interests")
+        .select("interested_user_id, interested_device_id")
+        .eq("activity_id", activityId);
+
+      const userIds = (subs || []).map((s: any) => s.interested_user_id).filter(Boolean);
+      const deviceIds = (subs || []).map((s: any) => s.interested_device_id).filter(Boolean);
+
+      const tokenSet = new Set<string>();
+
+      if (userIds.length) {
+        const { data } = await supabase
+          .from("push_tokens")
+          .select("expo_push_token")
+          .in("user_id", userIds);
+        (data || []).forEach((r: any) => r?.expo_push_token && tokenSet.add(r.expo_push_token));
+      }
+      if (deviceIds.length) {
+        const { data } = await supabase
+          .from("push_tokens")
+          .select("expo_push_token")
+          .in("device_id", deviceIds);
+        (data || []).forEach((r: any) => r?.expo_push_token && tokenSet.add(r.expo_push_token));
+      }
+
+      const tokens = Array.from(tokenSet);
+      await pushToTokens(
+        tokens,
+        t("bulletin.push.updatedTitle"),
+        t("bulletin.push.updatedBody", { title: titleForPush }),
+        { kind: "activity_updated", activityId }
+      );
+    } catch {}
   }
 
   async function submitEdit() {
@@ -389,8 +562,8 @@ export default function Bulletin() {
     const placeName = (placeChosen?.name || placeQuery || "").trim();
     if (!title.trim() || !startDate || !placeName) {
       Alert.alert(
-        "Missing info",
-        "Please fill in Title, Date/Time and Location."
+        t("bulletin.alerts.missingInfoTitle"),
+        t("bulletin.alerts.missingInfoBody")
       );
       return;
     }
@@ -412,13 +585,15 @@ export default function Bulletin() {
         .eq("id", editingRow.id);
       if (error) throw error;
 
+      await notifyInterestedUsersOnUpdate(editingRow.id, upd.title || editingRow.title);
+
       setCreating(false);
       setEditingRow(null);
       resetForm();
       loadActivities();
-      Alert.alert("Saved", "Your activity has been updated.");
-    } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Could not update activity.");
+      Alert.alert(t("bulletin.alerts.savedTitle"), t("bulletin.alerts.savedBody"));
+    } catch {
+      Alert.alert(t("common.error"), t("bulletin.errors.updateFailed"));
     }
   }
 
@@ -436,30 +611,79 @@ export default function Bulletin() {
         .order("created_at", { ascending: true });
       if (error) throw error;
       setInterestedList(data as InterestRow[]);
-    } catch (e) {
-      Alert.alert("Error", "Could not load interested people.");
+    } catch {
+      Alert.alert(t("common.error"), t("bulletin.errors.interestedLoadFailed"));
       setInterestedList([]);
     } finally {
       setInterestedLoading(false);
     }
   }
 
+  async function pushHostOnInterest(row: ActivityRow, interestedName: string) {
+    const tokens = await getTokensForUser(row.user_id ?? null, row.owner_device_id ?? null);
+    await pushToTokens(
+      tokens,
+      t("bulletin.push.newInterestTitle"),
+      t("bulletin.push.newInterestBody", { name: interestedName, title: row.title }),
+      { kind: "new_interest", activityId: row.id }
+    );
+  }
+
   async function markInterested(row: ActivityRow) {
+    if (interestedSet.has(row.id)) {
+      Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
+      return;
+    }
     try {
       const { error } = await supabase.from("activity_interests").insert([{
         activity_id: row.id,
-        activity_title: row.title,         
+        activity_title: row.title,
         owner_user_id: row.user_id ?? null,
-        interested_user_id: currentUserId, 
+        interested_user_id: currentUserId ?? null,
         interested_device_id: deviceId || null,
-        interested_name: myName ?? "Neighbour", 
+        interested_name: myName ?? t("chat.neighbour"),
       }]);
       if (error) throw error;
-      loadActivities(); 
-      Alert.alert("Got it 👍", "Noted your interest.");
+
+      setInterestedSet((prev) => new Set([...prev, row.id]));
+      loadActivities();
+
+      await pushHostOnInterest(row, myName ?? t("chat.neighbour"));
+
+      Alert.alert(t("bulletin.alerts.interestedSavedTitle"), t("bulletin.alerts.interestedSavedBody"));
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Could not mark interest.");
+      const msg = String(e?.message || "").toLowerCase();
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        setInterestedSet((prev) => new Set([...prev, row.id]));
+        Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
+        return;
+      }
+      Alert.alert(t("common.error"), t("bulletin.errors.markInterestedFailed"));
     }
+  }
+
+  async function canOpenChat(row: ActivityRow): Promise<boolean> {
+    if ((currentUserId && row.user_id === currentUserId) || row.owner_device_id === deviceId) {
+      return true;
+    }
+    if (interestedSet.has(row.id)) return true;
+
+    const or = [
+      currentUserId ? `interested_user_id.eq.${currentUserId}` : null,
+      deviceId ? `interested_device_id.eq.${deviceId}` : null,
+    ]
+      .filter(Boolean)
+      .join(",");
+    const { data } = await supabase
+      .from("activity_interests")
+      .select("id")
+      .eq("activity_id", row.id)
+      .or(or)
+      .maybeSingle();
+
+    const allowed = !!data;
+    if (allowed) setInterestedSet((prev) => new Set([...prev, row.id]));
+    return allowed;
   }
 
   const filtered = useMemo(() => {
@@ -479,11 +703,7 @@ export default function Bulletin() {
     );
   }, [filtered, currentUserId, deviceId]);
 
-  const [lang, setLangState] = useState<LangCode>("en");
-  const setLang = async (code: LangCode) => {
-    setLangState(code);
-    await AsyncStorage.setItem("lang", code);
-  };
+  const catLabel = (k: string) => t(`bulletin.categories.${k}`);
 
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
@@ -492,15 +712,15 @@ export default function Bulletin() {
         language={lang}
         setLanguage={setLang}
         includeTopInset
-        title="Bulletin Board"
+        title={t("home.bulletinBoard")}
+        bgColor="#809671"
         barHeight={44}
         topPadding={2}
         onLogout={async () => {
-          await logout();             
-          router.replace("/Authentication/LogIn"); 
+          await logout();
+          router.replace("/Authentication/LogIn");
         }}
       />
-
 
       <View style={s.headerRow}>
         <Pressable
@@ -512,7 +732,7 @@ export default function Bulletin() {
           }}
         >
           <Ionicons name="add-circle-outline" size={22} color="#fff" />
-          <Text style={s.createText}>Create</Text>
+          <Text style={s.createText}>{t("bulletin.create")}</Text>
         </Pressable>
 
         <ScrollView
@@ -520,11 +740,11 @@ export default function Bulletin() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingLeft: 6 }}
         >
-          <Chip label="All" active={!filterCat} onPress={() => setFilterCat(null)} />
+          <Chip label={t("community.all")} active={!filterCat} onPress={() => setFilterCat(null)} />
           {CATS.map((c) => (
             <Chip
               key={c.key}
-              label={c.label}
+              label={catLabel(c.key)}
               icon={c.icon}
               active={filterCat === c.key}
               onPress={() => setFilterCat(c.key)}
@@ -536,7 +756,7 @@ export default function Bulletin() {
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator />
-          <AppText style={{ marginTop: 8 }}>Loading…</AppText>
+          <AppText style={{ marginTop: 8 }}>{t("common.loading")}</AppText>
         </View>
       ) : (
         <FlatList
@@ -548,13 +768,25 @@ export default function Bulletin() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <>
-              {mine.length > 0 && <Section title="Your Activities" />}
+              {mine.length > 0 && <Section title={t("bulletin.sections.yours")} />}
               {mine.map((row) => (
                 <ActivityCard
                   key={row.id}
                   row={row}
                   myLoc={myLoc}
-                  onChat={() => {
+                  onChat={async () => {
+                    const ok = await canOpenChat(row);
+                    if (!ok) {
+                      Alert.alert(
+                        t("bulletin.alerts.chatGateTitle"),
+                        t("bulletin.alerts.chatGateBody"),
+                        [
+                          { text: t("common.cancel"), style: "cancel" },
+                          { text: t("bulletin.cta.imInterested"), onPress: () => markInterested(row) },
+                        ]
+                      );
+                      return;
+                    }
                     setChatFor({ id: row.id, title: row.title });
                     setChatOpen(true);
                   }}
@@ -575,14 +807,26 @@ export default function Bulletin() {
                   onEdit={() => startEdit(row)}
                 />
               ))}
-              <Section title="Nearby" />
+              <Section title={t("bulletin.sections.nearby")} />
             </>
           }
           renderItem={({ item }) => (
             <ActivityCard
               row={item}
               myLoc={myLoc}
-              onChat={() => {
+              onChat={async () => {
+                const ok = await canOpenChat(item);
+                if (!ok) {
+                  Alert.alert(
+                    t("bulletin.alerts.chatGateTitle"),
+                    t("bulletin.alerts.chatGateBody"),
+                    [
+                      { text: t("common.cancel"), style: "cancel" },
+                      { text: t("bulletin.cta.imInterested"), onPress: () => markInterested(item) },
+                    ]
+                  );
+                  return;
+                }
                 setChatFor({ id: item.id, title: item.title });
                 setChatOpen(true);
               }}
@@ -599,11 +843,12 @@ export default function Bulletin() {
                 });
               }}
               onInterested={() => markInterested(item)}
+              alreadyInterested={interestedSet.has(item.id)}
             />
           )}
           ListEmptyComponent={
             <View style={{ padding: 16 }}>
-              <AppText>No activities yet. Be the first!</AppText>
+              <AppText>{t("bulletin.empty")}</AppText>
             </View>
           }
         />
@@ -626,7 +871,6 @@ export default function Bulletin() {
           />
         ) : null}
       </Modal>
-
 
       {interestedFor && (
         <InterestedModal
@@ -651,10 +895,10 @@ export default function Bulletin() {
         >
           <View style={s.modalHead}>
             <AppText variant="h1" weight="900">
-              {editingRow ? "Edit Activity" : "New Activity"}
+              {editingRow ? t("bulletin.form.titleEdit") : t("bulletin.form.titleNew")}
             </AppText>
             <AppText style={{ color: "#6B7280", marginTop: 4 }}>
-              Keep it short & clear.
+              {t("bulletin.form.subtitleHint")}
             </AppText>
           </View>
 
@@ -669,16 +913,16 @@ export default function Bulletin() {
               }}
               keyboardShouldPersistTaps="handled"
             >
-              <Labeled label="Name">
+              <Labeled label={t("bulletin.form.name")}>
                 <TextInput
                   value={title}
                   onChangeText={setTitle}
-                  placeholder="e.g., Kopi @ Void Deck"
-                  style={s.input}
+                  placeholder={t("bulletin.form.namePH")}
+                  style={[s.input, { color: "#000000" }]}
                 />
               </Labeled>
 
-              <Labeled label="Category">
+              <Labeled label={t("bulletin.form.category")}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {CATS.map((c) => (
                     <Pressable
@@ -704,14 +948,14 @@ export default function Bulletin() {
                           cat === c.key && { color: "#fff" },
                         ]}
                       >
-                        {c.label}
+                        {catLabel(c.key)}
                       </Text>
                     </Pressable>
                   ))}
                 </ScrollView>
               </Labeled>
 
-              <Labeled label="Start">
+              <Labeled label={t("bulletin.form.start")}>
                 <View style={s.pickerCard}>
                   {Platform.OS === "ios" ? (
                     <>
@@ -761,14 +1005,14 @@ export default function Bulletin() {
                 </View>
               </Labeled>
 
-              <Labeled label="Location">
+              <Labeled label={t("bulletin.form.location")}>
                 <TextInput
                   value={placeQuery}
                   onChangeText={(v) => {
                     setPlaceQuery(v);
                     setPlaceChosen(null);
                   }}
-                  placeholder="e.g., Tampines West CC"
+                  placeholder={t("bulletin.form.locationPH")}
                   style={s.input}
                 />
                 {!!GOOGLE_PLACES_KEY && !!placePreds.length && (
@@ -799,22 +1043,21 @@ export default function Bulletin() {
                 )}
                 {!!placeChosen && (
                   <AppText style={{ marginTop: 6, color: "#16A34A" }}>
-                    Picked: {placeChosen.name}
+                    {t("bulletin.form.picked", { name: placeChosen.name })}
                   </AppText>
                 )}
                 {!GOOGLE_PLACES_KEY && (
                   <AppText style={{ marginTop: 6, color: "#B45309" }}>
-                    Set GOOGLE_PLACES_KEY to enable suggestions (typing still
-                    works).
+                    {t("bulletin.form.noPlacesKey")}
                   </AppText>
                 )}
               </Labeled>
 
-              <Labeled label="Details (optional)">
+              <Labeled label={t("bulletin.form.detailsOptional")}>
                 <TextInput
                   value={desc}
                   onChangeText={setDesc}
-                  placeholder="What to bring / short note"
+                  placeholder={t("bulletin.form.detailsPH")}
                   style={[s.input, { height: 90, textAlignVertical: "top" }]}
                   multiline
                 />
@@ -832,12 +1075,12 @@ export default function Bulletin() {
                   color="#fff"
                 />
                 <Text style={s.publishText}>
-                  {editingRow ? "Save" : "Post"}
+                  {editingRow ? t("common.save") : t("bulletin.post")}
                 </Text>
               </Pressable>
 
               <Pressable onPress={() => setCreating(false)} style={s.cancelBtn}>
-                <Text style={s.cancelText}>Close</Text>
+                <Text style={s.cancelText}>{t("common.close")}</Text>
               </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -973,6 +1216,7 @@ function ActivityCard({
   onInterested,
   onViewInterested,
   onEdit,
+  alreadyInterested,
 }: {
   row: ActivityRow;
   myLoc: LatLng | null;
@@ -982,7 +1226,9 @@ function ActivityCard({
   onInterested?: () => void;
   onViewInterested?: () => void;
   onEdit?: () => void;
+  alreadyInterested?: boolean;
 }) {
+  const { t } = useTranslation();
   const when = new Date(row.starts_at);
   const timeStr = when.toLocaleString("en-SG", {
     month: "short",
@@ -1017,7 +1263,7 @@ function ActivityCard({
             onPress={onEdit}
             hitSlop={8}
             style={stylesCard.iconBtnGhost}
-            accessibilityLabel="Edit"
+            accessibilityLabel={t("common.edit")}
           >
             <Ionicons name="create-outline" size={18} color="#0EA5E9" />
           </Pressable>
@@ -1040,22 +1286,40 @@ function ActivityCard({
           disabled={!onViewInterested && !isMine}
           onPress={onViewInterested}
           style={[stylesCard.metaChip, { paddingHorizontal: 8 }]}
-          accessibilityLabel="Interested"
+          accessibilityLabel={t("bulletin.interested")}
         >
           <Ionicons name="people-outline" size={14} color="#0F172A" />
           <Text style={stylesCard.metaText}>{count}</Text>
         </Pressable>
       </View>
 
+      {!!row.description && (
+        <Text style={{ color: "#374151", marginTop: 10 }} numberOfLines={3}>
+          {row.description}
+        </Text>
+      )}
+
       <View style={stylesCard.actionsRow}>
-        <IconCircle onPress={onChat} icon="chatbubble-ellipses-outline" label="Chat" />
-        <IconCircle onPress={onDirections} icon="navigate-outline" label="Go" />
+        <IconCircle onPress={onChat} icon="chatbubble-ellipses-outline" label={t("bulletin.actions.chat")} />
+        <IconCircle onPress={onDirections} icon="navigate-outline" label={t("bulletin.actions.go")} />
         {!isMine && !!onInterested && (
-          <IconCircle onPress={onInterested} icon="heart-outline" label="Interested" filled />
+          <Pressable
+            onPress={() => {
+              if (alreadyInterested) {
+                Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
+              } else {
+                onInterested();
+              }
+            }}
+            style={[stylesCard.circleBtn, alreadyInterested ? { backgroundColor: "#16A34A" } : null]}
+            accessibilityLabel={t("bulletin.actions.interested")}
+          >
+            <Ionicons name={alreadyInterested ? "heart" : "heart-outline"} size={18} color={alreadyInterested ? "#fff" : "#0F172A"} />
+          </Pressable>
         )}
         {isMine && (
           <View style={stylesCard.minePill}>
-            <Text style={stylesCard.mineText}>Mine</Text>
+            <Text style={stylesCard.mineText}>{t("bulletin.badges.mine")}</Text>
           </View>
         )}
       </View>
@@ -1098,6 +1362,7 @@ function InterestedModal({
   loading: boolean;
   title?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
@@ -1116,7 +1381,7 @@ function InterestedModal({
             <Ionicons name="chevron-back" size={24} color="#111827" />
           </Pressable>
           <Text style={{ fontWeight: "800", fontSize: 16, flex: 1, textAlign: "center" }}>
-            {title ? `Interested · ${title}` : "Interested"}
+            {title ? t("bulletin.modal.interestedWith", { title }) : t("bulletin.modal.interested")}
           </Text>
           <View style={{ width: 30 }} />
         </View>
@@ -1127,7 +1392,7 @@ function InterestedModal({
           </View>
         ) : rows.length === 0 ? (
           <View style={{ padding: 16 }}>
-            <Text style={{ color: "#6B7280" }}>No one yet.</Text>
+            <Text style={{ color: "#6B7280" }}>{t("bulletin.modal.none")}</Text>
           </View>
         ) : (
           <FlatList
@@ -1146,7 +1411,7 @@ function InterestedModal({
                 }}
               >
                 <Text style={{ fontWeight: "800" }}>
-                  {item.interested_name || "Neighbour"}
+                  {item.interested_name || t("chat.neighbour")}
                 </Text>
                 <Text style={{ color: "#6B7280", marginTop: 2 }}>
                   {new Date(item.created_at).toLocaleString("en-SG", {

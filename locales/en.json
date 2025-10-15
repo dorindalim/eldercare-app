@@ -7,7 +7,10 @@
     "pleaseLoginAgain": "Please log in again.",
     "save": "Save",
     "hide": "Hide",
-    "show": "Show"
+    "show": "Show",
+    "loading": "Loading…",
+    "close": "Close",
+    "edit": "Edit"
   },
   "alerts": {
     "noAccountTitle": "No account found",
@@ -364,14 +367,26 @@
       "confirmStepCheckbox": "I understand this action is permanent.",
       "explain": "Portal disabled while account is pending deletion."
     },
+    "photoAccess": {
+      "title": "Photo Library Access",
+      "openSettings": "Open Settings",
+      "allowedTitle": "Access already allowed",
+      "allowedBody": "You can change this in Settings if needed.",
+      "deniedTitle": "Access denied",
+      "deniedBody": "Please enable photo access in Settings to attach pictures.",
+      "status": {
+        "granted": "Allowed",
+        "denied": "Denied",
+        "askMe": "Ask me next time"
+      }
+    },
     "notifications": {
       "title": "Notifications",
       "status": {
         "allowed": "Allowed",
         "notAllowed": "Not allowed"
-  }
-}
-
+      }
+    }
   },
   "delete": {
     "typeMismatch": "Confirmation phrase doesn’t match.",
@@ -402,10 +417,10 @@
       "6": "Sa"
     }
   },
-    "walking": {
+  "walking": {
     "title": "Walking Routes",
     "loading": "Loading parks...",
-    "error": "Failed to load parks", 
+    "error": "Failed to load parks",
     "retry": "Retry",
     "search": {
       "button": "Search Parks",
@@ -413,7 +428,7 @@
       "action": "Search"
     },
     "filter": {
-      "button": "Filter Parks", 
+      "button": "Filter Parks",
       "clearAll": "Clear All",
       "apply": "Apply Filters"
     },
@@ -421,7 +436,7 @@
       "hours": "Hours",
       "region": "Region",
       "activities": "activit{{count}}ies",
-      "amenities": "amenit{{count}}ies", 
+      "amenities": "amenit{{count}}ies",
       "available": "{{activities}} and {{amenities}} available",
       "learnMore": "Learn more at NParks.gov.sg",
       "getDirections": "Get Directions",
@@ -480,6 +495,101 @@
         "west": "West",
         "offshoreIslands": "Offshore islands"
       }
+    }
+  },
+  "chat": {
+    "headerDefault": "Activity Chat",
+    "neighbour": "Neighbour",
+    "hostBadge": "· Host",
+    "hostColon": "· Host:",
+    "typing": "typing…",
+    "placeholder": "Message…"
+  },
+  "errors": {
+    "permissionTitle": "Permission needed",
+    "permissionBody": "Allow photo access to send images.",
+    "uploadTitle": "Upload failed",
+    "uploadReadBody": "Could not read image from device.",
+    "uploadGenericBody": "Could not upload image.",
+    "sendTitle": "Send failed",
+    "sendBody": "Could not save message.",
+    "unexpected": "Unexpected error"
+  },
+  "bulletin": {
+    "create": "Create",
+    "post": "Post",
+    "sections": {
+      "yours": "Your Activities",
+      "nearby": "Nearby"
+    },
+    "categories": {
+      "kopi": "Kopi",
+      "mahjong": "Mahjong",
+      "crafts": "Crafts",
+      "stretch": "Stretch",
+      "walks": "Walks",
+      "learning": "Learning",
+      "volunteer": "Volunteer"
+    },
+    "empty": "No activities yet. Be the first!",
+    "interested": "Interested",
+    "actions": {
+      "chat": "Chat",
+      "go": "Go",
+      "interested": "Interested"
+    },
+    "badges": {
+      "mine": "Mine"
+    },
+    "alerts": {
+      "missingInfoTitle": "Missing info",
+      "missingInfoBody": "Please fill in Title, Date/Time and Location.",
+      "postedTitle": "Posted!",
+      "postedBody": "Your neighbour activity is now visible.",
+      "savedTitle": "Saved",
+      "savedBody": "Your activity has been updated.",
+      "chatGateTitle": "Please indicate interest",
+      "chatGateBody": "You need to indicate interest before joining the chat.",
+      "alreadyInterestedTitle": "Already interested",
+      "alreadyInterestedBody": "You’ve already indicated interest for this activity.",
+      "interestedSavedTitle": "Got it",
+      "interestedSavedBody": "Noted your interest."
+    },
+    "cta": {
+      "imInterested": "I’m interested"
+    },
+    "form": {
+      "titleNew": "New Activity",
+      "titleEdit": "Edit Activity",
+      "subtitleHint": "Keep it short & clear.",
+      "name": "Name",
+      "category": "Category",
+      "start": "Start",
+      "location": "Location",
+      "detailsOptional": "Details (optional)",
+      "namePH": "e.g., Kopi @ Void Deck",
+      "locationPH": "e.g., Tampines West CC",
+      "detailsPH": "What to bring / short note",
+      "picked": "Picked: {{name}}",
+      "noPlacesKey": "Set GOOGLE_PLACES_KEY to enable suggestions (typing still works)."
+    },
+    "modal": {
+      "interested": "Interested",
+      "interestedWith": "Interested · {{title}}",
+      "none": "No one yet."
+    },
+    "errors": {
+      "loadFailed": "Could not load activities.",
+      "postFailed": "Could not post activity.",
+      "updateFailed": "Could not update activity.",
+      "interestedLoadFailed": "Could not load interested people.",
+      "markInterestedFailed": "Could not mark interest."
+    },
+    "push": {
+      "updatedTitle": "Activity updated",
+      "updatedBody": "{{title}} — details changed.",
+      "newInterestTitle": "New interest",
+      "newInterestBody": "{{name}} is interested in {{title}}."
     }
   }
 }

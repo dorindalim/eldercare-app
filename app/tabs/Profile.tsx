@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
@@ -229,6 +230,28 @@ export default function ElderlyProfile() {
       );
     }
   };
+  const [photoPerm, setPhotoPerm] = useState<"granted" | "denied" | "undetermined">("undetermined");
+  useEffect(() => {
+    (async () => {
+      const p = await ImagePicker.getMediaLibraryPermissionsAsync();
+      setPhotoPerm((p.status as any) ?? "undetermined");
+    })();
+  }, []);
+
+  async function requestPhotoAccess() {
+    const p = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    setPhotoPerm((p.status as any) ?? "undetermined");
+    if (p.status === "denied" && !p.canAskAgain) {
+      Alert.alert(
+        t("profile.photoAccess.deniedTitle"),
+        t("profile.photoAccess.deniedBody"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("profile.photoAccess.openSettings"), onPress: () => Linking.openSettings?.() },
+        ]
+      );
+    }
+  }
 
   useEffect(() => {
     loadData();
@@ -670,6 +693,46 @@ export default function ElderlyProfile() {
               <View style={[s.knob, locServicesOn && locPerm === "granted" ? s.knobOn : s.knobOff]} />
             </Pressable>
           </View>
+          
+          {/* Photo library access toggle */}
+          <View style={[s.rowBetween, { marginTop: 14, alignItems: "center" }]}>
+            <View style={{ flexShrink: 1, paddingRight: 10 }}>
+              <AppText variant="label" weight="700" color="#374151">
+                {t("profile.photoAccess.title")}
+              </AppText>
+              <AppText variant="caption" color="#6B7280" style={{ marginTop: 2 }}>
+                {photoPerm === "granted"
+                  ? t("profile.photoAccess.status.granted")
+                  : photoPerm === "denied"
+                  ? t("profile.photoAccess.status.denied")
+                  : t("profile.photoAccess.status.askMe")}
+              </AppText>
+            </View>
+
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: photoPerm === "granted" }}
+              onPress={() => {
+                if (photoPerm === "granted") {
+                  Alert.alert(
+                    t("profile.photoAccess.allowedTitle"),
+                    t("profile.photoAccess.allowedBody"),
+                    [
+                      { text: t("common.cancel"), style: "cancel" },
+                      { text: t("profile.photoAccess.openSettings"), onPress: () => Linking.openSettings?.() },
+                    ]
+                  );
+                } else {
+                  requestPhotoAccess();
+                }
+              }}
+              style={[s.toggleWrap, photoPerm === "granted" ? s.toggleOn : s.toggleOff]}
+            >
+              <View style={[s.knob, photoPerm === "granted" ? s.knobOn : s.knobOff]} />
+            </Pressable>
+          </View>
+
+
         </View>
 
         {/* Delete Account */}
