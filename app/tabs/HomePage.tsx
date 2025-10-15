@@ -284,7 +284,7 @@ export default function ElderlyHome() {
             </AppText>
           </Pressable>
 
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Community")}>
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Activities")}>
             <Ionicons name="people-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.allActivities")}
@@ -301,7 +301,7 @@ export default function ElderlyHome() {
             </AppText>
           </Pressable>
 
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Walking")}>
+          <Pressable style={s.rect} onPress={() => router.push("/tabs/Bulletin")}>
             <Ionicons name="newspaper-outline" size={28} color="#222" />
             <AppText variant="title" weight="700" style={s.rectText}>
               {t("home.bulletinBoard")}
