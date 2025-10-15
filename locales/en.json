@@ -77,7 +77,7 @@
     "checkedIn": "You have Checked In today!"
   },
   "activities": {
-    "prompt": "What would you like to do?",
+    "prompt": "What would you like to view?",
     "parks": "Parks",
     "ccActivities": "Community Centre Activities"
   },
@@ -185,7 +185,7 @@
       "startNav": "Start Navigation",
       "filter": {
         "everything": "Everything",
-        "cc": "Community Clubs",
+        "cc": "Community Center",
         "clinics": "Clinics",
         "parks": "Parks"
       },
