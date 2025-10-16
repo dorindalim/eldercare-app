@@ -589,10 +589,10 @@ export default function WalkingScreen() {
         sections={getFilterSections()}
         onReset={handleResetFilters}
         onApply={handleApplyFilters}
-        title={t("walking.filters.title")}
+        title={t("walking.filter.title")}
         labels={{
-          reset: t("walking.filters.reset"),
-          apply: t("walking.filters.apply"),
+          reset: t("walking.filter.reset"),
+          apply: t("walking.filter.apply"),
         }}
       />
 

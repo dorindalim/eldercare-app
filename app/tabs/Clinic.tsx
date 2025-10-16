@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Linking,
+  RefreshControl,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -17,7 +19,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CHASClinics from "../../assets/data/CHASClinics.json";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
-import { supabase } from "../../src/lib/supabase";
 import FilterSheet, {
   type FilterSection,
 } from "../../src/components/FilterSheet";
@@ -25,6 +26,7 @@ import Pagination from "../../src/components/Pagination";
 import SearchBar from "../../src/components/SearchBar";
 import SummaryChip from "../../src/components/SummaryChip";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
+import { supabase } from "../../src/lib/supabase";
 
 const datasetId = "d_9d0bbe366aee923a6e202f80bb356bb9";
 const url = `https://data.gov.sg/api/action/datastore_search?resource_id=${datasetId}`;
@@ -62,7 +64,9 @@ export default function ClinicScreen() {
   const { logout } = useAuth();
   const [allClinics, setAllClinics] = useState([]);
   const [filteredClinics, setFilteredClinics] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,115 +81,125 @@ export default function ClinicScreen() {
     AsyncStorage.setItem("lang", code).catch(() => {});
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    scrollToTop();
+  };
+
+  const fetchClinics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let location = null;
       try {
-        setLoading(true);
-        setError(null);
-
-        let location = null;
-        try {
-          const { status } = await Location.requestForegroundPermissionsAsync();
-          if (status === "granted") {
-            const pos = await Location.getCurrentPositionAsync({});
-            location = {
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-            };
-            setUserLocation(location);
-          }
-        } catch (e) {
-          console.warn("Could not get user location:", e);
-        }
-
-        // Fetch mock wait times from Supabase
-        const { data: mockData } = await supabase
-          .from('clinic_wait_times')
-          .select('clinic_name, wait_time_minutes');
-
-        const mockWaitTimesMap = new Map();
-        if (mockData) {
-          mockData.forEach(record => {
-            mockWaitTimesMap.set(record.clinic_name, record.wait_time_minutes);
-          });
-        }
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch waiting time data");
-        const data = await response.json();
-        const waitingTimeRecords = data.result?.records || [];
-
-        const liveWaitingTimesMap = new Map();
-        waitingTimeRecords.forEach((record) => {
-          const normalizedName = normalizeName(record.hospital);
-          liveWaitingTimesMap.set(normalizedName, record.minutes);
-        });
-
-        const METERS_PER_MINUTE_ASSUMED_SPEED = 250; // 15 km/h
-
-        const allClinics = CHASClinics.features.map((feature) => {
-          const description = feature.properties.Description;
-          const nameMatch = description.match(
-            /<th>HCI_NAME<\/th> <td>(.*?)<\/td>/
-          );
-          const phoneMatch = description.match(
-            /<th>HCI_TEL<\/th> <td>(.*?)<\/td>/
-          );
-          const name = nameMatch ? nameMatch[1] : "Unknown Clinic";
-          const phone = phoneMatch ? phoneMatch[1] : null;
-          const normalizedName = normalizeName(name);
-          const coords = feature.geometry.coordinates;
-          const lat = coords[1];
-          const lon = coords[0];
-
-          const distance = location
-            ? distanceMeters(location, { latitude: lat, longitude: lon })
-            : null;
-
-          // Priority: 1. Live API, 2. Supabase Mock, 3. Null
-          let waitingTime = liveWaitingTimesMap.get(normalizedName) || mockWaitTimesMap.get(normalizedName) || null;
-
-          const travelTime = distance != null ? distance / METERS_PER_MINUTE_ASSUMED_SPEED : null;
-          const totalTime = waitingTime != null && travelTime != null ? waitingTime + travelTime : null;
-
-          return {
-            name,
-            phone,
-            lat,
-            lon,
-            distance,
-            minutes: waitingTime,
-            totalTime,
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const pos = await Location.getCurrentPositionAsync({});
+          location = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
           };
-        });
-
-        if (location) {
-          // Sort by total time, with fallbacks
-          allClinics.sort((a, b) => {
-            if (a.totalTime != null && b.totalTime != null) {
-              return a.totalTime - b.totalTime;
-            }
-            if (a.totalTime != null) return -1;
-            if (b.totalTime != null) return 1;
-            if (a.distance != null && b.distance != null) {
-              return a.distance - b.distance;
-            }
-            return 0;
-          });
+          setUserLocation(location);
         }
-
-        setAllClinics(allClinics);
-        setFilteredClinics(allClinics);
-      } catch (err) {
-        console.error("Error processing clinic data:", err);
-        setError("Failed to load clinic data. Please try again later.");
-      } finally {
-        setLoading(false);
+      } catch (e) {
+        console.warn("Could not get user location:", e);
       }
-    };
 
-    fetchData();
-  }, []);
+      // Fetch mock wait times from Supabase
+      const { data: mockData, error: mockError } = await supabase
+        .from('clinic_wait_times')
+        .select('clinic_name, wait_time_minutes');
+
+      if (mockError) throw mockError;
+
+      const mockWaitTimesMap = new Map();
+      if (mockData) {
+        mockData.forEach(record => {
+          mockWaitTimesMap.set(record.clinic_name, record.wait_time_minutes);
+        });
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch waiting time data");
+      const data = await response.json();
+      const waitingTimeRecords = data.result?.records || [];
+
+      const liveWaitingTimesMap = new Map();
+      waitingTimeRecords.forEach((record) => {
+        const normalizedName = normalizeName(record.hospital);
+        liveWaitingTimesMap.set(normalizedName, record.minutes);
+      });
+
+      const METERS_PER_MINUTE_ASSUMED_SPEED = 250; // 15 km/h
+
+      const clinics = CHASClinics.features.map((feature) => {
+        const description = feature.properties.Description;
+        const nameMatch = description.match(
+          /<th>HCI_NAME<\/th> <td>(.*?)<\/td>/
+        );
+        const phoneMatch = description.match(
+          /<th>HCI_TEL<\/th> <td>(.*?)<\/td>/
+        );
+        const name = nameMatch ? nameMatch[1] : "Unknown Clinic";
+        const phone = phoneMatch ? phoneMatch[1] : null;
+        const normalizedName = normalizeName(name);
+        const coords = feature.geometry.coordinates;
+        const lat = coords[1];
+        const lon = coords[0];
+
+        const distance = location
+          ? distanceMeters(location, { latitude: lat, longitude: lon })
+          : null;
+
+        // Priority: 1. Live API, 2. Supabase Mock, 3. Null
+        let waitingTime = liveWaitingTimesMap.get(normalizedName) || mockWaitTimesMap.get(normalizedName) || null;
+
+        const travelTime = distance != null ? distance / METERS_PER_MINUTE_ASSUMED_SPEED : null;
+        const totalTime = waitingTime != null && travelTime != null ? waitingTime + travelTime : null;
+
+        return {
+          name,
+          phone,
+          lat,
+          lon,
+          distance,
+          minutes: waitingTime,
+          totalTime,
+        };
+      });
+
+      if (location) {
+        // Sort by total time, with fallbacks
+        clinics.sort((a, b) => {
+          if (a.totalTime != null && b.totalTime != null) {
+            return a.totalTime - b.totalTime;
+          }
+          if (a.totalTime != null) return -1;
+          if (b.totalTime != null) return 1;
+          if (a.distance != null && b.distance != null) {
+            return a.distance - b.distance;
+          }
+          return 0;
+        });
+      }
+
+      setAllClinics(clinics);
+      setFilteredClinics(clinics);
+    } catch (err) {
+      console.error("Error processing clinic data:", err);
+      setError("Failed to load clinic data. Please try again later.");
+      Alert.alert("Error", "Failed to load clinic data. Please try again later.");
+    } finally {
+      setInitialLoading(false);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -218,10 +232,19 @@ export default function ClinicScreen() {
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  const onRefresh = () => {
+    setRefreshing(true);
+    setLoading(true);
+    fetchClinics();
   };
+
+  useEffect(() => {
+    const load = async () => {
+      setInitialLoading(true);
+      await fetchClinics();
+    };
+    load();
+  }, []);
 
   const getFilterSections = (): FilterSection[] => {
     return [
@@ -314,32 +337,6 @@ export default function ClinicScreen() {
     currentPage * clinicsPerPage
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={s.safe}>
-        <TopBar
-          language={i18n.language as LangCode}
-          setLanguage={setLang as (c: LangCode) => void}
-          bgColor="#FFFAF6"
-          includeTopInset={true}
-          barHeight={44}
-          topPadding={2}
-          title={t("home.clinics")}
-          onLogout={async () => {
-            await logout();
-            router.replace("/Authentication/LogIn");
-          }}
-        />
-        <View style={s.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <AppText variant="body" weight="400" style={s.loadingText}>
-            Loading clinic data...
-          </AppText>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (error) {
     return (
       <SafeAreaView style={s.safe}>
@@ -360,6 +357,11 @@ export default function ClinicScreen() {
           <AppText variant="body" weight="600" style={s.errorText}>
             {error}
           </AppText>
+          <TouchableOpacity style={s.retryButton} onPress={fetchClinics}>
+            <AppText variant="button" weight="700" style={s.retryButtonText}>
+              Try Again
+            </AppText>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -412,9 +414,35 @@ export default function ClinicScreen() {
         keyExtractor={(item, index) => `${item.name}-${index}`}
         contentContainerStyle={s.listContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={["#007AFF"]} 
+            tintColor="#007AFF" 
+          />
+        }
         ListEmptyComponent={
           <View style={s.emptyContainer}>
-            <AppText style={s.emptyText}>No clinics match your search.</AppText>
+            {initialLoading || loading ? (
+              <>
+                <ActivityIndicator size="small" color="#007AFF" />
+                <AppText variant="body" weight="400" style={s.emptyText}>
+                  Loading clinic data...
+                </AppText>
+              </>
+            ) : (
+              <>
+                <AppText variant="body" weight="400" style={s.emptyText}>
+                  No clinics match your search.
+                </AppText>
+                <TouchableOpacity style={s.retryButton} onPress={fetchClinics}>
+                  <AppText variant="button" weight="700" style={s.retryButtonText}>
+                    Try Again
+                  </AppText>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         }
         ListFooterComponent={
@@ -445,6 +473,7 @@ const s = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+    flexGrow: 1,
   },
   clinicItem: {
     backgroundColor: "#FFF",
@@ -493,12 +522,6 @@ const s = StyleSheet.create({
     fontWeight: "400",
     marginBottom: 8,
   },
-  reviewsText: {
-    color: "#6C757D",
-    fontSize: 16,
-    fontWeight: "400",
-    marginBottom: 8,
-  },
   buttonContainer: {
     flexDirection: "row",
     gap: 10,
@@ -524,15 +547,6 @@ const s = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "600",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    color: "#6C757D",
-  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
@@ -545,14 +559,21 @@ const s = StyleSheet.create({
     color: "#DC3545",
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+    padding: 40,
     alignItems: "center",
-    marginTop: 50,
   },
   emptyText: {
-    fontSize: 16,
-    color: "#6C757D",
     textAlign: "center",
+    marginBottom: 16,
+    color: "#6C757D",
+  },
+  retryButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFF",
   },
 });
