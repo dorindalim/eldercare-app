@@ -334,19 +334,6 @@ export default function WalkingScreen() {
     }
   };
 
-  // Clear screen each time
-  const clearAllSearchAndFilters = () => {
-    // Clear search query
-    setSearchQuery("");
-  
-    // Clear all filter selections
-    handleResetFilters();
-    setSelectedFilterItems([]);
-    
-    // Reset to show all parks
-    setFilteredParks(parks);
-  };
-
   // Search functionality
   const performSearch = (query: string) => {
     if (!query.trim()) {
@@ -482,7 +469,7 @@ export default function WalkingScreen() {
       {
         id: "activities",
         type: "chips-multi",
-        title: "Activities",
+        title: t('walking.filters.categories.activity'),
         options: activityOptions.map(option => ({ key: option, label: option })),
         selected: tempFilters.activities,
         onToggle: (key) => {
@@ -497,7 +484,7 @@ export default function WalkingScreen() {
       {
         id: "amenities",
         type: "chips-multi", 
-        title: "Amenities",
+        title: t('walking.filters.categories.amenity'),
         options: amenityOptions.map(option => ({ key: option, label: option })),
         selected: tempFilters.amenities,
         onToggle: (key) => {
@@ -512,7 +499,7 @@ export default function WalkingScreen() {
       {
         id: "regions",
         type: "chips-multi",
-        title: "Regions", 
+        title: t('walking.filters.categories.region'), 
         options: regionOptions.map(option => ({ key: option, label: option })),
         selected: tempFilters.regions,
         onToggle: (key) => {
@@ -545,7 +532,7 @@ export default function WalkingScreen() {
       ) : (
         <View style={[s.parkImage, s.noImage]}>
           <AppText variant="caption" weight="400" style={s.noImageText}>
-            No Image
+            {t('walking.parkDetails.noImage')}
           </AppText>
         </View>
       )}
@@ -562,7 +549,7 @@ export default function WalkingScreen() {
                 userLocation, 
                 { latitude: item.latitude, longitude: item.longitude }
               )
-            )} away)
+            )} {t('walking.location.away')})
           </AppText>
         )}
       </View>
@@ -578,7 +565,7 @@ export default function WalkingScreen() {
       {item.region && (
         <View style={s.regionContainer}>
           <AppText variant="caption" weight="600" style={s.regionText}>
-            Region: {item.region}
+            {t('walking.parks.region')}: Region: {item.region}
           </AppText>
         </View>
       )}
@@ -587,8 +574,10 @@ export default function WalkingScreen() {
       {(item.activities?.length > 0 || item.amenities?.length > 0) && (
         <View style={s.combinedCountContainer}>
           <AppText variant="caption" weight="600" style={s.combinedCountText}>
-            {item.activities?.length || 0} activit{item.activities?.length !== 1 ? 'ies ' : 'y '} 
-            and {item.amenities?.length || 0} amenit{item.amenities?.length !== 1 ? 'ies' : 'y'} available
+             {t('walking.parks.available', {
+              activities: item.activities?.length || 0,
+              amenities: item.amenities?.length || 0
+            })}
           </AppText>
         </View>
       )}
@@ -600,7 +589,7 @@ export default function WalkingScreen() {
           style={s.urlContainer}
         >
           <AppText variant="caption" weight="600" style={s.urlText} numberOfLines={1}>
-            🔗 Learn more at NParks.gov.sg
+            {t('walking.parks.learnMore')}
           </AppText>
         </TouchableOpacity>
       )}
@@ -610,8 +599,8 @@ export default function WalkingScreen() {
         style={s.directionButton}
         onPress={() => handleGetDirections(item)}
       >
-        <AppText variant="button" weight="400" style={s.directionButtonText}>
-          Get Directions
+        <AppText variant="button" weight="800" color="#FFF">
+          {t('walking.parks.getDirections')}
         </AppText>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -632,7 +621,7 @@ export default function WalkingScreen() {
           language={i18n.language as LangCode}
           setLanguage={setLang as (c: LangCode) => void}
           bgColor="#D9D991"
-          title={t("walkingRoutes.title")}
+          title={t("walking.title")}
           includeTopInset={true}
           barHeight={44}
           topPadding={2}
@@ -647,7 +636,7 @@ export default function WalkingScreen() {
           </AppText>
           <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
             <AppText variant="button" weight="700" style={s.retryButtonText}>
-              Retry
+               {t('walking.retry')}
             </AppText>
           </TouchableOpacity>
         </View>
@@ -667,7 +656,7 @@ export default function WalkingScreen() {
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
-        title={t("walkingRoutes.title")}
+        title={t("walking.title")}
         onLogout={async () => {
           await logout();
           router.replace("/Authentication/LogIn");
@@ -678,7 +667,7 @@ export default function WalkingScreen() {
       <View style={s.searchBarContainer}>
         <SearchBar
           value={searchQuery}
-          placeholder="Search parks by name/activity/region"
+           placeholder={t('walking.search.placeholder')} 
           onChangeText={handleSearch}
           onSubmit={handleSearchButton}
           onPressFilter={handleOpenFilters}
@@ -691,14 +680,14 @@ export default function WalkingScreen() {
         <View style={s.summaryChipContainer}>
           <View style={s.summaryChipHeader}>
             <AppText variant="caption" weight="600" style={s.summaryChipTitle}>
-              Active Filters:
+               {t('walking.summary.activeFilters')}
             </AppText>
             <TouchableOpacity 
               onPress={clearAllFilters}
               style={s.clearAllButton}
             >
               <AppText variant="caption" weight="600" style={s.clearAllText}>
-                Clear All
+                {t('walking.summary.clearAll')}
               </AppText>
             </TouchableOpacity>
           </View>
@@ -708,7 +697,6 @@ export default function WalkingScreen() {
               variant="indigo"
               dense={true}
               onItemPress={(item) => {
-                // Remove individual filter item
                 setTempFilters(prev => ({
                   activities: prev.activities.filter(i => i !== item),
                   amenities: prev.amenities.filter(i => i !== item),
@@ -722,17 +710,17 @@ export default function WalkingScreen() {
 
       {/* Filter Sheet */}
       <FilterSheet
-        visible={showFilterPanel}
-        onClose={() => setShowFilterPanel(false)}
-        sections={getFilterSections()}
-        onReset={handleResetFilters}
-        onApply={handleApplyFilters}
-        title="Filter Parks"
-        labels={{
-          reset: "Reset Filters",
-          apply: "Apply Filters"
-        }}
-      />
+      visible={showFilterPanel}
+      onClose={() => setShowFilterPanel(false)}
+      sections={getFilterSections()}
+      onReset={handleResetFilters}
+      onApply={handleApplyFilters}
+      title={t('walking.filters.title')} // Add translation
+      labels={{
+        reset: t('walking.filters.reset'),
+        apply: t('walking.filters.apply')
+      }}
+    />
       
       {/* Parks List */}
       <FlatList
@@ -766,23 +754,23 @@ export default function WalkingScreen() {
             <>
               <ActivityIndicator size="small" color="#007AFF" />
               <AppText variant="body" weight="400" style={s.emptyText}>
-                Loading parks...
+                {t('walking.loading')}
               </AppText>
             </>
           ) : (
             <>
               <AppText variant="body" weight="400" style={s.emptyText}>
                 {searchQuery || selectedFilterItems.length > 0 
-                  ? "No parks match your search criteria" 
-                  : "No parks found in database"
+                  ? t('walking.parks.emptySearch') 
+                  : t('walking.parks.emptyDatabase')
                 }
               </AppText>
               <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
                 <AppText variant="button" weight="700" style={s.retryButtonText}>
-                  Try Again
+                  {t('walking.states.tryAgain')}
                 </AppText>
               </TouchableOpacity>
-            </>
+            </> 
           )}
         </View>
       }
@@ -895,9 +883,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     alignSelf: "flex-start",
-  },
-  directionButtonText: {
-    color: "#FFF",
   },
 
   // Loading & Error States

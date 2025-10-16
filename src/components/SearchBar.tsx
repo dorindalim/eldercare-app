@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View, ViewStyle } from "react-native";
 
 type Props = {
@@ -12,12 +13,13 @@ type Props = {
 
 export default function SearchBar({
   value,
-  placeholder = "Search",
+  placeholder,
   onChangeText,
   onSubmit,
   onPressFilter,
   style,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.row, style]}>
       <View style={styles.box}>
@@ -25,19 +27,20 @@ export default function SearchBar({
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          value={value}
           onChangeText={onChangeText}
           returnKeyType="search"
           onSubmitEditing={onSubmit}
         />
         {!!value && (
           <Pressable onPress={() => onChangeText("")} style={styles.clearBtn}>
+            accessibilityLabel={t('common.search.clear')}
             <Ionicons name="close" size={16} color="#6B7280" />
           </Pressable>
         )}
       </View>
 
-      <Pressable style={styles.filter} onPress={onPressFilter} accessibilityRole="button">
+      <Pressable style={styles.filter} onPress={onPressFilter} accessibilityRole="button"
+      accessibilityLabel={t('common.search.filter')}>
         <Ionicons name="options" size={18} color="#111827" />
       </Pressable>
     </View>

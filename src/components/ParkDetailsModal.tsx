@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Image, Linking, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
@@ -39,6 +40,8 @@ type Props = {
 };
 
 const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirections, distanceMeters, kmStr }: Props) => {
+  const { t } = useTranslation();
+  
   if (!park) return null;
 
   const handleUrlPress = async (url: string) => {
@@ -71,6 +74,76 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
     return kmStr(distance);
   };
 
+  // Translate dynamic content using existing filter keys
+  const translateActivity = (activityTitle: string) => {
+  const activities = t('walking.filters.activities', { returnObjects: true });
+  if (typeof activities === 'object' && activities !== null) {
+    // Try exact match first
+    const matchedKey = Object.keys(activities).find(key => 
+      activities[key].toLowerCase() === activityTitle.toLowerCase()
+    );
+    if (matchedKey) {
+      return activities[matchedKey];
+    }
+    
+    // Try partial match for common variations
+    const partialMatchKey = Object.keys(activities).find(key => 
+      activityTitle.toLowerCase().includes(activities[key].toLowerCase()) ||
+      activities[key].toLowerCase().includes(activityTitle.toLowerCase())
+    );
+    if (partialMatchKey) {
+      return activities[partialMatchKey];
+    }
+  }
+  return activityTitle;
+  };
+
+  const translateAmenity = (amenityTitle: string) => {
+  const amenities = t('walking.filters.amenities', { returnObjects: true });
+  if (typeof amenities === 'object' && amenities !== null) {
+    // Try exact match first
+    const matchedKey = Object.keys(amenities).find(key => 
+      amenities[key].toLowerCase() === amenityTitle.toLowerCase()
+    );
+    if (matchedKey) {
+      return amenities[matchedKey];
+    }
+    
+    // Try partial match for common variations
+    const partialMatchKey = Object.keys(amenities).find(key => 
+      amenityTitle.toLowerCase().includes(amenities[key].toLowerCase()) ||
+      amenities[key].toLowerCase().includes(amenityTitle.toLowerCase())
+    );
+    if (partialMatchKey) {
+      return amenities[partialMatchKey];
+    }
+  }
+  return amenityTitle;
+  };
+
+  const translateRegion = (regionName: string) => {
+  const regions = t('walking.filters.regions', { returnObjects: true });
+  if (typeof regions === 'object' && regions !== null) {
+    // Try exact match first
+    const matchedKey = Object.keys(regions).find(key => 
+      regions[key].toLowerCase() === regionName.toLowerCase()
+    );
+    if (matchedKey) {
+      return regions[matchedKey];
+    }
+    
+    // Try partial match for common variations
+    const partialMatchKey = Object.keys(regions).find(key => 
+      regionName.toLowerCase().includes(regions[key].toLowerCase()) ||
+      regions[key].toLowerCase().includes(regionName.toLowerCase())
+    );
+    if (partialMatchKey) {
+      return regions[partialMatchKey];
+    }
+  }
+  return regionName;
+  };
+
   return (
     <Modal
       visible={visible}
@@ -85,11 +158,11 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
             <AppText style={styles.closeButtonText}>×</AppText>
           </TouchableOpacity>
           <AppText variant="h2" weight="800" style={styles.title}>
-            Park Details
+            {t('walking.parkDetails.title')}
           </AppText>
           <View style={styles.placeholder} />
         </View>
-
+        
         <ScrollView style={styles.content}>
           {/* Park Image */}
           {park.image ? (
@@ -101,7 +174,7 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
           ) : (
             <View style={[styles.parkImage, styles.noImage]}>
               <AppText variant="caption" weight="400" style={styles.noImageText}>
-                No Image Available
+                {t('walking.parkDetails.noImage')}
               </AppText>
             </View>
           )}
@@ -113,7 +186,7 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
             </AppText>
             {userLocation && park.latitude && park.longitude && (
               <AppText variant="body" weight="600" style={styles.distanceBadge}>
-                ({getDistanceText()} away)
+                ({getDistanceText()} {t('walking.location.away')})
               </AppText>
             )}
           </View>
@@ -122,10 +195,10 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
           {park.region && (
             <View style={styles.section}>
               <AppText variant="title" weight="700" style={styles.sectionTitle}>
-                Region
+                {t('walking.parkDetails.region')}
               </AppText>
               <AppText variant="body" weight="400" style={styles.sectionContent}>
-                {park.region}
+                {translateRegion(park.region)}
               </AppText>
             </View>
           )}
@@ -133,7 +206,7 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
           {/* Opening Hours */}
           <View style={styles.section}>
             <AppText variant="title" weight="700" style={styles.sectionTitle}>
-              Opening Hours
+              {t('walking.parkDetails.openingHours')}
             </AppText>
             <AppText variant="body" weight="400" style={styles.sectionContent}>
               {park.hours}
@@ -141,46 +214,45 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
           </View>
 
           {park.activities && park.activities.length > 0 && (
-          <View style={styles.section}>
-            <AppText variant="title" weight="700" style={styles.sectionTitle}>
-              Activities ({park.activities.length})
-            </AppText>
-            {/* Add this description */}
-            <AppText variant="caption" weight="400" style={styles.sectionDescription}>
-              Tap the 📚  icon to view activity etiquette guidelines
-            </AppText>
+            <View style={styles.section}>
+              <AppText variant="title" weight="700" style={styles.sectionTitle}>
+                {t('walking.parkDetails.activities')} ({park.activities.length})
+              </AppText>
+              <AppText variant="caption" weight="400" style={styles.sectionDescription}>
+                {t('walking.parkDetails.etiquetteGuidelines')}
+              </AppText>
 
-            <View style={styles.chipsContainer}>
-              {park.activities.map((activity, index) => (
-                <View key={index} style={styles.chip}>
-                  <AppText variant="caption" weight="600" style={styles.chipText}>
-                    {activity.title}
-                  </AppText>
-                  {activity.etiquette_link && (
-                    <TouchableOpacity 
-                      onPress={() => handleEtiquettePress(activity.etiquette_link)}
-                      style={styles.etiquetteIcon}
-                    >
-                      <AppText>📚</AppText>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))}
+              <View style={styles.chipsContainer}>
+                {park.activities.map((activity, index) => (
+                  <View key={index} style={styles.chip}>
+                    <AppText variant="caption" weight="600" style={styles.chipText}>
+                      {translateActivity(activity.title)}
+                    </AppText>
+                    {activity.etiquette_link && (
+                      <TouchableOpacity 
+                        onPress={() => handleEtiquettePress(activity.etiquette_link)}
+                        style={styles.etiquetteIcon}
+                      >
+                        <AppText>📚</AppText>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
           )}
 
           {/* Amenities */}
           {park.amenities && park.amenities.length > 0 && (
             <View style={styles.section}>
               <AppText variant="title" weight="700" style={styles.sectionTitle}>
-                Amenities ({park.amenities.length})
+                {t('walking.parkDetails.amenities')} ({park.amenities.length})
               </AppText>
               <View style={styles.itemsContainer}>
                 {park.amenities.map((amenity, index) => (
                   <View key={index} style={styles.itemCard}>
                     <AppText variant="body" weight="700" style={styles.itemTitle}>
-                      {amenity.title}
+                      {translateAmenity(amenity.title)}
                     </AppText>
                     {amenity.description && (
                       <AppText variant="caption" weight="400" style={styles.itemDescription}>
@@ -197,14 +269,14 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
           {park.url && (
             <View style={styles.section}>
               <AppText variant="title" weight="700" style={styles.sectionTitle}>
-                More Information
+                {t('walking.parkDetails.moreInfo')}
               </AppText>
               <TouchableOpacity 
                 onPress={() => handleUrlPress(park.url)}
                 style={styles.urlButton}
               >
                 <AppText variant="body" weight="600" style={styles.urlText}>
-                  🔗 Visit NParks Official Page
+                  {t('walking.parkDetails.visitNParks')}
                 </AppText>
               </TouchableOpacity>
             </View>
@@ -216,7 +288,7 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
             onPress={() => onGetDirections(park)}
           >
             <AppText variant="button" weight="700" style={styles.directionsButtonText}>
-              Get Directions
+              {t('walking.parkDetails.getDirections')}
             </AppText>
           </TouchableOpacity>
 
@@ -230,9 +302,9 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
 
 const styles = StyleSheet.create({
   chipsContainer: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   chip: {
     flexDirection: 'row',
@@ -252,11 +324,11 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionDescription: {
-  color: '#6B7280',
-  fontSize: 14,
-  marginBottom: 12,
-  fontStyle: 'italic',
-},
+    color: '#6B7280',
+    fontSize: 14,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',

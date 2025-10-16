@@ -73,7 +73,7 @@ export default function FilterSheet({
   labels = {},
 }: Props) {
   const scrollViewRef = React.useRef<ScrollView>(null);
-
+  
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
@@ -82,7 +82,7 @@ export default function FilterSheet({
 
       <View style={s.card}>
         <AppText variant="title" weight="900" style={{ marginBottom: 10 }}>
-          {title}
+          {title} {/* Use prop directly */}
         </AppText>
 
         <ScrollView 
@@ -90,8 +90,8 @@ export default function FilterSheet({
           style={s.scrollView}
           contentContainerStyle={s.scrollContent}
           showsVerticalScrollIndicator={true}
-          keyboardShouldPersistTaps="handled" // Add this
-          keyboardDismissMode="on-drag" // Add this
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {sections.map((sec) => {
             if (sec.type === "custom") {
@@ -175,12 +175,12 @@ export default function FilterSheet({
         <View style={[s.rowSpace, { marginTop: 16 }]}>
           <Pressable style={[s.actionBtn, { backgroundColor: "#6B7280" }]} onPress={onReset}>
             <AppText variant="button" weight="800" color="#FFF">
-              {labels.reset ?? "Reset"}
+              {labels.reset ?? "Reset"} {/* Use prop directly with fallback */}
             </AppText>
           </Pressable>
           <Pressable style={[s.actionBtn, { backgroundColor: "#111827" }]} onPress={onApply}>
             <AppText variant="button" weight="800" color="#FFF">
-              {labels.apply ?? "Apply"}
+              {labels.apply ?? "Apply"} {/* Use prop directly with fallback */}
             </AppText>
           </Pressable>
         </View>
