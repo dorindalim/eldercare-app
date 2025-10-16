@@ -27,13 +27,17 @@ export default function SearchBar({
         <TextInput
           style={styles.input}
           placeholder={placeholder}
+          value={value}
           onChangeText={onChangeText}
           returnKeyType="search"
           onSubmitEditing={onSubmit}
         />
         {!!value && (
-          <Pressable onPress={() => onChangeText("")} style={styles.clearBtn}>
+          <Pressable
+            onPress={() => onChangeText("")}
+            style={styles.clearBtn}
             accessibilityLabel={t('common.search.clear')}
+          >
             <Ionicons name="close" size={16} color="#6B7280" />
           </Pressable>
         )}

@@ -1,15 +1,28 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Linking, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Linking,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import CHASClinics from '../../assets/data/CHASClinics.json';
+import CHASClinics from "../../assets/data/CHASClinics.json";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import FilterSheet, {
+  type FilterSection,
+} from "../../src/components/FilterSheet";
+import Pagination from "../../src/components/Pagination";
+import SearchBar from "../../src/components/SearchBar";
+import SummaryChip from "../../src/components/SummaryChip";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 
 const datasetId = "d_9d0bbe366aee923a6e202f80bb356bb9";
@@ -22,20 +35,22 @@ const distanceMeters = (a, b) => {
   const φ2 = (b.latitude * Math.PI) / 180;
   const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
   const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
-  const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const x =
+    Math.sin(Δφ / 2) ** 2 +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 };
 
-const kmStr = (m) => m == null ? "" : `${(m / 1000).toFixed(1)} km`;
+const kmStr = (m) => (m == null ? "" : `${(m / 1000).toFixed(1)} km`);
 
 const normalizeName = (name) => {
-  if (!name) return '';
+  if (!name) return "";
   return name
     .toLowerCase()
-    .replace(/\(.*?\)/g, '')
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\(.*?\)/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 };
 
@@ -49,6 +64,11 @@ export default function ClinicScreen() {
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const flatListRef = useRef<FlatList>(null);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [tempFilters, setTempFilters] = useState({ regions: [] as string[] });
+  const [selectedFilterItems, setSelectedFilterItems] = useState<string[]>([]);
 
   const setLang = (code) => {
     i18n.changeLanguage(code);
@@ -64,13 +84,16 @@ export default function ClinicScreen() {
         let location = null;
         try {
           const { status } = await Location.requestForegroundPermissionsAsync();
-          if (status === 'granted') {
+          if (status === "granted") {
             const pos = await Location.getCurrentPositionAsync({});
-            location = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+            location = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            };
             setUserLocation(location);
           }
         } catch (e) {
-          console.warn('Could not get user location:', e);
+          console.warn("Could not get user location:", e);
         }
 
         const response = await fetch(url);
@@ -79,43 +102,49 @@ export default function ClinicScreen() {
         const waitingTimeRecords = data.result?.records || [];
 
         const waitingTimesMap = new Map();
-        waitingTimeRecords.forEach(record => {
-            const normalizedName = normalizeName(record.hospital);
-            waitingTimesMap.set(normalizedName, record.minutes);
+        waitingTimeRecords.forEach((record) => {
+          const normalizedName = normalizeName(record.hospital);
+          waitingTimesMap.set(normalizedName, record.minutes);
         });
 
-        const allClinics = CHASClinics.features.map(feature => {
-            const description = feature.properties.Description;
-            const nameMatch = description.match(/<th>HCI_NAME<\/th> <td>(.*?)<\/td>/);
-            const phoneMatch = description.match(/<th>HCI_TEL<\/th> <td>(.*?)<\/td>/);
-            const name = nameMatch ? nameMatch[1] : 'Unknown Clinic';
-            const phone = phoneMatch ? phoneMatch[1] : null;
-            const normalizedName = normalizeName(name);
-            const coords = feature.geometry.coordinates;
-            const lat = coords[1];
-            const lon = coords[0];
+        const allClinics = CHASClinics.features.map((feature) => {
+          const description = feature.properties.Description;
+          const nameMatch = description.match(
+            /<th>HCI_NAME<\/th> <td>(.*?)<\/td>/
+          );
+          const phoneMatch = description.match(
+            /<th>HCI_TEL<\/th> <td>(.*?)<\/td>/
+          );
+          const name = nameMatch ? nameMatch[1] : "Unknown Clinic";
+          const phone = phoneMatch ? phoneMatch[1] : null;
+          const normalizedName = normalizeName(name);
+          const coords = feature.geometry.coordinates;
+          const lat = coords[1];
+          const lon = coords[0];
 
-            const distance = location ? distanceMeters(location, { latitude: lat, longitude: lon }) : null;
-            
-            let waitingTime = waitingTimesMap.get(normalizedName) || null;
-            if (!waitingTime) {
-                for (let [key, value] of waitingTimesMap.entries()) {
-                    if (key.includes(normalizedName) || normalizedName.includes(key)) {
-                        waitingTime = value;
-                        break;
-                    }
-                }
+          const distance = location
+            ? distanceMeters(location, { latitude: lat, longitude: lon })
+            : null;
+
+          let waitingTime = waitingTimesMap.get(normalizedName) || null;
+          if (!waitingTime) {
+            for (let [key, value] of waitingTimesMap.entries()) {
+              if (key.includes(normalizedName) || normalizedName.includes(key)) {
+                waitingTime = value;
+                break;
+              }
             }
+          }
 
-            return {
-                name,
-                phone,
-                lat,
-                lon,
-                distance,
-                minutes: waitingTime
-            };
-        }).filter(c => c.lat && c.lon);
+          return {
+            name,
+            phone,
+            lat,
+            lon,
+            distance,
+            minutes: waitingTime,
+          };
+        });
 
         if (location) {
           allClinics.sort((a, b) => a.distance - b.distance);
@@ -123,7 +152,6 @@ export default function ClinicScreen() {
 
         setAllClinics(allClinics);
         setFilteredClinics(allClinics);
-
       } catch (err) {
         console.error("Error processing clinic data:", err);
         setError("Failed to load clinic data. Please try again later.");
@@ -135,24 +163,28 @@ export default function ClinicScreen() {
     fetchData();
   }, []);
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
       setFilteredClinics(allClinics);
       return;
     }
-    const lowercasedQuery = searchQuery.toLowerCase();
-    const filtered = allClinics.filter(clinic => 
+    const lowercasedQuery = query.toLowerCase();
+    const filtered = allClinics.filter((clinic) =>
       clinic.name.toLowerCase().includes(lowercasedQuery)
     );
     setFilteredClinics(filtered);
   };
 
-  const handleGetDirections = (clinicName) => {
+  const handleGetDirections = (clinic) => {
     router.push({
       pathname: "/tabs/Navigation",
-      params: { 
-        presetQuery: clinicName
-      }
+      params: {
+        presetQuery: clinic.name,
+        autoStart: "1",
+        presetLat: clinic.lat ? String(clinic.lat) : undefined,
+        presetLng: clinic.lon ? String(clinic.lon) : undefined,
+      },
     });
   };
 
@@ -160,6 +192,37 @@ export default function ClinicScreen() {
     if (phone) {
       Linking.openURL(`tel:${phone}`);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  };
+
+  const getFilterSections = (): FilterSection[] => {
+    return [
+      {
+        id: "regions",
+        type: "chips-multi",
+        title: "Region",
+        options: [
+          { key: "Central", label: "Central" },
+          { key: "North", label: "North" },
+          { key: "South", label: "South" },
+          { key: "East", label: "East" },
+          { key: "West", label: "West" },
+        ],
+        selected: tempFilters.regions,
+        onToggle: (key) => {
+          setTempFilters((prev) => ({
+            ...prev,
+            regions: prev.regions.includes(key)
+              ? prev.regions.filter((i) => i !== key)
+              : [...prev.regions, key],
+          }));
+        },
+      },
+    ];
   };
 
   const renderClinicItem = ({ item }) => (
@@ -175,13 +238,16 @@ export default function ClinicScreen() {
         )}
       </View>
 
-      <AppText variant="body" weight="400" style={item.minutes ? s.waitingTime : s.waitingTimeUnavailable}>
-        {item.minutes ? `Waiting time: ${item.minutes} minutes` : "Waiting time: Unavailable"}
+      <AppText
+        variant="body"
+        weight="400"
+        style={item.minutes ? s.waitingTime : s.waitingTimeUnavailable}
+      >
+        {item.minutes
+          ? `Waiting time: ${item.minutes} minutes`
+          : "Waiting time: Unavailable"}
       </AppText>
 
-      <AppText variant="body" weight="400" style={s.reviewsText}>
-        Reviews: Needs paid service
-      </AppText>
 
       {item.phone && (
         <AppText variant="body" weight="400" style={s.contactText}>
@@ -190,20 +256,33 @@ export default function ClinicScreen() {
       )}
 
       <View style={s.buttonContainer}>
-        <TouchableOpacity style={s.directionButton} onPress={() => handleGetDirections(item.name)}>
+        <TouchableOpacity
+          style={s.directionButton}
+          onPress={() => handleGetDirections(item)}
+        >
           <AppText variant="button" weight="700" style={s.directionButtonText}>
             Get Directions
           </AppText>
         </TouchableOpacity>
         {item.phone && (
-            <TouchableOpacity style={s.callButton} onPress={() => handleCallClinic(item.phone)}>
-                <AppText variant="button" weight="700" style={s.callButtonText}>
-                    Call to Enquire
-                </AppText>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={s.callButton}
+            onPress={() => handleCallClinic(item.phone)}
+          >
+            <AppText variant="button" weight="700" style={s.callButtonText}>
+              Call to Enquire
+            </AppText>
+          </TouchableOpacity>
         )}
       </View>
     </View>
+  );
+
+  const clinicsPerPage = 10;
+  const totalPages = Math.ceil(filteredClinics.length / clinicsPerPage);
+  const currentClinics = filteredClinics.slice(
+    (currentPage - 1) * clinicsPerPage,
+    currentPage * clinicsPerPage
   );
 
   if (loading) {
@@ -273,85 +352,67 @@ export default function ClinicScreen() {
         }}
       />
 
-      <View style={s.header}>
-        <AppText variant="h1" weight="800" style={s.title}>
-          Clinic Recommendations
-        </AppText>
-        <AppText variant="body" weight="400" style={s.subtitle}>
-          {userLocation ? "Clinics sorted by distance" : "All CHAS Clinics"}
-        </AppText>
-        <View style={s.searchContainer}>
-            <TextInput
-                style={s.searchInput}
-                placeholder="Search clinics by name..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearch}
-            />
-            <TouchableOpacity style={s.searchButton} onPress={handleSearch}>
-                <AppText style={s.searchButtonText}>Search</AppText>
-            </TouchableOpacity>
-        </View>
+      <View style={s.searchBarContainer}>
+        <SearchBar
+          value={searchQuery}
+          placeholder={t("clinics.searchPlaceholder")}
+          onChangeText={handleSearch}
+          onSubmit={() => handleSearch(searchQuery)}
+          onPressFilter={() => setShowFilterPanel(true)}
+        />
+        {selectedFilterItems.length > 0 && (
+          <SummaryChip items={selectedFilterItems} style={{ marginTop: 8 }} />
+        )}
       </View>
 
+      <FilterSheet
+        visible={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        sections={getFilterSections()}
+        onReset={() => setTempFilters({ regions: [] })}
+        onApply={() => {
+          setSelectedFilterItems(tempFilters.regions);
+          setShowFilterPanel(false);
+        }}
+      />
+
       <FlatList
-        data={filteredClinics}
+        ref={flatListRef}
+        data={currentClinics}
         renderItem={renderClinicItem}
         keyExtractor={(item, index) => `${item.name}-${index}`}
         contentContainerStyle={s.listContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-            <View style={s.emptyContainer}>
-                <AppText style={s.emptyText}>No clinics match your search.</AppText>
-            </View>
+          <View style={s.emptyContainer}>
+            <AppText style={s.emptyText}>No clinics match your search.</AppText>
+          </View>
         }
+        ListFooterComponent={
+          filteredClinics.length > 0 ? (
+            <Pagination
+              page={currentPage}
+              total={totalPages}
+              onChange={handlePageChange}
+            />
+          ) : null
+        }
+        ListFooterComponentStyle={{ padding: 16 }}
       />
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe: { 
-    flex: 1, 
-    backgroundColor: "#F8F9FA" 
+  safe: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
   },
-  header: {
-    padding: 20,
+  searchBarContainer: {
+    padding: 16,
     backgroundColor: "#FFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E9ECEF",
-  },
-  title: {
-    marginBottom: 8,
-  },
-  subtitle: {
-    marginBottom: 12,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    marginTop: 8,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    backgroundColor: '#fff',
-  },
-  searchButton: {
-    paddingHorizontal: 16,
-    height: 40,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  searchButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
   },
   listContainer: {
     padding: 16,
@@ -404,7 +465,7 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
   },
   directionButton: {
@@ -418,15 +479,15 @@ const s = StyleSheet.create({
     color: "#FFF",
   },
   callButton: {
-    backgroundColor: '#E7F3FF',
+    backgroundColor: "#E7F3FF",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   callButtonText: {
-    color: '#007AFF',
-    fontWeight: '600',
+    color: "#007AFF",
+    fontWeight: "600",
   },
   loadingContainer: {
     flex: 1,
@@ -450,13 +511,13 @@ const s = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 50,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6C757D',
-    textAlign: 'center',
+    color: "#6C757D",
+    textAlign: "center",
   },
 });

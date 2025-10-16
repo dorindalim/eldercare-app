@@ -79,6 +79,9 @@
     "tapToCheckIn": "Tap to check in",
     "checkedIn": "You have Checked In today!"
   },
+  "clinics": {
+    "searchPlaceholder": "Search by clinic name..."
+  },
   "activities": {
     "prompt": "What would you like to view?",
     "parks": "Parks",

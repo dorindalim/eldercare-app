@@ -79,6 +79,9 @@
     "tapToCheckIn": "Ketik untuk daftar masuk",
     "checkedIn": "Anda telah daftar masuk hari ini!"
   },
+  "clinics": {
+    "searchPlaceholder": "Cari mengikut nama klinik..."
+  },
   "activities": {
     "prompt": "Apa yang anda ingin lihat?",
     "parks": "Taman",

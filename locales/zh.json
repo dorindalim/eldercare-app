@@ -79,6 +79,9 @@
     "tapToCheckIn": "点按以打卡",
     "checkedIn": "你今天已打卡！"
   },
+  "clinics": {
+    "searchPlaceholder": "按诊所名称搜索..."
+  },
   "activities": {
     "prompt": "你想查看什么？",
     "parks": "公园",
