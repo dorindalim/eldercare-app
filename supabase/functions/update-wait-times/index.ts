@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Helper to generate a random integer
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   try {
     // Create a Supabase client with the service role key
     const supabase = createClient(
@@ -20,6 +20,12 @@ serve(async (req) => {
       throw selectError;
     }
 
+    if (!clinics || clinics.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No clinics found in the table to update." }),
+        { headers: { 'Content-Type': 'application/json' } },
+      );
+    }
     // Prepare the updates
     const updates = clinics.map(clinic => ({
       clinic_name: clinic.clinic_name,
@@ -31,7 +37,6 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('clinic_wait_times')
       .upsert(updates, { onConflict: 'clinic_name' });
-
     if (updateError) {
       throw updateError;
     }

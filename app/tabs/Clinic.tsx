@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CHASClinics from "../../assets/data/CHASClinics.json";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import { supabase } from "../../src/lib/supabase";
 import FilterSheet, {
   type FilterSection,
 } from "../../src/components/FilterSheet";
@@ -47,9 +48,10 @@ const normalizeName = (name) => {
   if (!name) return "";
   return name
     .toLowerCase()
-    .replace(/\(.*?\)/g, "")
+    .replace(/\(/g, " ")
+    .replace(/\)/g, " ")
     .replace(/&/g, "and")
-    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\//g, " ")
     .replace(/\s+/g, " ")
     .trim();
 };
@@ -96,15 +98,27 @@ export default function ClinicScreen() {
           console.warn("Could not get user location:", e);
         }
 
+        // Fetch mock wait times from Supabase
+        const { data: mockData } = await supabase
+          .from('clinic_wait_times')
+          .select('clinic_name, wait_time_minutes');
+
+        const mockWaitTimesMap = new Map();
+        if (mockData) {
+          mockData.forEach(record => {
+            mockWaitTimesMap.set(record.clinic_name, record.wait_time_minutes);
+          });
+        }
+
         const response = await fetch(url);
         if (!response.ok) throw new Error("Failed to fetch waiting time data");
         const data = await response.json();
         const waitingTimeRecords = data.result?.records || [];
 
-        const waitingTimesMap = new Map();
+        const liveWaitingTimesMap = new Map();
         waitingTimeRecords.forEach((record) => {
           const normalizedName = normalizeName(record.hospital);
-          waitingTimesMap.set(normalizedName, record.minutes);
+          liveWaitingTimesMap.set(normalizedName, record.minutes);
         });
 
         const allClinics = CHASClinics.features.map((feature) => {
@@ -126,15 +140,8 @@ export default function ClinicScreen() {
             ? distanceMeters(location, { latitude: lat, longitude: lon })
             : null;
 
-          let waitingTime = waitingTimesMap.get(normalizedName) || null;
-          if (!waitingTime) {
-            for (let [key, value] of waitingTimesMap.entries()) {
-              if (key.includes(normalizedName) || normalizedName.includes(key)) {
-                waitingTime = value;
-                break;
-              }
-            }
-          }
+          // Priority: 1. Live API, 2. Supabase Mock, 3. Null
+          let waitingTime = liveWaitingTimesMap.get(normalizedName) || mockWaitTimesMap.get(normalizedName) || null;
 
           return {
             name,

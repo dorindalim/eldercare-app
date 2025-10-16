@@ -36,4 +36,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Supabase
+.temp/
+insert_clinics.sql.txt
+*.sql.txt
+
 app-example
