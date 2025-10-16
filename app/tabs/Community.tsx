@@ -718,7 +718,7 @@ export default function CommunityScreen() {
                   style={[
                     styles.btnBase,
                     styles.halfBtn,
-                    { backgroundColor: "#a3491d" },
+                    { backgroundColor: "#007aff" },
                     !selectedEvent.registration_link && { marginLeft: 0 },
                   ]}
                   onPress={() => onDirections(selectedEvent)}

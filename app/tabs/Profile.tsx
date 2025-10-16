@@ -458,7 +458,7 @@ export default function ElderlyProfile() {
 
           <View style={s.rowBetween}>
             <AppText variant="label" weight="700" color="#374151">
-              Name
+              {t("elderlyOnboarding.namePH")}
             </AppText>
             <AppText variant="label" weight="700">
               {name}
