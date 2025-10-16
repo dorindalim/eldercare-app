@@ -133,6 +133,7 @@ export default function NavigationScreen() {
   const isExpoGo = Constants.appOwnership === "expo";
   const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE;
 
+  // —— preset & auto-start params ——
   const params = useLocalSearchParams();
   const presetQuery = params.presetQuery as string | undefined;
   const [searchInput, setSearchInput] = useState(presetQuery || "");
@@ -144,6 +145,11 @@ export default function NavigationScreen() {
   const freshStart = params.freshStart == "true";
   const fillOnly = params.fillOnly === "true";
   const [userSelectedMode, setUserSelectedMode] = useState<"driving" | "walking" | "bicycling" | "transit" | null>(null);
+
+  // NEW: normalize autoStart from params
+  const autoStart =
+    String((params as any).autoStart ?? "").toLowerCase() === "1" ||
+    String((params as any).autoStart ?? "").toLowerCase() === "true";
 
   const fetchDirections = async (
     origin: LatLng,
@@ -302,23 +308,46 @@ export default function NavigationScreen() {
     };
   }, [navigating, destination, mode, steps, currentStepIndex]);
 
+  // NEW: If lat/lng are passed directly, set destination immediately
   useEffect(() => {
-    if (presetQuery && presetQuery !== prevPresetQueryRef.current) {
-      prevPresetQueryRef.current = presetQuery;
-      resetNavigationState();
-      setQuery(presetQuery);
-      setSearchInput(presetQuery);
-      if (fillOnly && location) {
-        setTimeout(() => {
-          fetchAutocompleteSuggestions(presetQuery);
-        }, 300);
-      } else if (!fillOnly && location) {
-        setTimeout(() => {
-          searchDestination(presetQuery);
-        }, 300);
-      }
+    if (presetLat != null && presetLng != null) {
+      const dest = { latitude: presetLat, longitude: presetLng };
+      setDestinationOnly(dest);
     }
-  }, [presetQuery, fillOnly]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetLat, presetLng]);
+
+  // UPDATED: Wait for BOTH presetQuery and location before auto-filling/searching
+  useEffect(() => {
+    if (!presetQuery || presetQuery === prevPresetQueryRef.current) return;
+    if (!location) return; // wait until we have location so geocode/places are consistent
+
+    prevPresetQueryRef.current = presetQuery;
+    resetNavigationState();
+    setQuery(presetQuery);
+    setSearchInput(presetQuery);
+
+    if (fillOnly) {
+      setTimeout(() => {
+        fetchAutocompleteSuggestions(presetQuery);
+      }, 200);
+    } else {
+      setTimeout(() => {
+        searchDestination(presetQuery);
+      }, 200);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetQuery, fillOnly, location]);
+
+  // NEW: Auto-start once destination and location are ready
+  useEffect(() => {
+    if (!autoStart || !destination || !location || navigating) return;
+    if (autoRanRef.current) return;
+    autoRanRef.current = true;
+
+    const id = setTimeout(() => startNavigation(), 250);
+    return () => clearTimeout(id);
+  }, [autoStart, destination, location, navigating]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -628,7 +657,8 @@ export default function NavigationScreen() {
   const startNavigation = () => {
     if (!location || !destination)
       return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
-    const navigationMode = userSelectedMode || "walking";
+    // Default to DRIVING unless user selected otherwise
+    const navigationMode = userSelectedMode || "driving";
     setMode(navigationMode);
     setNavigating(true);
     setCurrentStepIndex(0);
@@ -1337,21 +1367,6 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  modeRow: {
-    flexDirection: "row",
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 6,
-    justifyContent: "space-around",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    marginTop: 8,
-  },
-  modeBtn: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
-  modeBtnActive: { backgroundColor: "#007AFF" },
   map: { flex: 1 },
   bottomBar: {
     position: "absolute",

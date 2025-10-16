@@ -109,7 +109,8 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 const parseEventStart = (evt: EventRow): Date | null => {
   if (!evt.start_date) return null;
   const [y, m, d] = evt.start_date.split("-").map(Number);
-  let hh = 9, mm = 0;
+  let hh = 9,
+    mm = 0;
   if (evt.start_time) {
     const [h, min] = evt.start_time.split(":").map(Number);
     if (!isNaN(h)) hh = h;
@@ -173,7 +174,9 @@ export default function CommunityScreen() {
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
 
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
-  const [ccReminders, setCcReminders] = useState<{ id?: string; title?: string | null; at?: string; cc?: string | null }[]>([]);
+  const [ccReminders, setCcReminders] = useState<
+    { id?: string; title?: string | null; at?: string; cc?: string | null }[]
+  >([]);
   const [scheduled, setScheduled] = useState<ScheduledLocal[]>([]);
   const [notifBusy, setNotifBusy] = useState(false);
 
@@ -206,7 +209,9 @@ export default function CommunityScreen() {
       const items = await AsyncStorage.multiGet(hits);
       items.forEach(([k, v]) => {
         if (v) {
-          try { geoCache.current.set(k.slice(4), JSON.parse(v)); } catch {}
+          try {
+            geoCache.current.set(k.slice(4), JSON.parse(v));
+          } catch {}
         }
       });
     })();
@@ -217,20 +222,36 @@ export default function CommunityScreen() {
     return () => sub.remove();
   }, []);
 
-  useEffect(() => { fetchEvents(); },
-    [page, keyword, categories, timeFilter, pricingFilter, distanceFilter, i18n.language]
+  useEffect(() => {
+    fetchEvents();
+  }, [page, keyword, categories, timeFilter, pricingFilter, distanceFilter, i18n.language]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshNotifications();
+      return () => {};
+    }, [])
   );
 
-  useFocusEffect(useCallback(() => { refreshNotifications(); return () => {}; }, []));
-  useEffect(() => { listRef.current?.scrollToOffset({ offset: 0, animated: true }); }, [page]);
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [page]);
 
-  const handleScrollBegin = () => { if (notifPanelOpen) { smoothLayout(); setNotifPanelOpen(false); } };
+  const handleScrollBegin = () => {
+    if (notifPanelOpen) {
+      smoothLayout();
+      setNotifPanelOpen(false);
+    }
+  };
 
   const formatTime = (hhmmss?: string | null) => {
     if (!hhmmss) return "";
     const [hStr, mStr] = hhmmss.split(":");
-    let h = parseInt(hStr, 10); const m = parseInt(mStr, 10);
-    const ampm = h >= 12 ? "PM" : "AM"; h = h % 12; if (h === 0) h = 12;
+    let h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    if (h === 0) h = 12;
     const mm = String(m).padStart(2, "0");
     return `${h}${mm !== "00" ? ":" + mm : ""} ${ampm}`;
   };
@@ -244,8 +265,16 @@ export default function CommunityScreen() {
 
   const timeRange = (): { from?: string; to?: string } => {
     const now = new Date();
-    if (timeFilter === "today") { const d = toISODate(now); return { from: d, to: d }; }
-    if (timeFilter === "week") { const from = toISODate(now); const end = new Date(now); end.setDate(end.getDate() + 7); return { from, to: toISODate(end) }; }
+    if (timeFilter === "today") {
+      const d = toISODate(now);
+      return { from: d, to: d };
+    }
+    if (timeFilter === "week") {
+      const from = toISODate(now);
+      const end = new Date(now);
+      end.setDate(end.getDate() + 7);
+      return { from, to: toISODate(end) };
+    }
     return { from: toISODate(now) };
   };
 
@@ -258,14 +287,18 @@ export default function CommunityScreen() {
     const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
   };
+
   const kmStr = (m?: number | null) => (m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`);
 
   const geocode = async (q: string): Promise<LatLng | null> => {
     if (!q.trim()) return null;
     if (geoCache.current.has(q)) return geoCache.current.get(q)!;
     try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${GOOGLE_WEB_API_KEY}`;
-      const res = await fetch(url); const json = await res.json();
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        q
+      )}&key=${GOOGLE_WEB_API_KEY}`;
+      const res = await fetch(url);
+      const json = await res.json();
       const loc = json?.results?.[0]?.geometry?.location;
       if (loc) {
         const pt = { latitude: loc.lat, longitude: loc.lng };
@@ -286,7 +319,11 @@ export default function CommunityScreen() {
     return true;
   };
 
-  const clearOpenParams = useCallback(() => { try { router.replace({ pathname: "/tabs/Community" }); } catch {} }, [router]);
+  const clearOpenParams = useCallback(() => {
+    try {
+      router.replace({ pathname: "/tabs/Community" });
+    } catch {}
+  }, [router]);
 
   const openEventByAnyId = useCallback(
     async (idOrEventId: string | undefined | null) => {
@@ -297,22 +334,33 @@ export default function CommunityScreen() {
       let ev = events.find((e) => e.id === idOrEventId || e.event_id === idOrEventId) || null;
 
       if (!ev) {
-        const { data } = await supabase.from("events").select("*")
-          .or(`id.eq.${idOrEventId},event_id.eq.${idOrEventId}`).limit(1).maybeSingle();
+        const { data } = await supabase
+          .from("events")
+          .select("*")
+          .or(`id.eq.${idOrEventId},event_id.eq.${idOrEventId}`)
+          .limit(1)
+          .maybeSingle();
         if (data) ev = data as EventRow;
       }
 
-      if (ev) { setSelectedEvent(ev); setDetailsOpen(true); setTimeout(clearOpenParams, 0); }
-      else { setTimeout(clearOpenParams, 0); }
+      if (ev) {
+        setSelectedEvent(ev);
+        setDetailsOpen(true);
+        setTimeout(clearOpenParams, 0);
+      } else {
+        setTimeout(clearOpenParams, 0);
+      }
     },
     [events, clearOpenParams]
   );
 
-  useFocusEffect(useCallback(() => {
-    const anyId = params.openEventId ?? params.openEventEventId;
-    if (anyId) openEventByAnyId(anyId);
-    return () => {};
-  }, [params.openEventId, params.openEventEventId, openEventByAnyId]));
+  useFocusEffect(
+    useCallback(() => {
+      const anyId = params.openEventId ?? params.openEventEventId;
+      if (anyId) openEventByAnyId(anyId);
+      return () => {};
+    }, [params.openEventId, params.openEventEventId, openEventByAnyId])
+  );
 
   useEffect(() => {
     const anyId = params.openEventId ?? params.openEventEventId;
@@ -324,7 +372,8 @@ export default function CommunityScreen() {
     try {
       const { from, to } = timeRange();
 
-      let query = supabase.from("events")
+      let query = supabase
+        .from("events")
         .select("*", { count: "exact" })
         .order("start_date", { ascending: true })
         .order("start_time", { ascending: true });
@@ -348,12 +397,17 @@ export default function CommunityScreen() {
       let withDist = (data || []).map((r) => ({ ...r })) as (EventRow & { _distance?: number | null })[];
 
       if (myLoc) {
-        await Promise.all(withDist.map(async (r, i) => {
-          const q = r.address?.trim() || r.location_name?.trim();
-          let d: number | null = null;
-          if (q) { const pt = await geocode(q); if (pt) d = distanceMeters(myLoc, pt); }
-          withDist[i]._distance = d;
-        }));
+        await Promise.all(
+          withDist.map(async (r, i) => {
+            const q = r.address?.trim() || r.location_name?.trim();
+            let d: number | null = null;
+            if (q) {
+              const pt = await geocode(q);
+              if (pt) d = distanceMeters(myLoc, pt);
+            }
+            withDist[i]._distance = d;
+          })
+        );
       }
 
       withDist = withDist.filter((r) => distanceOk(r._distance));
@@ -362,8 +416,10 @@ export default function CommunityScreen() {
         const t = r.start_time ? r.start_time : "23:59:59";
         return new Date(`${r.start_date}T${t}`).getTime();
       };
+
       withDist.sort((a, b) => {
-        const ta = toDateValue(a), tb = toDateValue(b);
+        const ta = toDateValue(a),
+          tb = toDateValue(b);
         if (ta !== tb) return ta - tb;
         const da = a._distance ?? Number.POSITIVE_INFINITY;
         const db = b._distance ?? Number.POSITIVE_INFINITY;
@@ -374,26 +430,35 @@ export default function CommunityScreen() {
       setTotal(count || 0);
     } catch (e: any) {
       Alert.alert("Load error", e?.message || String(e));
-      setEvents([]); setTotal(0);
+      setEvents([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
   };
 
   const loadCcReminders = useCallback(async () => {
-    try { const raw = (await AsyncStorage.getItem(REMINDERS_KEY)) || "[]"; const arr = JSON.parse(raw); setCcReminders(Array.isArray(arr) ? arr : []); }
-    catch { setCcReminders([]); }
+    try {
+      const raw = (await AsyncStorage.getItem(REMINDERS_KEY)) || "[]";
+      const arr = JSON.parse(raw);
+      setCcReminders(Array.isArray(arr) ? arr : []);
+    } catch {
+      setCcReminders([]);
+    }
   }, []);
 
   const loadScheduledLocals = useCallback(async () => {
     try {
       const arr = await Notifications.getAllScheduledNotificationsAsync();
       const mapped: ScheduledLocal[] = arr.map((n) => {
-        const tr: any = n.trigger; const when: Date | undefined = tr?.date != null ? new Date(tr.date) : undefined;
+        const tr: any = n.trigger;
+        const when: Date | undefined = tr?.date != null ? new Date(tr.date) : undefined;
         return { id: n.identifier, title: n.content?.title, body: n.content?.body, when };
       });
       setScheduled(mapped);
-    } catch { setScheduled([]); }
+    } catch {
+      setScheduled([]);
+    }
   }, []);
 
   const refreshNotifications = useCallback(async () => {
@@ -407,10 +472,11 @@ export default function CommunityScreen() {
       await AsyncStorage.removeItem(REMINDERS_KEY);
       await refreshNotifications();
       Alert.alert("Cleared", "All scheduled notifications were cancelled.");
-    } finally { setNotifBusy(false); }
+    } finally {
+      setNotifBusy(false);
+    }
   };
 
-  // ---------- Schedule reminder from Community card ----------
   const scheduleReminderForEvent = async (evt: EventRow) => {
     const ok = await ensureNotifPermission(t);
     if (!ok) return;
@@ -467,24 +533,24 @@ export default function CommunityScreen() {
     pf === "free" ? t("community.price.freeOnly") : pf === "paid" ? t("community.price.paidOnly") : t("community.price.all");
 
   const distanceLabel =
-    distanceFilter === "any" ? t("community.distance.anyDistance")
-      : distanceFilter === "2" ? t("community.distance.le2")
-      : distanceFilter === "5" ? t("community.distance.le5")
+    distanceFilter === "any"
+      ? t("community.distance.anyDistance")
+      : distanceFilter === "2"
+      ? t("community.distance.le2")
+      : distanceFilter === "5"
+      ? t("community.distance.le5")
       : t("community.distance.le10");
 
-  const selectedCatsLabel = categories.length > 0 ? categories.map((c) => catLabel(c as any, t)).join(", ") : t("community.all");
+  const selectedCatsLabel =
+    categories.length > 0 ? categories.map((c) => catLabel(c as any, t)).join(", ") : t("community.all");
 
-  const summaryItems = [
-    selectedCatsLabel,
-    timingText(timeFilter),
-    distanceLabel,
-    priceText(pricingFilter),
-  ];
+  const summaryItems = [selectedCatsLabel, timingText(timeFilter), distanceLabel, priceText(pricingFilter)];
 
   const onRegister = async (url?: string | null) => {
     if (!url) return Alert.alert(t("community.register"), t("community.noEvents"));
-    try { await WebBrowser.openBrowserAsync(url); }
-    catch {
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
       Linking.openURL(url).catch(() => Alert.alert(t("community.register"), t("alerts.genericFailBody")));
     }
   };
@@ -493,10 +559,55 @@ export default function CommunityScreen() {
     setDetailsOpen(false);
     const q = (evt.address && evt.address.trim()) || (evt.location_name && evt.location_name.trim());
     if (!q) return Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
-    router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q } });
+
+    router.push({
+      pathname: "/tabs/Navigation",
+      params: { presetQuery: q, autoStart: "1" }, // 👈 new
+    });
   };
 
-  const openDetails = (e: EventRow) => { setSelectedEvent(e); setDetailsOpen(true); };
+  const openNativeDirections = async (q: string) => {
+    let latlng: LatLng | null = null;
+    try {
+      latlng = await geocode(q);
+    } catch {}
+
+    if (Platform.OS === "android") {
+      const navTarget = latlng ? `${latlng.latitude},${latlng.longitude}` : q;
+      const googleNavUrl = `google.navigation:q=${encodeURIComponent(navTarget)}&mode=d`;
+      const geoFallback = latlng
+        ? `geo:${latlng.latitude},${latlng.longitude}?q=${latlng.latitude},${latlng.longitude}(${encodeURIComponent(q)})`
+        : `geo:0,0?q=${encodeURIComponent(q)}`;
+
+      try {
+        const canNav = await Linking.canOpenURL("google.navigation:");
+        if (canNav) {
+          await Linking.openURL(googleNavUrl);
+          return;
+        }
+      } catch {}
+      await Linking.openURL(geoFallback);
+      return;
+    }
+
+    const appleTarget = latlng ? `${latlng.latitude},${latlng.longitude}` : q;
+    const gmapsUrl = `comgooglemaps://?daddr=${encodeURIComponent(appleTarget)}&directionsmode=driving`;
+    const appleUrl = `http://maps.apple.com/?daddr=${encodeURIComponent(appleTarget)}&dirflg=d`;
+
+    try {
+      const canG = await Linking.canOpenURL("comgooglemaps://");
+      if (canG) {
+        await Linking.openURL(gmapsUrl);
+        return;
+      }
+    } catch {}
+    await Linking.openURL(appleUrl);
+  };
+
+  const openDetails = (e: EventRow) => {
+    setSelectedEvent(e);
+    setDetailsOpen(true);
+  };
 
   const RenderCard = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
     const scheduledAlready = isEventScheduled(item, ccReminders);
@@ -508,18 +619,28 @@ export default function CommunityScreen() {
       <View style={styles.card}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable onPress={() => openDetails(item)} style={{ flex: 1 }}>
-            <AppText variant="title" weight="800" style={{ marginBottom: 2 }}>{item.title}</AppText>
+            <AppText variant="title" weight="800" style={{ marginBottom: 2 }}>
+              {item.title}
+            </AppText>
 
             <View style={styles.metaRow}>
-              <AppText variant="label" color="#2563EB" weight="700">{item.location_name || "—"}</AppText>
-              {!!distPart && <AppText variant="label" color="#6B7280" weight="700">· {distPart}</AppText>}
+              <AppText variant="label" color="#2563EB" weight="700">
+                {item.location_name || "—"}
+              </AppText>
+              {!!distPart && (
+                <AppText variant="label" color="#6B7280" weight="700">
+                  · {distPart}
+                </AppText>
+              )}
             </View>
 
             <View style={styles.metaRowBetween}>
               <AppText variant="label" color="#111827" weight="700" style={{ flexShrink: 1 }}>
                 {item.start_date} · {timePart}
               </AppText>
-              <AppText variant="label" weight="800" style={styles.feeTag}>{feePart}</AppText>
+              <AppText variant="label" weight="800" style={styles.feeTag}>
+                {feePart}
+              </AppText>
             </View>
           </Pressable>
 
@@ -617,38 +738,66 @@ export default function CommunityScreen() {
         barHeight={44}
         topPadding={2}
         title={t("community.title")}
-        onLogout={async () => { await logout(); router.replace("/Authentication/LogIn"); }}
+        onLogout={async () => {
+          await logout();
+          router.replace("/Authentication/LogIn");
+        }}
       />
 
       <View style={styles.notifWrap}>
-        <Pressable style={styles.notifBar} onPress={() => { smoothLayout(); setNotifPanelOpen((v) => { const next = !v; if (next) refreshNotifications(); return next; }); }} accessibilityRole="button">
-          <AppText variant="label" weight="800">{t("community.notifs.panelTitle")}</AppText>
+        <Pressable
+          style={styles.notifBar}
+          onPress={() => {
+            smoothLayout();
+            setNotifPanelOpen((v) => {
+              const next = !v;
+              if (next) refreshNotifications();
+              return next;
+            });
+          }}
+          accessibilityRole="button"
+        >
+          <AppText variant="label" weight="800">
+            {t("community.notifs.panelTitle")}
+          </AppText>
           <Ionicons name={notifPanelOpen ? "chevron-up" : "chevron-down"} size={16} color="#6B7280" />
         </Pressable>
 
         {notifPanelOpen && (
           <View style={styles.notifPanel}>
             <Pressable
-              style={[styles.actionBtn, { backgroundColor: "#DC2626", marginBottom: 10, opacity: notifBusy ? 0.6 : 1, minHeight: 44, justifyContent: "center" }]}
+              style={[
+                styles.actionBtn,
+                { backgroundColor: "#DC2626", marginBottom: 10, opacity: notifBusy ? 0.6 : 1, minHeight: 44, justifyContent: "center" },
+              ]}
               onPress={clearAllNotifications}
               disabled={notifBusy}
             >
-              <AppText variant="button" weight="800" color="#FFF">{t("community.notifs.clearAll")}</AppText>
+              <AppText variant="button" weight="800" color="#FFF">
+                {t("community.notifs.clearAll")}
+              </AppText>
             </Pressable>
 
             <View style={{ marginTop: 2 }}>
-              <AppText variant="label" weight="700" color="#374151">{t("community.notifs.inAppUpcoming")}</AppText>
+              <AppText variant="label" weight="700" color="#374151">
+                {t("community.notifs.inAppUpcoming")}
+              </AppText>
               {ccReminders.length === 0 ? (
-                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>{t("community.notifs.noneScheduled")}</AppText>
+                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+                  {t("community.notifs.noneScheduled")}
+                </AppText>
               ) : (
                 <View style={{ marginTop: 6, gap: 6 }}>
                   {ccReminders.map((r, idx) => (
                     <View key={`${r.id ?? "x"}-${idx}`} style={styles.reminderRow}>
                       <Ionicons name="notifications-outline" size={16} color="#374151" />
                       <AppText variant="caption" weight="700" style={{ flex: 1 }}>
-                        {r.title || t("community.notifs.event")}{r.cc ? ` — ${r.cc}` : ""}
+                        {r.title || t("community.notifs.event")}
+                        {r.cc ? ` — ${r.cc}` : ""}
                       </AppText>
-                      <AppText variant="caption" color="#6B7280">{r.at ? new Date(r.at).toLocaleString() : ""}</AppText>
+                      <AppText variant="caption" color="#6B7280">
+                        {r.at ? new Date(r.at).toLocaleString() : ""}
+                      </AppText>
                     </View>
                   ))}
                 </View>
@@ -656,18 +805,25 @@ export default function CommunityScreen() {
             </View>
 
             <View style={{ marginTop: 12 }}>
-              <AppText variant="label" weight="700" color="#374151">{t("community.notifs.deviceScheduled")}</AppText>
+              <AppText variant="label" weight="700" color="#374151">
+                {t("community.notifs.deviceScheduled")}
+              </AppText>
               {scheduled.length === 0 ? (
-                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>{t("community.notifs.noneScheduled")}</AppText>
+                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
+                  {t("community.notifs.noneScheduled")}
+                </AppText>
               ) : (
                 <View style={{ marginTop: 6, gap: 6 }}>
                   {scheduled.map((n) => (
                     <View key={n.id} style={styles.reminderRow}>
                       <Ionicons name="alarm-outline" size={16} color="#374151" />
                       <AppText variant="caption" weight="700" style={{ flex: 1 }}>
-                        {n.title || t("community.notifs.reminder")}{n.body ? ` — ${n.body}` : ""}
+                        {n.title || t("community.notifs.reminder")}
+                        {n.body ? ` — ${n.body}` : ""}
                       </AppText>
-                      <AppText variant="caption" color="#6B7280">{n.when ? n.when.toLocaleString() : "—"}</AppText>
+                      <AppText variant="caption" color="#6B7280">
+                        {n.when ? n.when.toLocaleString() : "—"}
+                      </AppText>
                     </View>
                   ))}
                 </View>
@@ -681,7 +837,10 @@ export default function CommunityScreen() {
         <SearchBar
           value={keyword}
           placeholder={t("community.searchPlaceholder")}
-          onChangeText={(txt) => { setKeyword(txt); setPage(1); }}
+          onChangeText={(txt) => {
+            setKeyword(txt);
+            setPage(1);
+          }}
           onSubmit={() => setPage(1)}
           onPressFilter={() => {
             setTmpCategories(categories);
@@ -701,7 +860,13 @@ export default function CommunityScreen() {
         keyExtractor={(it) => it.event_id}
         renderItem={RenderCard}
         contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
-        ListEmptyComponent={<View style={{ padding: 16 }}><AppText variant="label" color="#6B7280">{t("community.noEvents")}</AppText></View>}
+        ListEmptyComponent={
+          <View style={{ padding: 16 }}>
+            <AppText variant="label" color="#6B7280">
+              {t("community.noEvents")}
+            </AppText>
+          </View>
+        }
         refreshing={loading}
         onRefresh={() => fetchEvents()}
         onScrollBeginDrag={handleScrollBegin}
@@ -710,7 +875,9 @@ export default function CommunityScreen() {
             <View style={{ paddingHorizontal: 12 }}>
               <Pagination page={page} total={totalPages} onChange={(p) => setPage(p)} />
             </View>
-          ) : <View />
+          ) : (
+            <View />
+          )
         }
       />
 
@@ -784,7 +951,8 @@ export default function CommunityScreen() {
                 )}
               </View>
 
-              {([formatTime(selectedEvent.start_time), formatTime(selectedEvent.end_time)].filter(Boolean).join(" - ") || "") && (
+              {([formatTime(selectedEvent.start_time), formatTime(selectedEvent.end_time)].filter(Boolean).join(" - ") ||
+                "") && (
                 <AppText variant="caption" color="#6B7280">
                   {[formatTime(selectedEvent.start_time), formatTime(selectedEvent.end_time)]
                     .filter(Boolean)
@@ -857,8 +1025,15 @@ const styles = StyleSheet.create({
 
   notifWrap: { paddingHorizontal: 12, paddingTop: Platform.OS === "ios" ? 8 : 4 },
   notifBar: {
-    backgroundColor: "#FFF", borderRadius: 12, borderWidth: 1, borderColor: CARD_BORDER,
-    paddingVertical: 10, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   notifPanel: { marginTop: 8, backgroundColor: "#FFF", borderRadius: 12, borderWidth: 1, borderColor: CARD_BORDER, padding: 12 },
 
@@ -867,7 +1042,7 @@ const styles = StyleSheet.create({
   metaRowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2, gap: 8 },
   feeTag: { color: "#E57373", flexShrink: 0, marginLeft: 8 },
 
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.25)" },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0, 0, 0, 0.25)" },
   detailsCard: {
     position: "absolute",
     left: 12,
@@ -907,8 +1082,12 @@ const styles = StyleSheet.create({
   pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#F3F4F6" },
 
   reminderRow: {
-    flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#E5E7EB",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E7EB",
   },
 
   actionBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
