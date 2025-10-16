@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -212,6 +212,56 @@ function lastReadStorageKey(activityId: string, identityKey: string) {
   return `activity:lastread:${activityId}:${identityKey}`;
 }
 
+async function ensureLocalNotifPermission(t: any) {
+  const cur = await Notifications.getPermissionsAsync();
+  if (cur.status === "granted") return true;
+  const req = await Notifications.requestPermissionsAsync();
+  if (req.status === "granted") return true;
+  Alert.alert(t("navigation.reminders.permTitle"), t("navigation.reminders.permBody"));
+  return false;
+}
+function fmtWhen(dt: Date, locale?: string) {
+  try {
+    return dt.toLocaleString(locale || "en-SG", {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return dt.toISOString();
+  }
+}
+async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: string) {
+  const ok = await ensureLocalNotifPermission(t);
+  if (!ok) return;
+
+  const start = new Date(row.starts_at);
+  let fireAt = new Date(start.getTime() - 60 * 60 * 1000);
+  const now = new Date();
+
+  if (fireAt.getTime() <= now.getTime() + 10000) {
+    fireAt = new Date(now.getTime() + 5000);
+  }
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: row.title || t("navigation.reminders.untitled"),
+      body: t("navigation.reminders.fireBody"),
+      data: { kind: "activity_reminder", activityId: row.id, title: row.title },
+      sound: "default" as any,
+      ...(Platform.OS === "android" ? { channelId: "event-reminders" } : null),
+    },
+    trigger: (fireAt as unknown) as Notifications.NotificationTriggerInput,
+  });
+
+  Alert.alert(
+    t("common.ok"),
+    t("navigation.reminders.scheduledBody", { when: fmtWhen(fireAt, locale) })
+  );
+}
+
 export default function Bulletin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -276,6 +326,18 @@ export default function Bulletin() {
       if (token) await upsertPushToken({ token, userId: currentUserId, deviceId });
     })();
   }, [deviceId, currentUserId]);
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      Notifications.setNotificationChannelAsync("event-reminders", {
+        name: t("community.notifs.reminder"),
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "default",
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      }).catch(() => {});
+    }
+  }, [i18n.language]); 
 
   const [myLoc, setMyLoc] = useState<LatLng | null>(null);
   useEffect(() => {
@@ -664,11 +726,14 @@ export default function Bulletin() {
 
       await pushHostOnInterest(row, myName ?? t("chat.neighbour"));
 
+      scheduleReminderForActivity(row, t, locale).catch(() => {});
+
       Alert.alert(t("bulletin.alerts.interestedSavedTitle"), t("bulletin.alerts.interestedSavedBody"));
     } catch (e: any) {
       const msg = String(e?.message || "").toLowerCase();
       if (msg.includes("duplicate") || msg.includes("unique")) {
         setInterestedSet((prev) => new Set([...prev, row.id]));
+        scheduleReminderForActivity(row, t, locale).catch(() => {});
         Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
         return;
       }
@@ -1699,16 +1764,8 @@ const stylesCard = StyleSheet.create({
     marginLeft: 4,
   },
   mineText: { color: "#166534", fontWeight: "900", fontSize: 12 },
-  badgeBelow: {
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: "#EF4444",
-    minWidth: 24,
-    alignItems: "center",
-  },
-    iconWrap: {
+
+  iconWrap: {
     position: "relative",
     width: 40,
     height: 40,

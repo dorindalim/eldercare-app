@@ -185,9 +185,9 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
               {park.title}
             </AppText>
             {userLocation && park.latitude && park.longitude && (
-              <AppText variant="body" weight="600" style={styles.distanceBadge}>
-                ({getDistanceText()} {t('walking.location.away')})
-              </AppText>
+            <AppText variant="body" weight="600" style={styles.distanceBadge}>
+              {t('walking.location.away', { distance: getDistanceText() })}
+            </AppText>
             )}
           </View>
 

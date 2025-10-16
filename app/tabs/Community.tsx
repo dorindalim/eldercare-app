@@ -33,6 +33,7 @@ import Pagination from "../../src/components/Pagination";
 import SearchBar from "../../src/components/SearchBar";
 import SummaryChip from "../../src/components/SummaryChip";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
+import { presentNow } from "../../src/lib/notifications";
 import { supabase } from "../../src/lib/supabase";
 
 type EventRow = {
@@ -59,7 +60,7 @@ const BG = "#F8FAFC";
 const CARD_BORDER = "#E5E7EB";
 const DARK = "#111827";
 const MIN_SHEET_RATIO = 0.38;
-const MAX_SHEET_RATIO = 0.68; 
+const MAX_SHEET_RATIO = 0.68;
 
 const GOOGLE_WEB_API_KEY = "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGs";
 const REMINDERS_KEY = "cc:reminders";
@@ -104,6 +105,38 @@ const catLabel = (c: (typeof CATEGORIES)[number], t: (k: string, p?: any) => str
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const parseEventStart = (evt: EventRow): Date | null => {
+  if (!evt.start_date) return null;
+  const [y, m, d] = evt.start_date.split("-").map(Number);
+  let hh = 9, mm = 0;
+  if (evt.start_time) {
+    const [h, min] = evt.start_time.split(":").map(Number);
+    if (!isNaN(h)) hh = h;
+    if (!isNaN(min)) mm = min;
+  }
+  const dt = new Date(y, (m || 1) - 1, d || 1, hh, mm, 0, 0);
+  return isNaN(dt.getTime()) ? null : dt;
+};
+
+const ensureNotifPermission = async (t: (k: string, p?: any) => string): Promise<boolean> => {
+  const { status: cur } = await Notifications.getPermissionsAsync();
+  if (cur === "granted") return true;
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert(t("navigation.reminders.permTitle"), t("navigation.reminders.permBody"));
+    return false;
+  }
+  return true;
+};
+
+const isEventScheduled = (
+  evt: EventRow,
+  list: { id?: string; title?: string | null; at?: string; cc?: string | null }[]
+) => {
+  if (!evt?.id) return false;
+  return list.some((r) => r.id === evt.id);
+};
 
 export default function CommunityScreen() {
   const router = useRouter();
@@ -377,6 +410,54 @@ export default function CommunityScreen() {
     } finally { setNotifBusy(false); }
   };
 
+  // ---------- Schedule reminder from Community card ----------
+  const scheduleReminderForEvent = async (evt: EventRow) => {
+    const ok = await ensureNotifPermission(t);
+    if (!ok) return;
+
+    const startsAt = parseEventStart(evt);
+    if (!startsAt) return;
+
+    const triggerDate = new Date(startsAt.getTime() - 60 * 60 * 1000);
+    if (triggerDate.getTime() <= Date.now()) {
+      await presentNow({
+        title: evt.title || t("navigation.reminders.untitled"),
+        body: t("community.notifs.noneScheduled"),
+      });
+      return;
+    }
+
+    const notifId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: evt.title ?? t("navigation.reminders.untitled"),
+        body: t("navigation.reminders.fireBody"),
+        data: { eventId: evt.id ?? evt.event_id, startsAt: startsAt.toISOString() },
+        sound: true,
+      },
+      trigger: triggerDate as any,
+    });
+
+    try {
+      const raw = (await AsyncStorage.getItem(REMINDERS_KEY)) || "[]";
+      const arr: any[] = JSON.parse(raw);
+      arr.push({
+        id: evt.id,
+        title: evt.title,
+        at: startsAt.toISOString(),
+        remindAt: triggerDate.toISOString(),
+        notifId,
+        cc: null,
+      });
+      await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(arr));
+    } catch {}
+
+    await refreshNotifications();
+    await presentNow({
+      title: evt.title ?? t("navigation.reminders.untitled"),
+      body: t("navigation.reminders.scheduledBody", { when: triggerDate.toLocaleString() }),
+    });
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const timingText = (tf: TimeFilter) =>
@@ -418,18 +499,19 @@ export default function CommunityScreen() {
   const openDetails = (e: EventRow) => { setSelectedEvent(e); setDetailsOpen(true); };
 
   const RenderCard = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
+    const scheduledAlready = isEventScheduled(item, ccReminders);
     const timePart = [formatTime(item.start_time), formatTime(item.end_time)].filter(Boolean).join(" - ") || "—";
     const feePart = item.fee?.trim() || t("community.priceOptions.free");
     const distPart = kmStr(item._distance);
 
     return (
       <View style={styles.card}>
-        <Pressable onPress={() => openDetails(item)} style={{ flexDirection: "row", alignItems: "center" }}>
-          <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={() => openDetails(item)} style={{ flex: 1 }}>
             <AppText variant="title" weight="800" style={{ marginBottom: 2 }}>{item.title}</AppText>
 
             <View style={styles.metaRow}>
-              <AppText variant="label" color="#374151" weight="700">{item.location_name || "—"}</AppText>
+              <AppText variant="label" color="#2563EB" weight="700">{item.location_name || "—"}</AppText>
               {!!distPart && <AppText variant="label" color="#6B7280" weight="700">· {distPart}</AppText>}
             </View>
 
@@ -439,12 +521,37 @@ export default function CommunityScreen() {
               </AppText>
               <AppText variant="label" weight="800" style={styles.feeTag}>{feePart}</AppText>
             </View>
-          </View>
+          </Pressable>
 
-          <TouchableOpacity hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }} onPress={() => openDetails(item)} style={{ marginLeft: 8, padding: 4 }}>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-        </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 8 }}>
+            <TouchableOpacity
+              hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
+              onPress={() => {
+                if (!scheduledAlready) {
+                  scheduleReminderForEvent(item);
+                } else {
+                  presentNow({ title: item.title || "", body: t("community.notifs.alreadyScheduled") });
+                }
+              }}
+              style={{ padding: 4, marginRight: 4 }}
+              accessibilityLabel={t("navigation.actions.setReminder")}
+            >
+              <Ionicons
+                name={scheduledAlready ? "notifications" : "notifications-outline"}
+                size={20}
+                color={scheduledAlready ? "#007AFF" : "#9CA3AF"}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
+              onPress={() => openDetails(item)}
+              style={{ padding: 4 }}
+            >
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   };
@@ -502,7 +609,7 @@ export default function CommunityScreen() {
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
       <TopBar
         leftMode="back"
-        backTo="/tabs/Activities"     
+        backTo="/tabs/Activities"
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
         bgColor="#FFEE8C"

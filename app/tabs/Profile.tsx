@@ -457,7 +457,7 @@ export default function ElderlyProfile() {
           </AppText>
 
           <View style={s.rowBetween}>
-            <AppText variant="label" weight="700" color="#374151">
+            <AppText variant="label" weight="700" color="#2563EB">
               {t("elderlyOnboarding.namePH")}
             </AppText>
             <AppText variant="label" weight="700">
@@ -466,7 +466,7 @@ export default function ElderlyProfile() {
           </View>
 
           <View style={s.rowBetween}>
-            <AppText variant="label" weight="700" color="#374151">
+            <AppText variant="label" weight="700" color="#2563EB">
               {t("elderlyOnboarding.yobPH")}
             </AppText>
             <AppText variant="label" weight="700">
@@ -491,7 +491,7 @@ export default function ElderlyProfile() {
           {!!emergency &&
             (emergency.name || emergency.relation || emergency.phone || emergency.email) && (
               <View style={s.block}>
-                <AppText variant="label" weight="700" color="#374151">
+                <AppText variant="label" weight="700" color="#2563EB">
                   {t("profile.emergencyContacts")}
                 </AppText>
                 <AppText variant="label" weight="700">
@@ -503,7 +503,7 @@ export default function ElderlyProfile() {
             )}
 
           <View style={s.block}>
-            <AppText variant="label" weight="700" color="#374151">
+            <AppText variant="label" weight="700" color="#2563EB">
               {t("profile.drugAllergy")}
             </AppText>
             <AppText variant="label" weight="700">
@@ -512,7 +512,7 @@ export default function ElderlyProfile() {
           </View>
 
           <View style={s.block}>
-            <AppText variant="label" weight="700" color="#374151">
+            <AppText variant="label" weight="700" color="#2563EB">
               {t("profile.assistive")}
             </AppText>
             <AppText variant="label" weight="700">
@@ -521,7 +521,7 @@ export default function ElderlyProfile() {
           </View>
 
           <View style={s.block}>
-            <AppText variant="label" weight="700" color="#374151">
+            <AppText variant="label" weight="700" color="#2563EB">
               {t("profile.publicNote")}
             </AppText>
             <AppText variant="label" weight="700">

@@ -10,16 +10,7 @@
     "show": "Show",
     "loading": "Loading…",
     "close": "Close",
-    "edit": "Edit",
-    "activities": "Activities",
-    "amenities": "Amenities",
-    "regions": "Regions",
-    "search" : { 
-      "placeholder" : "Search",
-      "clear": "Clear search",
-      "filter": "Filter options"
-    }
-
+    "edit": "Edit"
   },
   "alerts": {
     "noAccountTitle": "No account found",
@@ -430,33 +421,65 @@
     "title": "Walking Routes",
     "loading": "Loading parks...",
     "error": "Failed to load parks",
+    "errors": {
+      "dbLoadFailed": "Failed to load parks from database",
+      "missingParkName": "Park name is required for directions",
+      "cannotOpenUrl": "Cannot open this URL",
+      "openUrlFailed": "Failed to open URL",
+      "openNavFailed": "Failed to open navigation"
+    },
+    "summary": {
+      "activeFilters": "Active filters",
+      "clearAll": "Clear All"
+    },
     "retry": "Retry",
     "search": {
-      "placeholder": "Search parks by name/activity/region"
+      "button": "Search Parks",
+      "placeholder": "Search parks by name, activity, amenity, or region...",
+      "action": "Search"
+    },
+    "filter": {
+      "button": "Filter Parks",
+      "clearAll": "Clear All",
+      "apply": "Apply Filters",
+      "title": "Filters",
+      "reset": "Reset"
     },
     "parks": {
       "hours": "Hours",
       "region": "Region",
-      "activities": "activities",
-      "amenities": "amenities",
+      "activities": "activit{{count}}ies",
+      "amenities": "amenit{{count}}ies",
       "available": "{{activities}} and {{amenities}} available",
-      "learnMore": "🔗 Learn more at NParks.gov.sg",
+      "learnMore": "Learn more at NParks.gov.sg",
       "getDirections": "Get Directions",
       "emptySearch": "No parks match your search criteria",
       "emptyDatabase": "No parks found in database",
-      "tryAgain": "Try Again"
+      "tryAgain": "Try Again",
+      "noImage": "No image available",
+      "noHours": "Hours not available",
+      "untitled": "Untitled Park"
     },
     "location": {
-      "away": "away"
+      "away": "{{distance}} away"
+    },
+    "parkDetails": {
+      "title": "Park Details",
+      "noImage": "No image available",
+      "region": "Region",
+      "openingHours": "Opening hours",
+      "activities": "Activities",
+      "etiquetteGuidelines": "Tap the book icon to view etiquette guidelines for each activity.",
+      "amenities": "Amenities",
+      "moreInfo": "More information",
+      "visitNParks": "Visit NParks page",
+      "getDirections": "Get Directions"
     },
     "filters": {
-      "title": "Filter Parks",
-      "reset": "Reset Filters",
-      "apply": "Apply Filters",
       "categories": {
-        "activity": "Activities",
-        "amenity": "Amenities",
-        "region": "Regions"
+        "activity": "Activity",
+        "amenity": "Amenity",
+        "region": "Region"
       },
       "activities": {
         "barbecuing": "Barbecuing",
@@ -500,23 +523,101 @@
         "west": "West",
         "offshoreIslands": "Offshore islands"
       }
+    }
+  },
+  "chat": {
+    "headerDefault": "Activity Chat",
+    "neighbour": "Neighbour",
+    "hostBadge": "· Host",
+    "hostColon": "· Host:",
+    "typing": "typing…",
+    "placeholder": "Message…"
+  },
+  "errors": {
+    "permissionTitle": "Permission needed",
+    "permissionBody": "Allow photo access to send images.",
+    "uploadTitle": "Upload failed",
+    "uploadReadBody": "Could not read image from device.",
+    "uploadGenericBody": "Could not upload image.",
+    "sendTitle": "Send failed",
+    "sendBody": "Could not save message.",
+    "unexpected": "Unexpected error"
+  },
+  "bulletin": {
+    "create": "Create",
+    "post": "Post",
+    "sections": {
+      "yours": "Your Activities",
+      "nearby": "Nearby"
     },
-    "summary": {
-      "activeFilters": "Active Filters:",
-      "clearAll": "Clear All"
+    "categories": {
+      "kopi": "Kopi",
+      "mahjong": "Mahjong",
+      "crafts": "Crafts",
+      "stretch": "Stretch",
+      "walks": "Walks",
+      "learning": "Learning",
+      "volunteer": "Volunteer"
     },
-    "parkDetails": {
-      "title": "Park Details",
-      "region": "Region",
-      "openingHours": "Opening Hours",
-      "activities": "Activities",
-      "amenities": "Amenities",
-      "moreInfo": "More Information",
-      "visitNParks": "🔗 Visit NParks Official Page",
-      "etiquetteGuidelines": "Tap the 📚 icon to view activity etiquette guidelines",
-      "getDirections": "Get Directions",
-      "distanceAway": "away",
-      "noImage": "No Image Available"
+    "empty": "No activities yet. Be the first!",
+    "interested": "Interested",
+    "actions": {
+      "chat": "Chat",
+      "go": "Go",
+      "interested": "Interested"
+    },
+    "badges": {
+      "mine": "Mine"
+    },
+    "alerts": {
+      "missingInfoTitle": "Missing info",
+      "missingInfoBody": "Please fill in Title, Date/Time and Location.",
+      "postedTitle": "Posted!",
+      "postedBody": "Your neighbour activity is now visible.",
+      "savedTitle": "Saved",
+      "savedBody": "Your activity has been updated.",
+      "chatGateTitle": "Please indicate interest",
+      "chatGateBody": "You need to indicate interest before joining the chat.",
+      "alreadyInterestedTitle": "Already interested",
+      "alreadyInterestedBody": "You’ve already indicated interest for this activity.",
+      "interestedSavedTitle": "Got it",
+      "interestedSavedBody": "Noted your interest."
+    },
+    "cta": {
+      "imInterested": "I’m interested"
+    },
+    "form": {
+      "titleNew": "New Activity",
+      "titleEdit": "Edit Activity",
+      "subtitleHint": "Keep it short & clear.",
+      "name": "Name",
+      "category": "Category",
+      "start": "Start",
+      "location": "Location",
+      "detailsOptional": "Details (optional)",
+      "namePH": "e.g., Kopi @ Void Deck",
+      "locationPH": "e.g., Tampines West CC",
+      "detailsPH": "What to bring / short note",
+      "picked": "Picked: {{name}}",
+      "noPlacesKey": "Set GOOGLE_PLACES_KEY to enable suggestions (typing still works)."
+    },
+    "modal": {
+      "interested": "Interested",
+      "interestedWith": "Interested · {{title}}",
+      "none": "No one yet."
+    },
+    "errors": {
+      "loadFailed": "Could not load activities.",
+      "postFailed": "Could not post activity.",
+      "updateFailed": "Could not update activity.",
+      "interestedLoadFailed": "Could not load interested people.",
+      "markInterestedFailed": "Could not mark interest."
+    },
+    "push": {
+      "updatedTitle": "Activity updated",
+      "updatedBody": "{{title}} — details changed.",
+      "newInterestTitle": "New interest",
+      "newInterestBody": "{{name}} is interested in {{title}}."
     }
   }
 }
