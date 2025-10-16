@@ -121,6 +121,8 @@ export default function ClinicScreen() {
           liveWaitingTimesMap.set(normalizedName, record.minutes);
         });
 
+        const METERS_PER_MINUTE_ASSUMED_SPEED = 250; // 15 km/h
+
         const allClinics = CHASClinics.features.map((feature) => {
           const description = feature.properties.Description;
           const nameMatch = description.match(
@@ -143,6 +145,9 @@ export default function ClinicScreen() {
           // Priority: 1. Live API, 2. Supabase Mock, 3. Null
           let waitingTime = liveWaitingTimesMap.get(normalizedName) || mockWaitTimesMap.get(normalizedName) || null;
 
+          const travelTime = distance != null ? distance / METERS_PER_MINUTE_ASSUMED_SPEED : null;
+          const totalTime = waitingTime != null && travelTime != null ? waitingTime + travelTime : null;
+
           return {
             name,
             phone,
@@ -150,11 +155,23 @@ export default function ClinicScreen() {
             lon,
             distance,
             minutes: waitingTime,
+            totalTime,
           };
         });
 
         if (location) {
-          allClinics.sort((a, b) => a.distance - b.distance);
+          // Sort by total time, with fallbacks
+          allClinics.sort((a, b) => {
+            if (a.totalTime != null && b.totalTime != null) {
+              return a.totalTime - b.totalTime;
+            }
+            if (a.totalTime != null) return -1;
+            if (b.totalTime != null) return 1;
+            if (a.distance != null && b.distance != null) {
+              return a.distance - b.distance;
+            }
+            return 0;
+          });
         }
 
         setAllClinics(allClinics);
@@ -255,6 +272,11 @@ export default function ClinicScreen() {
           : "Waiting time: Unavailable"}
       </AppText>
 
+      {item.totalTime != null && (
+        <AppText variant="body" weight="600" style={s.totalTime}>
+          Est. Time (Travel + Wait): {Math.round(item.totalTime)} mins
+        </AppText>
+      )}
 
       {item.phone && (
         <AppText variant="body" weight="400" style={s.contactText}>
@@ -446,6 +468,12 @@ const s = StyleSheet.create({
   distanceText: {
     color: "#6C757D",
     fontSize: 14,
+  },
+  totalTime: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
   },
   waitingTime: {
     color: "#28A745",
