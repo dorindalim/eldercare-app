@@ -203,7 +203,7 @@ export default function ClinicScreen() {
     }
   };
 
-  const applyFilters = () => {
+  const applyFilters = (filters) => {
     let filtered = allClinics;
 
     if (searchQuery.trim()) {
@@ -213,9 +213,9 @@ export default function ClinicScreen() {
       );
     }
 
-    if (tempFilters.regions.length > 0) {
+    if (filters.regions.length > 0) {
       filtered = filtered.filter((clinic) =>
-        tempFilters.regions.includes(clinic.region)
+        filters.regions.includes(clinic.region)
       );
     }
 
@@ -225,7 +225,14 @@ export default function ClinicScreen() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    applyFilters();
+    applyFilters(tempFilters);
+  };
+
+  const clearAllFilters = () => {
+    const newFilters = { regions: [] };
+    setTempFilters(newFilters);
+    setSelectedFilterItems([]);
+    applyFilters(newFilters);
   };
 
   const handleGetDirections = (clinic) => {
@@ -411,11 +418,7 @@ export default function ClinicScreen() {
               <AppText variant="caption" weight="600" style={s.summaryChipTitle}>
                 {t("walking.summary.activeFilters")}
               </AppText>
-              <TouchableOpacity onPress={() => {
-                setTempFilters({ regions: [] });
-                setSelectedFilterItems([]);
-                applyFilters();
-              }} style={s.clearAllButton}>
+              <TouchableOpacity onPress={clearAllFilters} style={s.clearAllButton}>
                 <AppText variant="caption" weight="600" style={s.clearAllText}>
                   {t("walking.summary.clearAll")}
                 </AppText>
@@ -433,7 +436,7 @@ export default function ClinicScreen() {
         onReset={() => setTempFilters({ regions: [] })}
         onApply={() => {
           setSelectedFilterItems(tempFilters.regions);
-          applyFilters();
+          applyFilters(tempFilters);
           setShowFilterPanel(false);
         }}
       />
