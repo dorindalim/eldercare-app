@@ -3,28 +3,28 @@
     "ok": "OK",
     "error": "Ralat",
     "cancel": "Batal",
-    "notLoggedIn": "Tidak log masuk",
+    "notLoggedIn": "Belum log masuk",
     "pleaseLoginAgain": "Sila log masuk semula.",
     "save": "Simpan",
     "hide": "Sembunyi",
     "show": "Tunjuk",
-    "loading": "Memuatkan…",
+    "loading": "Memuat…",
     "close": "Tutup",
-    "edit": "Sunting"
+    "edit": "Edit"
   },
   "alerts": {
     "noAccountTitle": "Tiada akaun ditemui",
-    "noAccountBody": "Anda akan dihalakan untuk mendaftar.",
+    "noAccountBody": "Anda akan diarahkan untuk mendaftar.",
     "codeSentTitle": "Kod dihantar",
-    "codeSentBody": "Buat masa ini gunakan 123456 (olokan).",
+    "codeSentBody": "Buat masa ini gunakan 123456 (moki).",
     "invalidCodeTitle": "Kod tidak sah",
     "invalidCodeBody": "Sila semak dan cuba lagi.",
     "signupInvalidTitle": "Semak butiran",
     "signupFailedTitle": "Pendaftaran gagal",
-    "signupFailedBody": "Nombor telefon itu mungkin telah didaftarkan.",
+    "signupFailedBody": "Nombor telefon mungkin telah didaftarkan.",
     "noEC": {
-      "title": "Tiada orang hubungan kecemasan",
-      "body": "Sila tambah nombor telefon kecemasan dalam profil anda."
+      "title": "Tiada orang kecemasan",
+      "body": "Sila tambah nombor telefon orang kecemasan dalam profil anda."
     }
   },
   "auth": {
@@ -42,7 +42,7 @@
     },
     "signup": {
       "title": "Cipta akaun anda",
-      "subtitle": "Gunakan nombor mudah alih untuk mendaftar",
+      "subtitle": "Daftar menggunakan nombor mudah alih anda",
       "phoneLabel": "Nombor telefon",
       "phonePH": "+65 91234567",
       "passwordLabel": "Kata laluan",
@@ -53,15 +53,15 @@
       "haveAccount": "Sudah ada akaun?",
       "login": "Log Masuk",
       "phoneInvalidLength": "Nombor telefon mesti tepat {{digits}} digit.",
-      "passwordTooShort": "Kata laluan mestilah sekurang-kurangnya {{min}} aksara.",
+      "passwordTooShort": "Kata laluan mesti sekurang-kurangnya {{min}} aksara.",
       "passwordMismatch": "Kata laluan tidak sepadan.",
       "passwordHint": "Sekurang-kurangnya {{min}} aksara"
     },
-    "notLoggedInTitle": "Tidak log masuk",
+    "notLoggedInTitle": "Belum log masuk",
     "notLoggedInBody": "Sila log masuk semula.",
     "restore": {
       "restoredTitle": "Akaun dipulihkan",
-      "restoredBody": "Kami telah membatalkan penghapusan tertunda anda dan memulihkan akses."
+      "restoredBody": "Kami telah membatalkan pemadaman yang belum selesai dan memulihkan akses."
     }
   },
   "home": {
@@ -71,16 +71,17 @@
     "ccActivities": "Aktiviti Pusat Komuniti",
     "clinics": "Klinik",
     "allActivities": "Semua Aktiviti",
-    "bulletinBoard": "Papan Buletin",
+    "bulletinBoard": "Papan Hebahan",
     "profile": "Profil",
     "rewards": "Ganjaran",
     "sos": "SOS",
-    "imActive": "Saya Aktif",
+    "imActive": "Ketik untuk Daftar Masuk!",
+    "youreCheckedIn": "Anda Telah Daftar Masuk!",
     "tapToCheckIn": "Ketik untuk daftar masuk",
-    "checkedIn": "Anda telah daftar masuk hari ini!"
+    "checkedIn": "Semoga hari anda baik!"
   },
   "clinics": {
-    "searchPlaceholder": "Cari mengikut nama klinik..."
+    "searchPlaceholder": "Cari mengikut nama klinik…"
   },
   "activities": {
     "prompt": "Apa yang anda ingin lihat?",
@@ -90,21 +91,21 @@
   "sos": {
     "title": "Menghantar SOS",
     "titleShort": "SOS",
-    "subtitle": "Kami akan menghantar mesej dan menelefon orang hubungan kecemasan anda.",
-    "autoCalling": "Memanggil {{name}} secara automatik dalam {{seconds}}s",
+    "subtitle": "Kami akan menghantar mesej dan menelefon orang kecemasan anda.",
+    "autoCalling": "Memanggil {{name}} dalam {{seconds}}s",
     "cancel": "Batal",
     "callNowBtn": "Telefon {{name}} sekarang",
-    "ecFallback": "Orang Hubungan Kecemasan",
-    "yourLovedOne": "Orang tersayang anda",
-    "callConfirm": "Anda mahu telefon {{name}}?"
+    "ecFallback": "Orang Kecemasan",
+    "yourLovedOne": "Orang tersayang",
+    "callConfirm": "Adakah anda mahu menelefon {{name}}?"
   },
   "community": {
-    "title": "Aktiviti CC",
+    "title": "Aktiviti Pusat Komuniti",
     "searchPlaceholder": "Cari mengikut Tajuk",
     "ui": {
       "search": "Cari"
     },
-    "noEvents": "Tiada acara ditemui.",
+    "noEvents": "Tiada aktiviti ditemui.",
     "details": "Tiada keterangan.",
     "register": "Daftar",
     "getDirections": "Dapatkan Arah",
@@ -115,13 +116,13 @@
       "timing": "Masa",
       "distance": "Jarak",
       "price": "Harga",
-      "reset": "Tetapkan semula",
+      "reset": "Tetap semula",
       "apply": "Guna"
     },
     "timing": {
       "today": "Hari ini",
-      "week": "Minggu ini",
-      "upcoming": "Akan datang"
+      "week": "Minggu Ini",
+      "upcoming": "Akan Datang"
     },
     "price": {
       "all": "Semua",
@@ -136,12 +137,12 @@
       "artsCulture": "Seni & Budaya",
       "activeAging": "Penuaan Aktif",
       "parentingEducation": "Keibubapaan & Pendidikan",
-      "exhibitionFair": "Pameran & Pesta",
-      "neighbourhoodEvents": "Acara kejiranan",
-      "celebrationFestivity": "Perayaan & Keraian",
-      "kopiTalksDialogues": "Bicara Kopi & Dialog",
+      "exhibitionFair": "Pameran & Ekspo",
+      "neighbourhoodEvents": "Acara Kejiranan",
+      "celebrationFestivity": "Perayaan & Pesta",
+      "kopiTalksDialogues": "Sesi Kopi & Dialog",
       "charityVolunteerism": "Kebajikan & Sukarelawan",
-      "overseasOutingsTours": "Lawatan & Pakej ke Luar Negara"
+      "overseasOutingsTours": "Percutian & Lawatan Luar Negara"
     },
     "sortSummary": {
       "default": "Semua kategori · Akan datang · Apa-apa jarak · Harga: Semua"
@@ -155,28 +156,28 @@
     },
     "notifs": {
       "panelTitle": "Pemberitahuan & Peringatan",
-      "clearAll": "Kosongkan Semua Pemberitahuan",
-      "inAppUpcoming": "Peringatan CC akan datang (dalam aplikasi)",
-      "deviceScheduled": "Pemberitahuan Tempatan Dijadualkan (peranti)",
-      "noneScheduled": "Tiada yang dijadualkan.",
+      "clearAll": "Padam Semua Pemberitahuan",
+      "inAppUpcoming": "Peringatan CC (dalam aplikasi) yang akan datang",
+      "deviceScheduled": "Pemberitahuan Tempatan Berjadual (peranti)",
+      "noneScheduled": "Tiada berjadual.",
       "event": "Acara",
       "reminder": "Peringatan",
       "turnOffTitle": "Matikan pemberitahuan",
-      "turnOffBody": "Untuk mematikan pemberitahuan, sila gunakan Tetapan peranti untuk aplikasi ini."
+      "turnOffBody": "Untuk mematikan pemberitahuan, sila guna Tetapan peranti untuk aplikasi ini."
     }
   },
   "navigation": {
     "title": "Navigasi",
     "search": {
       "permissionTitle": "Kebenaran Lokasi Diperlukan",
-      "permissionBody": "Sila benarkan kebenaran lokasi untuk menggunakan ciri navigasi.",
+      "permissionBody": "Sila benarkan lokasi untuk menggunakan ciri navigasi.",
       "enterTitle": "Masukkan Destinasi",
-      "enterBody": "Sila masukkan destinasi untuk dinavigasi.",
+      "enterBody": "Sila masukkan destinasi.",
       "notFoundTitle": "Tidak ditemui",
-      "notFoundBody": "Tidak dapat mencari lokasi yang dinyatakan.",
+      "notFoundBody": "Tidak dapat mencari lokasi tersebut.",
       "placeholder": "Cari tempat…",
       "destination": "Destinasi",
-      "loading": "Memuatkan…",
+      "loading": "Memuat…",
       "requesting": "Meminta kebenaran lokasi…",
       "eta": "ETA: {{duration}} ({{distance}})",
       "nextStepShort": "Seterusnya",
@@ -198,7 +199,7 @@
       "modes": {
         "driving": "Memandu",
         "walking": "Berjalan",
-        "bicycling": "Berbasikal",
+        "bicycling": "Berkayuh",
         "transit": "Transit"
       }
     },
@@ -210,8 +211,8 @@
     },
     "reminders": {
       "permTitle": "Kebenaran Pemberitahuan Diperlukan",
-      "permBody": "Sila benarkan pemberitahuan untuk menetapkan peringatan.",
-      "untitled": "Acara Tanpa Tajuk",
+      "permBody": "Benarkan pemberitahuan untuk menetapkan peringatan.",
+      "untitled": "Acara tanpa tajuk",
       "fireBody": "Acara bermula dalam 1 jam",
       "scheduledBody": "Peringatan ditetapkan pada {{when}}"
     }
@@ -232,7 +233,7 @@
     "notEnoughTitle": "Syiling tidak mencukupi",
     "notEnoughBody": "Anda tidak mempunyai syiling yang mencukupi untuk menebus ganjaran ini.",
     "confirmTitle": "Sahkan penebusan",
-    "confirmBody": "Belanjakan {{cost}} untuk menebus “{{name}}”?",
+    "confirmBody": "Belanja {{cost}} untuk menebus “{{name}}”?",
     "cancel": "Batal",
     "confirm": "Sahkan",
     "failed": "Penebusan gagal",
@@ -244,28 +245,28 @@
     "voucher": "Baucar",
     "code": "Kod",
     "redeemedAt": "Ditebus pada",
-    "howToUse": "Cara menggunakan",
+    "howToUse": "Cara guna",
     "close": "Tutup",
     "items": {
       "ntuc5": {
         "title": "Baucar NTUC FairPrice $5",
-        "desc": "Gunakan di cawangan NTUC FairPrice yang mengambil bahagian.",
-        "terms": "Sah untuk pembelian dalam kedai sahaja. Sekali guna. Tiada baki dikembalikan. Tidak boleh ditebus tunai. Sah 6 bulan dari tarikh tebus."
+        "desc": "Digunakan di cawangan NTUC FairPrice yang mengambil bahagian.",
+        "terms": "Sah untuk pembelian di kedai sahaja. Sekali guna. Tiada baki dipulangkan. Tidak boleh ditukar kepada tunai. Sah selama 6 bulan dari penebusan."
       },
       "ntuc10": {
         "title": "Baucar NTUC FairPrice $10",
-        "desc": "Gunakan di cawangan NTUC FairPrice yang mengambil bahagian.",
-        "terms": "Sah untuk pembelian dalam kedai sahaja. Sekali guna. Tiada baki dikembalikan. Tidak boleh ditebus tunai. Sah 6 bulan dari tarikh tebus."
+        "desc": "Digunakan di cawangan NTUC FairPrice yang mengambil bahagian.",
+        "terms": "Sah untuk pembelian di kedai sahaja. Sekali guna. Tiada baki dipulangkan. Tidak boleh ditukar kepada tunai. Sah selama 6 bulan dari penebusan."
       },
       "kopitiam5": {
         "title": "Nilai Tersimpan Kopitiam $5",
         "desc": "Nikmati makanan di medan selera Kopitiam yang mengambil bahagian.",
-        "terms": "Tebus di gerai yang mengambil bahagian. Sekali guna. Tidak boleh ditebus tunai. Sah 6 bulan dari tarikh tebus."
+        "terms": "Tebus di gerai yang mengambil bahagian. Sekali guna. Tidak boleh ditukar kepada tunai. Sah selama 6 bulan dari penebusan."
       },
       "guardian5": {
         "title": "Baucar Guardian $5",
-        "desc": "Gunakan di kedai Guardian yang mengambil bahagian.",
-        "terms": "Sah untuk pembelian dalam kedai sahaja. Sekali guna. Tiada baki dikembalikan. Tidak boleh ditebus tunai. Sah 6 bulan dari tarikh tebus."
+        "desc": "Digunakan di kedai Guardian yang mengambil bahagian.",
+        "terms": "Sah untuk pembelian di kedai sahaja. Sekali guna. Tiada baki dipulangkan. Tidak boleh ditukar kepada tunai. Sah selama 6 bulan dari penebusan."
       }
     }
   },
@@ -280,7 +281,7 @@
     "noMedicationsForThis": "Tiada ubat untuk keadaan ini",
     "medsLabel": "Ubat",
     "medNamePH": "Nama ubat",
-    "medFreqPH": "Kekerapan (cth., 1 tablet sehari)",
+    "medFreqPH": "Kekerapan (cth., 1 tablet setiap hari)",
     "addMed": "Tambah ubat",
     "addCondition": "Tambah keadaan lain",
     "assistive": {
@@ -308,32 +309,32 @@
     "genderLabel": "Jantina",
     "male": "Lelaki",
     "female": "Perempuan",
-    "na": "Tidak mahu nyatakan",
-    "emergencySectionTitle": "Orang Hubungan Kecemasan",
-    "ecNamePH": "Nama orang hubungan",
-    "ecRelationPH": "Hubungan (cth., Anak perempuan)",
-    "ecPhonePH": "Telefon orang hubungan",
-    "ecEmailPH": "Emel orang hubungan (pilihan)",
+    "na": "Lebih baik tidak nyatakan",
+    "emergencySectionTitle": "Orang Kecemasan",
+    "ecNamePH": "Nama orang kecemasan",
+    "ecRelationPH": "Hubungan (cth., Anak Perempuan)",
+    "ecPhonePH": "Telefon orang kecemasan",
+    "ecEmailPH": "Emel orang kecemasan (pilihan)",
     "finish": "Simpan & Teruskan",
-    "alertIncompleteTitle": "Sila lengkapkan semua ruangan wajib.",
+    "alertIncompleteTitle": "Sila lengkapkan semua medan wajib.",
     "saveErrorTitle": "Tidak dapat menyimpan",
-    "saveErrorMsg": "Ralat semasa menyimpan profil anda. Sila cuba lagi."
+    "saveErrorMsg": "Terdapat ralat semasa menyimpan profil anda. Sila cuba lagi."
   },
   "profile": {
     "title": "Profil",
     "basicInfo": "Maklumat Asas",
-    "editBasic": "Sunting butiran asas",
+    "editBasic": "Edit butiran asas",
     "healthCard": "Kad Kesihatan Kecemasan",
-    "emergencyContacts": "Orang hubungan kecemasan",
+    "emergencyContacts": "Orang kecemasan",
     "drugAllergy": "Alergi ubat",
     "assistive": "Keperluan bantuan",
     "publicNote": "Nota umum",
-    "sharePortal": "Kongsi Portal Orang Hubungan Kecemasan",
-    "noPortalTitle": "Belum ada pautan portal",
-    "noPortalBody": "Profil anda mungkin belum lengkap atau pautan belum dicipta. Sila pastikan anda telah mengisi Orang Hubungan Kecemasan dan menyimpan.",
+    "sharePortal": "Kongsi Portal Orang Kecemasan",
+    "noPortalTitle": "Tiada pautan portal lagi",
+    "noPortalBody": "Profil anda mungkin belum lengkap atau pautan belum dibuat. Pastikan anda telah mengisi Orang Kecemasan dan menyimpan.",
     "conditions": "Keadaan Perubatan",
     "activity": "Aktiviti & Ganjaran",
-    "streak": "Rekod Harian",
+    "streak": "Kehadiran Harian",
     "coins": "Syiling",
     "accessibility": "Kebolehcapaian",
     "textSize": "Saiz teks",
@@ -349,34 +350,34 @@
       "turnOnServicesTitle": "Hidupkan Perkhidmatan Lokasi",
       "turnOnServicesBody": "Sila aktifkan Perkhidmatan Lokasi dalam Tetapan peranti anda.",
       "openSettings": "Buka Tetapan",
-      "needAccessTitle": "Kebenaran lokasi diperlukan",
+      "needAccessTitle": "Perlu kebenaran lokasi",
       "needAccessBody": "Sila benarkan akses lokasi untuk ciri seperti Navigasi.",
       "requestError": "Tidak dapat meminta kebenaran lokasi.",
-      "allowedTitle": "Akses lokasi sudah dibenarkan",
-      "allowedBody": "Untuk menukar ini, uruskan kebenaran dalam Tetapan peranti."
+      "allowedTitle": "Lokasi sudah dibenarkan",
+      "allowedBody": "Untuk mengubahnya, urus kebenaran dalam Tetapan peranti."
     },
     "delete": {
       "title": "Padam Akaun",
-      "cardExplain": "Jadualkan pemadaman akaun anda. Data anda akan dipadam secara kekal selepas 14 hari.",
+      "cardExplain": "Jadualkan pemadaman akaun anda. Data akan dipadam secara kekal selepas 14 hari.",
       "button": "Jadualkan pemadaman",
       "modalTitle": "Sahkan pemadaman akaun",
-      "modalExplain": "Ini akan menjadualkan akaun anda untuk dipadam dalam 14 hari. Anda boleh batalkannya melalui sokongan sebelum itu.",
+      "modalExplain": "Ini akan menjadualkan akaun anda untuk dipadam dalam 14 hari. Anda boleh membatalkannya melalui sokongan sebelum tarikh itu.",
       "optionalReason": "(Pilihan) Beritahu sebab anda keluar",
-      "reasonPH_modal": "Taip sebab ringkas (pilihan)",
+      "reasonPH_modal": "Tulis sebab ringkas (pilihan)",
       "confirmStepTitle": "Taip untuk sahkan",
       "typeToConfirm": "Taip \"{{phrase}}\" untuk meneruskan.",
       "typePH": "DELETE MY ACCOUNT",
       "confirmDeletion": "Sahkan pemadaman",
       "confirmStepCheckbox": "Saya faham tindakan ini adalah kekal.",
-      "explain": "Portal dinyahaktifkan semasa akaun menunggu pemadaman."
+      "explain": "Portal dilumpuhkan semasa akaun sedang dijadualkan untuk dipadam."
     },
     "photoAccess": {
-      "title": "Akses Pustaka Foto",
+      "title": "Akses Perpustakaan Foto",
       "openSettings": "Buka Tetapan",
       "allowedTitle": "Akses telah dibenarkan",
-      "allowedBody": "Anda boleh menukarnya dalam Tetapan jika perlu.",
+      "allowedBody": "Anda boleh ubah dalam Tetapan jika perlu.",
       "deniedTitle": "Akses dinafikan",
-      "deniedBody": "Sila aktifkan akses foto dalam Tetapan untuk melampirkan gambar.",
+      "deniedBody": "Sila benarkan akses foto di Tetapan untuk melampirkan gambar.",
       "status": {
         "granted": "Dibenarkan",
         "denied": "Ditolak",
@@ -395,13 +396,13 @@
     "typeMismatch": "Frasa pengesahan tidak sepadan.",
     "failedSchedule": "Tidak dapat menjadualkan pemadaman. Sila cuba lagi.",
     "scheduledAlertTitle": "Pemadaman dijadualkan",
-    "scheduledBody": "Akaun anda dijadualkan untuk dipadam dalam 14 hari."
+    "scheduledBody": "Akaun anda akan dipadam dalam 14 hari."
   },
   "settings": {
     "title": "Tetapan",
     "language": "Bahasa",
     "hint": "Buka tetapan aplikasi dan bahasa",
-    "switchTo": "Tukar bahasa kepada",
+    "switchTo": "Tukar bahasa ke",
     "logout": "Log Keluar"
   },
   "checkins": {
@@ -422,12 +423,12 @@
   },
   "walking": {
     "title": "Laluan Berjalan",
-    "loading": "Memuatkan taman…",
-    "error": "Gagal memuatkan taman",
+    "loading": "Memuat taman…",
+    "error": "Gagal memuat taman",
     "errors": {
-      "dbLoadFailed": "Gagal memuatkan taman daripada pangkalan data",
+      "dbLoadFailed": "Gagal memuat taman dari pangkalan data",
       "missingParkName": "Nama taman diperlukan untuk arah",
-      "cannotOpenUrl": "Tidak dapat membuka URL ini",
+      "cannotOpenUrl": "Tidak dapat buka URL ini",
       "openUrlFailed": "Gagal membuka URL",
       "openNavFailed": "Gagal membuka navigasi"
     },
@@ -438,7 +439,7 @@
     "retry": "Cuba Lagi",
     "search": {
       "button": "Cari Taman",
-      "placeholder": "Cari taman mengikut nama, aktiviti, kemudahan atau wilayah…",
+      "placeholder": "Cari taman mengikut nama, aktiviti, kemudahan, atau kawasan…",
       "action": "Cari"
     },
     "filter": {
@@ -446,22 +447,22 @@
       "clearAll": "Kosongkan Semua",
       "apply": "Guna Penapis",
       "title": "Penapis",
-      "reset": "Tetapkan semula"
+      "reset": "Tetap semula"
     },
     "parks": {
       "hours": "Waktu",
-      "region": "Wilayah",
-      "activities": "{{count}} aktiviti",
-      "amenities": "{{count}} kemudahan",
+      "region": "Kawasan",
+      "activities": "aktivit{{count}}",
+      "amenities": "kemudah{{count}}",
       "available": "{{activities}} dan {{amenities}} tersedia",
-      "learnMore": "Ketahui lagi di NParks.gov.sg",
+      "learnMore": "Ketahui lebih lanjut di NParks.gov.sg",
       "getDirections": "Dapatkan Arah",
       "emptySearch": "Tiada taman yang sepadan dengan carian anda",
       "emptyDatabase": "Tiada taman dalam pangkalan data",
       "tryAgain": "Cuba Lagi",
       "noImage": "Tiada imej",
       "noHours": "Waktu tidak tersedia",
-      "untitled": "Taman Tanpa Tajuk"
+      "untitled": "Taman Tanpa Nama"
     },
     "location": {
       "away": "{{distance}} jauhnya"
@@ -469,8 +470,8 @@
     "parkDetails": {
       "title": "Butiran Taman",
       "noImage": "Tiada imej",
-      "region": "Wilayah",
-      "openingHours": "Waktu dibuka",
+      "region": "Kawasan",
+      "openingHours": "Waktu buka",
       "activities": "Aktiviti",
       "etiquetteGuidelines": "Ketik ikon buku untuk melihat garis panduan etika bagi setiap aktiviti.",
       "amenities": "Kemudahan",
@@ -482,41 +483,41 @@
       "categories": {
         "activity": "Aktiviti",
         "amenity": "Kemudahan",
-        "region": "Wilayah"
+        "region": "Kawasan"
       },
       "activities": {
         "barbecuing": "Barbeku",
         "birdwatching": "Pemerhatian burung",
         "camping": "Berkhemah",
-        "contemplativeLandscape": "Landskap renungan",
-        "cycling": "Berkayuh atau selaju (inline skating)",
+        "contemplativeLandscape": "Pemandangan menenangkan",
+        "cycling": "Berkayuh atau kasut roda",
         "dining": "Menjamu selera",
         "fishing": "Memancing",
-        "fitnessStudio": "Studio kecergasan",
-        "funWithChildren": "Aktiviti bersama kanak-kanak",
-        "funWithDog": "Aktiviti bersama anjing",
+        "fitnessStudio": "Gimnasium",
+        "funWithChildren": "Seronok bersama anak",
+        "funWithDog": "Seronok bersama anjing",
         "hiking": "Mendaki",
-        "natureWalks": "Berjalan alam semula jadi / lawatan",
+        "natureWalks": "Jejak alam atau lawatan",
         "photography": "Fotografi",
         "shopping": "Membeli-belah",
         "therapeuticGardens": "Taman terapeutik",
-        "wellness": "Kesihatan"
+        "wellness": "Kesihatan diri"
       },
       "amenities": {
         "restrooms": "Tandas",
-        "parking": "Letak kereta",
+        "parking": "Parkir",
         "picnicArea": "Kawasan berkelah",
-        "walkingTrails": "Laluan berjalan",
+        "walkingTrails": "Laluan pejalan kaki",
         "drinkingFountain": "Pancutan air minum",
-        "allotmentGarden": "Kebun sewaan",
+        "allotmentGarden": "Kebun peruntukan",
         "artSpace": "Ruang seni / pameran",
-        "birdPerch": "Tempat hinggap burung",
+        "birdPerch": "Para burung",
         "communityGarden": "Kebun komuniti",
         "dining": "Menjamu selera",
         "fishingFacility": "Kemudahan memancing",
         "therapeuticGarden": "Taman terapeutik",
-        "venueBooking": "Tempat untuk tempahan",
-        "wellnessProvider": "Penyedia kesihatan"
+        "venueBooking": "Ruang untuk tempahan",
+        "wellnessProvider": "Penyedia kesihatan diri"
       },
       "regions": {
         "central": "Tengah",
@@ -524,23 +525,23 @@
         "north": "Utara",
         "south": "Selatan",
         "west": "Barat",
-        "offshoreIslands": "Pulau-pulau luar pesisir"
+        "offshoreIslands": "Pulau luar pesisir"
       }
     }
   },
   "chat": {
     "headerDefault": "Sembang Aktiviti",
     "neighbour": "Jiran",
-    "hostBadge": "· Hos",
-    "hostColon": "· Hos:",
-    "typing": "sedang menaip…",
+    "hostBadge": "· Penganjur",
+    "hostColon": "· Penganjur:",
+    "typing": "menaip…",
     "placeholder": "Mesej…"
   },
   "errors": {
     "permissionTitle": "Kebenaran diperlukan",
     "permissionBody": "Benarkan akses foto untuk menghantar imej.",
     "uploadTitle": "Muat naik gagal",
-    "uploadReadBody": "Tidak dapat membaca imej daripada peranti.",
+    "uploadReadBody": "Tidak dapat membaca imej dari peranti.",
     "uploadGenericBody": "Tidak dapat memuat naik imej.",
     "sendTitle": "Penghantaran gagal",
     "sendBody": "Tidak dapat menyimpan mesej.",
@@ -570,29 +571,29 @@
       "interested": "Berminat"
     },
     "badges": {
-      "mine": "Milik Saya"
+      "mine": "Saya"
     },
     "alerts": {
       "missingInfoTitle": "Maklumat hilang",
       "missingInfoBody": "Sila isi Tajuk, Tarikh/Masa dan Lokasi.",
-      "postedTitle": "Diposit!",
+      "postedTitle": "Dipaparkan!",
       "postedBody": "Aktiviti jiran anda kini kelihatan.",
       "savedTitle": "Disimpan",
       "savedBody": "Aktiviti anda telah dikemas kini.",
       "chatGateTitle": "Sila nyatakan minat",
-      "chatGateBody": "Anda perlu nyatakan minat sebelum menyertai sembang.",
+      "chatGateBody": "Anda perlu menyatakan minat sebelum menyertai sembang.",
       "alreadyInterestedTitle": "Sudah berminat",
       "alreadyInterestedBody": "Anda telah menyatakan minat untuk aktiviti ini.",
       "interestedSavedTitle": "Baik",
-      "interestedSavedBody": "Minat anda direkodkan."
+      "interestedSavedBody": "Minat anda telah direkodkan."
     },
     "cta": {
       "imInterested": "Saya berminat"
     },
     "form": {
       "titleNew": "Aktiviti Baharu",
-      "titleEdit": "Sunting Aktiviti",
-      "subtitleHint": "Ringkas & jelas.",
+      "titleEdit": "Edit Aktiviti",
+      "subtitleHint": "Pastikan ringkas & jelas.",
       "name": "Nama",
       "category": "Kategori",
       "start": "Mula",
@@ -602,7 +603,7 @@
       "locationPH": "cth., Tampines West CC",
       "detailsPH": "Apa yang perlu dibawa / nota ringkas",
       "picked": "Dipilih: {{name}}",
-      "noPlacesKey": "Tetapkan GOOGLE_PLACES_KEY untuk mendayakan cadangan (menaip masih berfungsi)."
+      "noPlacesKey": "Tetapkan GOOGLE_PLACES_KEY untuk mengaktifkan cadangan (menaip masih berfungsi)."
     },
     "modal": {
       "interested": "Berminat",
@@ -610,15 +611,15 @@
       "none": "Belum ada sesiapa."
     },
     "errors": {
-      "loadFailed": "Tidak dapat memuatkan aktiviti.",
-      "postFailed": "Tidak dapat mengepos aktiviti.",
+      "loadFailed": "Tidak dapat memuat aktiviti.",
+      "postFailed": "Tidak dapat menyiarkan aktiviti.",
       "updateFailed": "Tidak dapat mengemas kini aktiviti.",
-      "interestedLoadFailed": "Tidak dapat memuatkan senarai berminat.",
-      "markInterestedFailed": "Tidak dapat menanda minat."
+      "interestedLoadFailed": "Tidak dapat memuat senarai berminat.",
+      "markInterestedFailed": "Tidak dapat menandakan minat."
     },
     "push": {
       "updatedTitle": "Aktiviti dikemas kini",
-      "updatedBody": "{{title}} — butiran telah berubah.",
+      "updatedBody": "{{title}} — butiran berubah.",
       "newInterestTitle": "Minat baharu",
       "newInterestBody": "{{name}} berminat dengan {{title}}."
     }

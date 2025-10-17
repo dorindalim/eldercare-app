@@ -265,7 +265,8 @@ export default function ElderlyHome() {
         }
       >
         <CheckinCard
-          titleKey="home.imActive"
+          titleKey="home.imActive"                 
+          titleWhenCheckedKey="home.youreCheckedIn" 
           hintKey="home.tapToCheckIn"
           hintWhenCheckedKey="home.checkedIn"
           checked={todayChecked}

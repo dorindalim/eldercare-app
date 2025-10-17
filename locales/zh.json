@@ -13,13 +13,13 @@
     "edit": "编辑"
   },
   "alerts": {
-    "noAccountTitle": "未找到账户",
-    "noAccountBody": "将为你跳转至注册页面。",
+    "noAccountTitle": "没有找到账户",
+    "noAccountBody": "将带您前往注册。",
     "codeSentTitle": "验证码已发送",
-    "codeSentBody": "目前请使用 123456（模拟）。",
+    "codeSentBody": "暂时使用 123456（模拟）。",
     "invalidCodeTitle": "验证码无效",
-    "invalidCodeBody": "请检查后再试。",
-    "signupInvalidTitle": "请检查信息",
+    "invalidCodeBody": "请检查后重试。",
+    "signupInvalidTitle": "请检查资料",
     "signupFailedTitle": "注册失败",
     "signupFailedBody": "该手机号可能已被注册。",
     "noEC": {
@@ -30,30 +30,30 @@
   "auth": {
     "login": {
       "title": "欢迎回来",
-      "subtitle": "请输入你的手机号",
-      "phoneLabel": "电话号码",
+      "subtitle": "请输入您的手机号",
+      "phoneLabel": "手机号",
       "phonePH": "+65 91234567",
       "getCode": "获取验证码",
       "codeLabel": "验证码",
-      "codePH": "输入 6 位验证码",
+      "codePH": "输入6位验证码",
       "verify": "验证并登录",
       "noAccount": "还没有账户？",
       "signup": "注册"
     },
     "signup": {
-      "title": "创建你的账户",
-      "subtitle": "使用你的手机号码注册",
-      "phoneLabel": "电话号码",
+      "title": "创建账户",
+      "subtitle": "使用您的手机号码注册",
+      "phoneLabel": "手机号",
       "phonePH": "+65 91234567",
       "passwordLabel": "密码",
-      "passwordPH": "创建一个密码",
+      "passwordPH": "创建密码",
       "confirmLabel": "确认密码",
       "confirmPH": "再次输入密码",
       "button": "注册",
-      "haveAccount": "已经有账户？",
+      "haveAccount": "已有账户？",
       "login": "登录",
-      "phoneInvalidLength": "电话号码必须正好为 {{digits}} 位数字。",
-      "passwordTooShort": "密码长度至少为 {{min}} 个字符。",
+      "phoneInvalidLength": "手机号必须正好为 {{digits}} 位数字。",
+      "passwordTooShort": "密码至少需要 {{min}} 个字符。",
       "passwordMismatch": "两次输入的密码不一致。",
       "passwordHint": "至少 {{min}} 个字符"
     },
@@ -61,7 +61,7 @@
     "notLoggedInBody": "请重新登录。",
     "restore": {
       "restoredTitle": "账户已恢复",
-      "restoredBody": "我们已取消你的待删除请求并恢复访问。"
+      "restoredBody": "我们已取消您的删除请求并恢复访问。"
     }
   },
   "home": {
@@ -71,32 +71,33 @@
     "ccActivities": "社区中心活动",
     "clinics": "诊所",
     "allActivities": "所有活动",
-    "bulletinBoard": "公告栏",
+    "bulletinBoard": "公告板",
     "profile": "个人资料",
     "rewards": "奖励",
-    "sos": "SOS",
-    "imActive": "我很活跃",
-    "tapToCheckIn": "点按以打卡",
-    "checkedIn": "你今天已打卡！"
+    "sos": "紧急求助",
+    "imActive": "点击打卡！",
+    "youreCheckedIn": "已完成打卡！",
+    "tapToCheckIn": "点击进行打卡",
+    "checkedIn": "祝您今天愉快！"
   },
   "clinics": {
-    "searchPlaceholder": "按诊所名称搜索..."
+    "searchPlaceholder": "按诊所名称搜索…"
   },
   "activities": {
-    "prompt": "你想查看什么？",
+    "prompt": "您想查看什么？",
     "parks": "公园",
     "ccActivities": "社区中心活动"
   },
   "sos": {
-    "title": "正在发送 SOS",
+    "title": "正在发送紧急求助",
     "titleShort": "SOS",
-    "subtitle": "我们会给你的紧急联系人发信息并拨打电话。",
-    "autoCalling": "将在 {{seconds}} 秒后自动致电 {{name}}",
+    "subtitle": "我们将向您的紧急联系人发信息并拨打电话。",
+    "autoCalling": "{{seconds}} 秒后自动拨打 {{name}}",
     "cancel": "取消",
-    "callNowBtn": "立即致电 {{name}}",
+    "callNowBtn": "立即拨打 {{name}}",
     "ecFallback": "紧急联系人",
-    "yourLovedOne": "你的亲人",
-    "callConfirm": "要拨打 {{name}} 的电话吗？"
+    "yourLovedOne": "您的家人",
+    "callConfirm": "您要拨打 {{name}} 吗？"
   },
   "community": {
     "title": "社区中心活动",
@@ -121,12 +122,12 @@
     "timing": {
       "today": "今天",
       "week": "本周",
-      "upcoming": "即将到来"
+      "upcoming": "即将开始"
     },
     "price": {
       "all": "全部",
-      "freeOnly": "仅限免费",
-      "paidOnly": "仅限付费"
+      "freeOnly": "仅免费",
+      "paidOnly": "仅付费"
     },
     "priceOptions": {
       "free": "免费"
@@ -134,17 +135,17 @@
     "categories": {
       "healthFitness": "健康与健身",
       "artsCulture": "艺术与文化",
-      "activeAging": "积极乐龄",
-      "parentingEducation": "亲子与教育",
-      "exhibitionFair": "展览与集市",
+      "activeAging": "乐龄活动",
+      "parentingEducation": "育儿与教育",
+      "exhibitionFair": "展览与博览",
       "neighbourhoodEvents": "社区活动",
       "celebrationFestivity": "庆典与节日",
-      "kopiTalksDialogues": "咖啡谈与对话",
+      "kopiTalksDialogues": "咖啡座谈与对话",
       "charityVolunteerism": "慈善与志愿",
       "overseasOutingsTours": "海外出游与旅行"
     },
     "sortSummary": {
-      "default": "全部类别 · 即将到来 · 任意距离 · 价格：全部"
+      "default": "所有类别 · 即将开始 · 任意距离 · 价格：全部"
     },
     "distance": {
       "any": "任意",
@@ -156,13 +157,13 @@
     "notifs": {
       "panelTitle": "通知与提醒",
       "clearAll": "清除所有通知",
-      "inAppUpcoming": "应用内即将开始的 CC 提醒",
-      "deviceScheduled": "已在设备上安排的本地通知",
+      "inAppUpcoming": "应用内即将到来的 CC 提醒",
+      "deviceScheduled": "设备已安排的本地通知",
       "noneScheduled": "暂无安排。",
       "event": "活动",
       "reminder": "提醒",
       "turnOffTitle": "关闭通知",
-      "turnOffBody": "若要关闭通知，请在设备设置中管理此应用的通知。"
+      "turnOffBody": "要关闭通知，请在设备的“设置”中管理本应用的权限。"
     }
   },
   "navigation": {
@@ -171,9 +172,9 @@
       "permissionTitle": "需要定位权限",
       "permissionBody": "请授予定位权限以使用导航功能。",
       "enterTitle": "输入目的地",
-      "enterBody": "请输入要导航的目的地。",
+      "enterBody": "请输入要前往的地点。",
       "notFoundTitle": "未找到",
-      "notFoundBody": "找不到指定位置。",
+      "notFoundBody": "无法找到指定位置。",
       "placeholder": "搜索地点…",
       "destination": "目的地",
       "loading": "加载中…",
@@ -186,7 +187,7 @@
       "stopNav": "停止",
       "started": "导航已开始",
       "stopped": "导航已停止",
-      "arrived": "你已到达目的地",
+      "arrived": "您已到达目的地",
       "destinationSet": "已设置目的地",
       "startNav": "开始导航",
       "filter": {
@@ -211,9 +212,9 @@
     "reminders": {
       "permTitle": "需要通知权限",
       "permBody": "请授予通知权限以设置提醒。",
-      "untitled": "未命名事件",
-      "fireBody": "活动将在 1 小时后开始",
-      "scheduledBody": "提醒已设置：{{when}}"
+      "untitled": "未命名活动",
+      "fireBody": "活动将于1小时后开始",
+      "scheduledBody": "已为 {{when}} 设置提醒"
     }
   },
   "walkingRoutes": {
@@ -224,23 +225,23 @@
     "balance": "余额",
     "coin": "金币",
     "coins": "金币",
-    "catalogTitle": "奖品目录",
-    "cost_one": "{{count}} 个金币",
-    "cost_other": "{{count}} 个金币",
+    "catalogTitle": "兑换目录",
+    "cost_one": "{{count}} 枚金币",
+    "cost_other": "{{count}} 枚金币",
     "viewTerms": "查看条款",
     "redeem": "兑换",
     "notEnoughTitle": "金币不足",
-    "notEnoughBody": "你的金币不足，无法兑换该奖励。",
+    "notEnoughBody": "您的金币不足，无法兑换此奖励。",
     "confirmTitle": "确认兑换",
     "confirmBody": "花费 {{cost}} 兑换“{{name}}”？",
     "cancel": "取消",
     "confirm": "确认",
     "failed": "兑换失败",
     "tryAgain": "请重试。",
-    "successTitle": "已兑换！",
-    "successBody": "你的兑换码为 {{code}}。",
+    "successTitle": "兑换成功！",
+    "successBody": "您的兑换码是 {{code}}。",
     "ownedTitle": "我的代金券",
-    "noneOwned": "你还没有兑换任何代金券。",
+    "noneOwned": "您尚未兑换任何代金券。",
     "voucher": "代金券",
     "code": "兑换码",
     "redeemedAt": "兑换日期",
@@ -248,74 +249,74 @@
     "close": "关闭",
     "items": {
       "ntuc5": {
-        "title": "NTUC FairPrice 5 新元代金券",
-        "desc": "适用于参与活动的 NTUC FairPrice 门店。",
-        "terms": "仅限店内消费。一次性使用。不找零。不可兑换现金。自兑换日起 6 个月内有效。"
+        "title": "NTUC FairPrice 5新币礼券",
+        "desc": "适用于参与的 NTUC FairPrice 门店。",
+        "terms": "仅限门店使用。一次性使用。不找零。不兑现。自兑换起6个月内有效。"
       },
       "ntuc10": {
-        "title": "NTUC FairPrice 10 新元代金券",
-        "desc": "适用于参与活动的 NTUC FairPrice 门店。",
-        "terms": "仅限店内消费。一次性使用。不找零。不可兑换现金。自兑换日起 6 个月内有效。"
+        "title": "NTUC FairPrice 10新币礼券",
+        "desc": "适用于参与的 NTUC FairPrice 门店。",
+        "terms": "仅限门店使用。一次性使用。不找零。不兑现。自兑换起6个月内有效。"
       },
       "kopitiam5": {
-        "title": "Kopitiam 5 新元储值",
-        "desc": "适用于参与活动的 Kopitiam 美食广场。",
-        "terms": "在参与商家处兑换。一次性使用。不可兑换现金。自兑换日起 6 个月内有效。"
+        "title": "Kopitiam 5新币储值",
+        "desc": "可在参与的 Kopitiam 美食广场使用。",
+        "terms": "在参与摊位兑换。一次性使用。不兑现。自兑换起6个月内有效。"
       },
       "guardian5": {
-        "title": "Guardian 5 新元代金券",
-        "desc": "适用于参与活动的 Guardian 门店。",
-        "terms": "仅限店内消费。一次性使用。不找零。不可兑换现金。自兑换日起 6 个月内有效。"
+        "title": "Guardian 5新币礼券",
+        "desc": "适用于参与的 Guardian 门店。",
+        "terms": "仅限门店使用。一次性使用。不找零。不兑现。自兑换起6个月内有效。"
       }
     }
   },
   "elderlyConditions": {
-    "noConditions": "我没有任何病症",
-    "conditionTitle": "病症 {{index}}",
+    "noConditions": "我没有医疗状况",
+    "conditionTitle": "状况 {{index}}",
     "remove": "移除",
-    "conditionPH": "病症名称（如：高血压）",
+    "conditionPH": "病症名称（例如：高血压）",
     "doctorPH": "医生（可选）",
     "clinicPH": "诊所/医院（可选）",
-    "appointmentsPH": "即将就诊/备注（可选）",
-    "noMedicationsForThis": "该病症暂无用药",
+    "appointmentsPH": "后续预约 / 备注（可选）",
+    "noMedicationsForThis": "该状况暂无药物",
     "medsLabel": "药物",
     "medNamePH": "药物名称",
-    "medFreqPH": "频率（例如：每日 1 片）",
+    "medFreqPH": "用药频率（例如：每日1片）",
     "addMed": "添加药物",
-    "addCondition": "添加另一项病症",
+    "addCondition": "添加另一项状况",
     "assistive": {
-      "label": "辅具需求",
+      "label": "辅助需求",
       "walking_cane": "手杖",
       "wheelchair": "轮椅",
       "hearing_aid": "助听器",
       "glasses": "眼镜",
       "other": "其他",
-      "otherPH": "描述其他辅具需求"
+      "otherPH": "描述其他辅助需求"
     },
     "drugAllergiesPH": "药物过敏（可选）",
     "publicNotePH": "公开备注",
     "finish": "保存并继续",
     "errors": {
-      "missingConditionName": "请输入至少一个病症名称，或勾选“我没有任何病症”。",
-      "invalidMed": "未填写药物名称时，不能填写用药频率。",
-      "saveFailed": "无法保存你的病症信息。请重试。"
+      "missingConditionName": "请输入至少一项病症，或选择“我没有医疗状况”。",
+      "invalidMed": "未填写药物名称时不能填写用药频率。",
+      "saveFailed": "无法保存您的状况。请重试。"
     }
   },
   "elderlyOnboarding": {
     "title": "基本信息",
     "namePH": "全名",
-    "yobPH": "出生年份（如 2000）",
+    "yobPH": "出生年份（例如 2000）",
     "genderLabel": "性别",
     "male": "男",
     "female": "女",
     "na": "不愿透露",
     "emergencySectionTitle": "紧急联系人",
     "ecNamePH": "联系人姓名",
-    "ecRelationPH": "关系（如：女儿）",
-    "ecPhonePH": "联系人电话",
-    "ecEmailPH": "联系人邮箱（可选）",
+    "ecRelationPH": "关系（例如：女儿）",
+    "ecPhonePH": "联系电话",
+    "ecEmailPH": "联系邮箱（可选）",
     "finish": "保存并继续",
-    "alertIncompleteTitle": "请完成所有必填项。",
+    "alertIncompleteTitle": "请填写所有必填项。",
     "saveErrorTitle": "无法保存",
     "saveErrorMsg": "保存个人资料时出错。请重试。"
   },
@@ -326,61 +327,61 @@
     "healthCard": "紧急健康卡",
     "emergencyContacts": "紧急联系人",
     "drugAllergy": "药物过敏",
-    "assistive": "辅具需求",
+    "assistive": "辅助需求",
     "publicNote": "公开备注",
     "sharePortal": "分享紧急联系人门户",
-    "noPortalTitle": "尚无门户链接",
-    "noPortalBody": "你的资料可能不完整或尚未创建链接。请确保已填写紧急联系人并保存。",
-    "conditions": "病症情况",
+    "noPortalTitle": "暂无门户链接",
+    "noPortalBody": "您的资料可能尚未完成或未创建链接。请确保已填写紧急联系人并保存。",
+    "conditions": "医疗状况",
     "activity": "活动与奖励",
     "streak": "连续打卡",
     "coins": "金币",
-    "accessibility": "无障碍",
+    "accessibility": "辅助功能",
     "textSize": "文字大小",
-    "open": "打开资料",
+    "open": "打开个人资料",
     "locationAccess": {
-      "title": "定位权限",
+      "title": "定位访问",
       "status": {
         "granted": "已允许",
         "denied": "已拒绝",
-        "askMe": "下次再询问"
+        "askMe": "下次再问我"
       },
       "servicesOff": "定位服务已关闭",
       "turnOnServicesTitle": "开启定位服务",
-      "turnOnServicesBody": "请在设备设置中启用定位服务。",
+      "turnOnServicesBody": "请在设备“设置”中启用定位服务。",
       "openSettings": "打开设置",
       "needAccessTitle": "需要定位权限",
-      "needAccessBody": "请允许定位权限以使用导航等功能。",
+      "needAccessBody": "请允许定位访问以使用导航等功能。",
       "requestError": "无法请求定位权限。",
       "allowedTitle": "已允许定位",
-      "allowedBody": "如需更改，请在设备设置中管理权限。"
+      "allowedBody": "若要更改，请在设置中管理权限。"
     },
     "delete": {
       "title": "删除账户",
-      "cardExplain": "计划删除你的账户。14 天后将永久删除你的数据。",
+      "cardExplain": "计划删除您的账户。14 天后将永久移除您的数据。",
       "button": "安排删除",
       "modalTitle": "确认删除账户",
-      "modalExplain": "这将把你的账户设为 14 天后删除。在此之前你可以通过客服取消。",
-      "optionalReason": "（可选）告诉我们离开的原因",
+      "modalExplain": "这将把您的账户安排在 14 天后删除。期间可通过客服取消。",
+      "optionalReason": "（可选）告诉我们您离开的原因",
       "reasonPH_modal": "输入简短原因（可选）",
       "confirmStepTitle": "输入以确认",
       "typeToConfirm": "输入“{{phrase}}”以继续。",
       "typePH": "DELETE MY ACCOUNT",
       "confirmDeletion": "确认删除",
-      "confirmStepCheckbox": "我理解此操作是永久性的。",
-      "explain": "账户待删除期间，门户已停用。"
+      "confirmStepCheckbox": "我明白此操作是永久性的。",
+      "explain": "账户处于待删除状态时，门户已禁用。"
     },
     "photoAccess": {
       "title": "照片库访问",
       "openSettings": "打开设置",
       "allowedTitle": "已允许访问",
-      "allowedBody": "如需更改，可在设置中调整。",
+      "allowedBody": "如需更改，您可在设置中进行操作。",
       "deniedTitle": "访问被拒绝",
       "deniedBody": "请在设置中启用照片访问以附加图片。",
       "status": {
         "granted": "已允许",
         "denied": "已拒绝",
-        "askMe": "下次再询问"
+        "askMe": "下次再问我"
       }
     },
     "notifications": {
@@ -395,7 +396,7 @@
     "typeMismatch": "确认短语不匹配。",
     "failedSchedule": "无法安排删除。请重试。",
     "scheduledAlertTitle": "已安排删除",
-    "scheduledBody": "你的账户将在 14 天后删除。"
+    "scheduledBody": "您的账户将在 14 天后删除。"
   },
   "settings": {
     "title": "设置",
@@ -426,13 +427,13 @@
     "error": "加载公园失败",
     "errors": {
       "dbLoadFailed": "从数据库加载公园失败",
-      "missingParkName": "获取路线需要公园名称",
-      "cannotOpenUrl": "无法打开此网址",
-      "openUrlFailed": "打开网址失败",
+      "missingParkName": "导航需要公园名称",
+      "cannotOpenUrl": "无法打开此链接",
+      "openUrlFailed": "打开链接失败",
       "openNavFailed": "打开导航失败"
     },
     "summary": {
-      "activeFilters": "已启用的筛选",
+      "activeFilters": "已应用筛选",
       "clearAll": "清除全部"
     },
     "retry": "重试",
@@ -451,13 +452,13 @@
     "parks": {
       "hours": "开放时间",
       "region": "区域",
-      "activities": "{{count}} 个活动",
-      "amenities": "{{count}} 项设施",
-      "available": "提供 {{activities}} 与 {{amenities}}",
-      "learnMore": "前往 NParks.gov.sg 了解更多",
+      "activities": "活{{count}}动",
+      "amenities": "设{{count}}施",
+      "available": "有 {{activities}} 与 {{amenities}}",
+      "learnMore": "在 NParks.gov.sg 了解更多",
       "getDirections": "获取路线",
-      "emptySearch": "没有公园符合你的搜索条件",
-      "emptyDatabase": "数据库中未找到公园",
+      "emptySearch": "没有符合条件的公园",
+      "emptyDatabase": "数据库中暂无公园",
       "tryAgain": "重试",
       "noImage": "暂无图片",
       "noHours": "暂无开放时间",
@@ -488,19 +489,19 @@
         "barbecuing": "烧烤",
         "birdwatching": "观鸟",
         "camping": "露营",
-        "contemplativeLandscape": "静思景观",
+        "contemplativeLandscape": "静心观景",
         "cycling": "骑行或直排轮",
         "dining": "用餐",
-        "fishing": "垂钓",
+        "fishing": "钓鱼",
         "fitnessStudio": "健身房",
-        "funWithChildren": "亲子活动",
+        "funWithChildren": "亲子娱乐",
         "funWithDog": "与爱犬同乐",
-        "hiking": "徒步",
-        "natureWalks": "自然漫步/导览",
+        "hiking": "远足",
+        "natureWalks": "自然步行或导览",
         "photography": "摄影",
         "shopping": "购物",
         "therapeuticGardens": "疗愈花园",
-        "wellness": "身心健康"
+        "wellness": "保健"
       },
       "amenities": {
         "restrooms": "洗手间",
@@ -508,15 +509,15 @@
         "picnicArea": "野餐区",
         "walkingTrails": "步道",
         "drinkingFountain": "饮水处",
-        "allotmentGarden": "配给花园",
+        "allotmentGarden": "配给园地",
         "artSpace": "艺术/展览空间",
-        "birdPerch": "鸟栖点",
+        "birdPerch": "鸟栖架",
         "communityGarden": "社区花园",
-        "dining": "餐饮",
+        "dining": "用餐",
         "fishingFacility": "垂钓设施",
         "therapeuticGarden": "疗愈花园",
         "venueBooking": "可预订场地",
-        "wellnessProvider": "健康服务提供者"
+        "wellnessProvider": "保健服务"
       },
       "regions": {
         "central": "中部",
@@ -524,21 +525,21 @@
         "north": "北部",
         "south": "南部",
         "west": "西部",
-        "offshoreIslands": "离岛"
+        "offshoreIslands": "离岸岛屿"
       }
     }
   },
   "chat": {
     "headerDefault": "活动聊天",
     "neighbour": "邻居",
-    "hostBadge": "· 主办",
-    "hostColon": "· 主办：",
+    "hostBadge": "· 发起者",
+    "hostColon": "· 发起者：",
     "typing": "正在输入…",
-    "placeholder": "留言…"
+    "placeholder": "发消息…"
   },
   "errors": {
     "permissionTitle": "需要权限",
-    "permissionBody": "允许访问照片以发送图片。",
+    "permissionBody": "允许照片访问以发送图片。",
     "uploadTitle": "上传失败",
     "uploadReadBody": "无法从设备读取图片。",
     "uploadGenericBody": "无法上传图片。",
@@ -550,24 +551,24 @@
     "create": "创建",
     "post": "发布",
     "sections": {
-      "yours": "你的活动",
+      "yours": "您的活动",
       "nearby": "附近"
     },
     "categories": {
-      "kopi": "Kopi",
+      "kopi": "咖啡",
       "mahjong": "麻将",
       "crafts": "手工",
       "stretch": "伸展",
       "walks": "散步",
       "learning": "学习",
-      "volunteer": "志愿服务"
+      "volunteer": "志愿者"
     },
-    "empty": "还没有活动。抢先发布！",
-    "interested": "感兴趣",
+    "empty": "还没有活动。做第一个吧！",
+    "interested": "有兴趣",
     "actions": {
       "chat": "聊天",
       "go": "去",
-      "interested": "感兴趣"
+      "interested": "有兴趣"
     },
     "badges": {
       "mine": "我的"
@@ -576,51 +577,51 @@
       "missingInfoTitle": "信息缺失",
       "missingInfoBody": "请填写标题、日期/时间和地点。",
       "postedTitle": "已发布！",
-      "postedBody": "你的邻里活动已可见。",
+      "postedBody": "您的邻里活动已可见。",
       "savedTitle": "已保存",
-      "savedBody": "你的活动已更新。",
-      "chatGateTitle": "请先表示感兴趣",
-      "chatGateBody": "加入聊天前需要先表示感兴趣。",
-      "alreadyInterestedTitle": "已标记为感兴趣",
-      "alreadyInterestedBody": "你已对该活动表示感兴趣。",
+      "savedBody": "您的活动已更新。",
+      "chatGateTitle": "请先表示兴趣",
+      "chatGateBody": "您需要先表示兴趣才能加入聊天。",
+      "alreadyInterestedTitle": "已表示兴趣",
+      "alreadyInterestedBody": "您已对该活动表示兴趣。",
       "interestedSavedTitle": "收到",
-      "interestedSavedBody": "已记录你的兴趣。"
+      "interestedSavedBody": "已记录您的兴趣。"
     },
     "cta": {
-      "imInterested": "我感兴趣"
+      "imInterested": "我有兴趣"
     },
     "form": {
       "titleNew": "新活动",
       "titleEdit": "编辑活动",
-      "subtitleHint": "简短清晰。",
+      "subtitleHint": "保持简洁明了。",
       "name": "名称",
       "category": "类别",
-      "start": "开始时间",
+      "start": "开始",
       "location": "地点",
       "detailsOptional": "详情（可选）",
-      "namePH": "例如：Kopi @ 楼下空地",
-      "locationPH": "例如：淡滨尼西社区中心",
-      "detailsPH": "需要携带/简要说明",
+      "namePH": "例如：楼下咖啡",
+      "locationPH": "例如：Tampines West CC",
+      "detailsPH": "需要携带的物品 / 简短说明",
       "picked": "已选择：{{name}}",
-      "noPlacesKey": "设置 GOOGLE_PLACES_KEY 以启用建议（仍可输入）。"
+      "noPlacesKey": "设置 GOOGLE_PLACES_KEY 以启用建议（不设置也可手动输入）。"
     },
     "modal": {
-      "interested": "感兴趣",
-      "interestedWith": "感兴趣 · {{title}}",
-      "none": "暂时还没有人。"
+      "interested": "有兴趣",
+      "interestedWith": "有兴趣 · {{title}}",
+      "none": "还没有人。"
     },
     "errors": {
       "loadFailed": "无法加载活动。",
       "postFailed": "无法发布活动。",
       "updateFailed": "无法更新活动。",
-      "interestedLoadFailed": "无法加载感兴趣的人。",
+      "interestedLoadFailed": "无法加载有兴趣的人。",
       "markInterestedFailed": "无法标记兴趣。"
     },
     "push": {
       "updatedTitle": "活动已更新",
-      "updatedBody": "{{title}} — 详情已变更。",
+      "updatedBody": "{{title}} — 详情已更改。",
       "newInterestTitle": "新的兴趣",
-      "newInterestBody": "{{name}} 对 {{title}} 感兴趣。"
+      "newInterestBody": "{{name}} 对 {{title}} 表示了兴趣。"
     }
   }
 }

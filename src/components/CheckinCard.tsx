@@ -6,6 +6,8 @@ export type WeekCell = { date: string; checked: boolean };
 
 type Props = {
   titleKey: string;
+  titleWhenCheckedKey?: string;
+
   hintKey: string;
   hintWhenCheckedKey: string;
 
@@ -19,6 +21,7 @@ type Props = {
 
 export default function CheckinCard({
   titleKey,
+  titleWhenCheckedKey,
   hintKey,
   hintWhenCheckedKey,
   checked,
@@ -29,7 +32,8 @@ export default function CheckinCard({
 }: Props) {
   const { t } = useTranslation();
 
-  // Helper to get localized short day-of-week labels from your checkins namespace
+  const titleText = checked ? t(titleWhenCheckedKey ?? titleKey) : t(titleKey);
+
   const dow = (n: number) => t(`checkins.dowShort.${n}` as const);
 
   return (
@@ -38,37 +42,20 @@ export default function CheckinCard({
       accessibilityRole="button"
       style={[s.checkCard, checked ? s.checkCardDone : s.checkCardNotDone]}
     >
-      <Text style={s.checkTitle}>{t(titleKey)}</Text>
+      <Text style={s.checkTitle}>{titleText}</Text>
 
       <View style={s.doodle}>
         <Ionicons name="person-circle-outline" size={72} />
         {checked ? (
-          <Ionicons
-            name="checkmark-done-circle"
-            size={88}
-            color="#2e7d32"
-            style={s.tick}
-          />
+          <Ionicons name="checkmark-done-circle" size={88} color="#2e7d32" style={s.tick} />
         ) : (
-          <Ionicons
-            name="close-circle"
-            size={88}
-            color="#e53935"
-            style={s.tick}
-          />
+          <Ionicons name="close-circle" size={88} color="#e53935" style={s.tick} />
         )}
       </View>
 
-      <Text style={s.checkHint}>
-        {checked ? t(hintWhenCheckedKey) : t(hintKey)}
-      </Text>
+      <Text style={s.checkHint}>{checked ? t(hintWhenCheckedKey) : t(hintKey)}</Text>
 
-      {/* Weekly tracker */}
-      <View
-        style={s.trackerWrap}
-        accessible
-        accessibilityLabel={t("checkins.trackerLabel")}
-      >
+      <View style={s.trackerWrap} accessible accessibilityLabel={t("checkins.trackerLabel")}>
         {weekChecks.map((cell) => {
           const d = new Date(`${cell.date}T00:00:00`);
           const label = dow(d.getDay());
@@ -99,20 +86,14 @@ export default function CheckinCard({
       </View>
 
       <View style={s.rewardsRow}>
-        <Pressable
-          onPress={onPressRewards}
-          accessibilityRole="button"
-          style={s.rewardsBtn}
-        >
+        <Pressable onPress={onPressRewards} accessibilityRole="button" style={s.rewardsBtn}>
           <Text style={s.rewardsBtnText}>{t("rewards.title")}</Text>
         </Pressable>
 
         <View
           style={s.coinsPill}
           accessibilityRole="text"
-          accessibilityLabel={`${coins} ${
-            coins === 1 ? t("rewards.coin") : t("rewards.coins")
-          }`}
+          accessibilityLabel={`${coins} ${coins === 1 ? t("rewards.coin") : t("rewards.coins")}`}
         >
           <Text style={s.coinsText}>
             {coins} {coins === 1 ? t("rewards.coin") : t("rewards.coins")}

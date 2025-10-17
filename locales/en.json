@@ -75,9 +75,10 @@
     "profile": "Profile",
     "rewards": "Rewards",
     "sos": "SOS",
-    "imActive": "I'm Active",
+    "imActive": "Tap to Check In!",
+    "youreCheckedIn": "You're Checked In!",
     "tapToCheckIn": "Tap to check in",
-    "checkedIn": "You have Checked In today!"
+    "checkedIn": "Have a nice day!"
   },
   "clinics": {
     "searchPlaceholder": "Search by clinic name..."
