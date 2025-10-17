@@ -81,7 +81,14 @@
     "checkedIn": "நல்ல நாளாக அமையட்டும்!"
   },
   "clinics": {
-    "searchPlaceholder": "கிளினிக் பெயரால் தேடவும்…"
+    "searchPlaceholder": "கிளினிக் பெயரால் தேடவும்…",
+    "waitingTime": "காத்திருப்பு நேரம்",
+    "minutes": "நிமிடங்கள்",
+    "unavailable": "கிடைக்கவில்லை",
+    "totalEstTime": "மொத்த மதிப்பிடப்பட்ட நேரம்",
+    "mins": "நிமிடங்கள்",
+    "contact": "தொடர்பு",
+    "callToEnquire": "விசாரிக்க அழைக்கவும்"
   },
   "activities": {
     "prompt": "நீங்கள் என்ன பார்க்க விரும்புகிறீர்கள்?",
@@ -523,6 +530,7 @@
         "central": "மத்திய",
         "east": "கிழக்கு",
         "north": "வட",
+        "northEast": "வடகிழக்கு",
         "south": "தென்",
         "west": "மேற்கு",
         "offshoreIslands": "கரையொதுக்க தீவுகள்"

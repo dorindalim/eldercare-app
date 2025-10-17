@@ -81,7 +81,14 @@
     "checkedIn": "祝您今天愉快！"
   },
   "clinics": {
-    "searchPlaceholder": "按诊所名称搜索…"
+    "searchPlaceholder": "按诊所名称搜索…",
+    "waitingTime": "等待时间",
+    "minutes": "分钟",
+    "unavailable": "不可用",
+    "totalEstTime": "预计总时间",
+    "mins": "分钟",
+    "contact": "联系方式",
+    "callToEnquire": "致电查询"
   },
   "activities": {
     "prompt": "您想查看什么？",

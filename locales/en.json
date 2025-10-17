@@ -81,7 +81,14 @@
     "checkedIn": "Have a nice day!"
   },
   "clinics": {
-    "searchPlaceholder": "Search by clinic name..."
+    "searchPlaceholder": "Search by clinic name...",
+    "waitingTime": "Waiting time",
+    "minutes": "minutes",
+    "unavailable": "Unavailable",
+    "totalEstTime": "Total Est. Time",
+    "mins": "mins",
+    "contact": "Contact",
+    "callToEnquire": "Call to Enquire"
   },
   "activities": {
     "prompt": "What would you like to view?",
@@ -523,6 +530,7 @@
         "central": "Central",
         "east": "East",
         "north": "North",
+        "northEast": "North-East",
         "south": "South",
         "west": "West",
         "offshoreIslands": "Offshore islands"

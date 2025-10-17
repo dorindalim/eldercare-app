@@ -81,7 +81,14 @@
     "checkedIn": "Semoga hari anda baik!"
   },
   "clinics": {
-    "searchPlaceholder": "Cari mengikut nama klinik…"
+    "searchPlaceholder": "Cari mengikut nama klinik…",
+    "waitingTime": "Masa menunggu",
+    "minutes": "minit",
+    "unavailable": "Tidak tersedia",
+    "totalEstTime": "Jumlah Anggaran Masa",
+    "mins": "minit",
+    "contact": "Hubungi",
+    "callToEnquire": "Hubungi untuk Bertanya"
   },
   "activities": {
     "prompt": "Apa yang anda ingin lihat?",
@@ -233,7 +240,7 @@
     "notEnoughTitle": "Syiling tidak mencukupi",
     "notEnoughBody": "Anda tidak mempunyai syiling yang mencukupi untuk menebus ganjaran ini.",
     "confirmTitle": "Sahkan penebusan",
-    "confirmBody": "Belanja {{cost}} untuk menebus “{{name}}”?",
+    "confirmBody": "Belanja {{cost}} untuk menebus \"{{name}}\"?",
     "cancel": "Batal",
     "confirm": "Sahkan",
     "failed": "Penebusan gagal",
@@ -297,7 +304,7 @@
     "publicNotePH": "Nota umum",
     "finish": "Simpan & Teruskan",
     "errors": {
-      "missingConditionName": "Sila masukkan sekurang-kurangnya satu nama keadaan, atau pilih “Saya tiada keadaan perubatan.”",
+      "missingConditionName": "Sila masukkan sekurang-kurangnya satu nama keadaan, atau pilih \"Saya tiada keadaan perubatan.\"",
       "invalidMed": "Kekerapan ubat tidak boleh diisi tanpa nama ubat.",
       "saveFailed": "Tidak dapat menyimpan keadaan anda. Sila cuba lagi."
     }
@@ -523,6 +530,7 @@
         "central": "Tengah",
         "east": "Timur",
         "north": "Utara",
+        "northEast": "Timur Laut",
         "south": "Selatan",
         "west": "Barat",
         "offshoreIslands": "Pulau luar pesisir"

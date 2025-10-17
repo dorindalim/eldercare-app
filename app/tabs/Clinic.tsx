@@ -58,6 +58,27 @@ const normalizeName = (name) => {
     .trim();
 };
 
+const getRegionFromPostalCode = (postalCode) => {
+  if (!postalCode) return null;
+  const firstTwoDigits = parseInt(postalCode.substring(0, 2), 10);
+  if (firstTwoDigits >= 1 && firstTwoDigits <= 16) return "Central";
+  if (firstTwoDigits >= 17 && firstTwoDigits <= 30) return "Central";
+  if (firstTwoDigits >= 31 && firstTwoDigits <= 41) return "East";
+  if (firstTwoDigits >= 42 && firstTwoDigits <= 45) return "East";
+  if (firstTwoDigits >= 46 && firstTwoDigits <= 52) return "East";
+  if (firstTwoDigits >= 53 && firstTwoDigits <= 57) return "North-East";
+  if (firstTwoDigits >= 58 && firstTwoDigits <= 60) return "West";
+  if (firstTwoDigits >= 61 && firstTwoDigits <= 64) return "West";
+  if (firstTwoDigits >= 65 && firstTwoDigits <= 68) return "West";
+  if (firstTwoDigits >= 69 && firstTwoDigits <= 71) return "North";
+  if (firstTwoDigits >= 72 && firstTwoDigits <= 73) return "North";
+  if (firstTwoDigits >= 75 && firstTwoDigits <= 76) return "North";
+  if (firstTwoDigits >= 77 && firstTwoDigits <= 80) return "North-East";
+  if (firstTwoDigits >= 81 && firstTwoDigits <= 81) return "East";
+  if (firstTwoDigits >= 82 && firstTwoDigits <= 82) return "North-East";
+  return null;
+};
+
 export default function ClinicScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -110,7 +131,6 @@ export default function ClinicScreen() {
         console.warn("Could not get user location:", e);
       }
 
-      // Fetch mock wait times from Supabase
       const { data: mockData, error: mockError } = await supabase
         .from('clinic_wait_times')
         .select('clinic_name, wait_time_minutes');
@@ -135,55 +155,37 @@ export default function ClinicScreen() {
         liveWaitingTimesMap.set(normalizedName, record.minutes);
       });
 
-      const METERS_PER_MINUTE_ASSUMED_SPEED = 250; // 15 km/h
+      const METERS_PER_MINUTE_ASSUMED_SPEED = 250;
 
       const clinics = CHASClinics.features.map((feature) => {
         const description = feature.properties.Description;
-        const nameMatch = description.match(
-          /<th>HCI_NAME<\/th> <td>(.*?)<\/td>/
-        );
-        const phoneMatch = description.match(
-          /<th>HCI_TEL<\/th> <td>(.*?)<\/td>/
-        );
+        const nameMatch = description.match(/<th>HCI_NAME<\/th> <td>(.*?)<\/td>/);
+        const phoneMatch = description.match(/<th>HCI_TEL<\/th> <td>(.*?)<\/td>/);
+        const postalCodeMatch = description.match(/<th>POSTAL_CD<\/th> <td>(.*?)<\/td>/);
+
         const name = nameMatch ? nameMatch[1] : "Unknown Clinic";
         const phone = phoneMatch ? phoneMatch[1] : null;
+        const postalCode = postalCodeMatch ? postalCodeMatch[1] : null;
+        const region = getRegionFromPostalCode(postalCode);
         const normalizedName = normalizeName(name);
         const coords = feature.geometry.coordinates;
         const lat = coords[1];
         const lon = coords[0];
 
-        const distance = location
-          ? distanceMeters(location, { latitude: lat, longitude: lon })
-          : null;
-
-        // Priority: 1. Live API, 2. Supabase Mock, 3. Null
+        const distance = location ? distanceMeters(location, { latitude: lat, longitude: lon }) : null;
         let waitingTime = liveWaitingTimesMap.get(normalizedName) || mockWaitTimesMap.get(normalizedName) || null;
-
         const travelTime = distance != null ? distance / METERS_PER_MINUTE_ASSUMED_SPEED : null;
         const totalTime = waitingTime != null && travelTime != null ? waitingTime + travelTime : null;
 
-        return {
-          name,
-          phone,
-          lat,
-          lon,
-          distance,
-          minutes: waitingTime,
-          totalTime,
-        };
+        return { name, phone, lat, lon, distance, minutes: waitingTime, totalTime, region };
       });
 
       if (location) {
-        // Sort by total time, with fallbacks
         clinics.sort((a, b) => {
-          if (a.totalTime != null && b.totalTime != null) {
-            return a.totalTime - b.totalTime;
-          }
+          if (a.totalTime != null && b.totalTime != null) return a.totalTime - b.totalTime;
           if (a.totalTime != null) return -1;
           if (b.totalTime != null) return 1;
-          if (a.distance != null && b.distance != null) {
-            return a.distance - b.distance;
-          }
+          if (a.distance != null && b.distance != null) return a.distance - b.distance;
           return 0;
         });
       }
@@ -201,17 +203,29 @@ export default function ClinicScreen() {
     }
   };
 
+  const applyFilters = () => {
+    let filtered = allClinics;
+
+    if (searchQuery.trim()) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter((clinic) =>
+        clinic.name.toLowerCase().includes(lowercasedQuery)
+      );
+    }
+
+    if (tempFilters.regions.length > 0) {
+      filtered = filtered.filter((clinic) =>
+        tempFilters.regions.includes(clinic.region)
+      );
+    }
+
+    setFilteredClinics(filtered);
+    setCurrentPage(1);
+  };
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (!query.trim()) {
-      setFilteredClinics(allClinics);
-      return;
-    }
-    const lowercasedQuery = query.toLowerCase();
-    const filtered = allClinics.filter((clinic) =>
-      clinic.name.toLowerCase().includes(lowercasedQuery)
-    );
-    setFilteredClinics(filtered);
+    applyFilters();
   };
 
   const handleGetDirections = (clinic) => {
@@ -251,13 +265,13 @@ export default function ClinicScreen() {
       {
         id: "regions",
         type: "chips-multi",
-        title: "Region",
+        title: t("walking.filters.categories.region"),
         options: [
-          { key: "Central", label: "Central" },
-          { key: "North", label: "North" },
-          { key: "South", label: "South" },
-          { key: "East", label: "East" },
-          { key: "West", label: "West" },
+          { key: "Central", label: t("walking.filters.regions.central") },
+          { key: "North", label: t("walking.filters.regions.north") },
+          { key: "North-East", label: "North-East" },
+          { key: "East", label: t("walking.filters.regions.east") },
+          { key: "West", label: t("walking.filters.regions.west") },
         ],
         selected: tempFilters.regions,
         onToggle: (key) => {
@@ -280,7 +294,7 @@ export default function ClinicScreen() {
         </AppText>
         {userLocation && item.distance != null && (
           <AppText variant="caption" weight="600" style={s.distanceText}>
-            ({kmStr(item.distance)} away)
+            ({kmStr(item.distance)} {t('walking.location.away', { distance: '' })})
           </AppText>
         )}
       </View>
@@ -291,19 +305,19 @@ export default function ClinicScreen() {
         style={item.minutes ? s.waitingTime : s.waitingTimeUnavailable}
       >
         {item.minutes
-          ? `Waiting time: ${item.minutes} minutes`
-          : "Waiting time: Unavailable"}
+          ? `${t('clinics.waitingTime')}: ${item.minutes} ${t('clinics.minutes')}`
+          : `${t('clinics.waitingTime')}: ${t('clinics.unavailable')}`}
       </AppText>
 
       {item.totalTime != null && (
         <AppText variant="body" weight="600" style={s.totalTime}>
-          Est. Time (Travel + Wait): {Math.round(item.totalTime)} mins
+          {t('clinics.totalEstTime')}: {Math.round(item.totalTime)} {t('clinics.mins')}
         </AppText>
       )}
 
       {item.phone && (
         <AppText variant="body" weight="400" style={s.contactText}>
-          Contact: {item.phone}
+          {t('clinics.contact')}: {item.phone}
         </AppText>
       )}
 
@@ -313,7 +327,7 @@ export default function ClinicScreen() {
           onPress={() => handleGetDirections(item)}
         >
           <AppText variant="button" weight="700" style={s.directionButtonText}>
-            Get Directions
+            {t('walking.parks.getDirections')}
           </AppText>
         </TouchableOpacity>
         {item.phone && (
@@ -322,7 +336,7 @@ export default function ClinicScreen() {
             onPress={() => handleCallClinic(item.phone)}
           >
             <AppText variant="button" weight="700" style={s.callButtonText}>
-              Call to Enquire
+              {t('clinics.callToEnquire')}
             </AppText>
           </TouchableOpacity>
         )}
@@ -387,12 +401,28 @@ export default function ClinicScreen() {
         <SearchBar
           value={searchQuery}
           placeholder={t("clinics.searchPlaceholder")}
-          onChangeText={handleSearch}
+          onChangeText={setSearchQuery}
           onSubmit={() => handleSearch(searchQuery)}
           onPressFilter={() => setShowFilterPanel(true)}
         />
         {selectedFilterItems.length > 0 && (
-          <SummaryChip items={selectedFilterItems} style={{ marginTop: 8 }} />
+          <View style={s.summaryChipContainer}>
+            <View style={s.summaryChipHeader}>
+              <AppText variant="caption" weight="600" style={s.summaryChipTitle}>
+                {t("walking.summary.activeFilters")}
+              </AppText>
+              <TouchableOpacity onPress={() => {
+                setTempFilters({ regions: [] });
+                setSelectedFilterItems([]);
+                applyFilters();
+              }} style={s.clearAllButton}>
+                <AppText variant="caption" weight="600" style={s.clearAllText}>
+                  {t("walking.summary.clearAll")}
+                </AppText>
+              </TouchableOpacity>
+            </View>
+            <SummaryChip items={selectedFilterItems} style={{ marginTop: 8 }} />
+          </View>
         )}
       </View>
 
@@ -403,6 +433,7 @@ export default function ClinicScreen() {
         onReset={() => setTempFilters({ regions: [] })}
         onApply={() => {
           setSelectedFilterItems(tempFilters.regions);
+          applyFilters();
           setShowFilterPanel(false);
         }}
       />
@@ -524,28 +555,36 @@ const s = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
+    alignItems: 'flex-start',
   },
   directionButton: {
     backgroundColor: "#007AFF",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignSelf: "flex-start",
+    flex: 1,
+    minWidth: 150,
+    alignItems: 'center',
   },
   directionButtonText: {
     color: "#FFF",
+    textAlign: 'center',
   },
   callButton: {
     backgroundColor: "#E7F3FF",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignSelf: "flex-start",
+    flex: 1,
+    minWidth: 150,
+    alignItems: 'center',
   },
   callButtonText: {
     color: "#007AFF",
     fontWeight: "600",
+    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,
@@ -576,4 +615,21 @@ const s = StyleSheet.create({
   retryButtonText: {
     color: "#FFF",
   },
+  summaryChipContainer: {
+    backgroundColor: "#FFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
+  },
+  summaryChipHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  summaryChipTitle: { color: "#6B7280", fontSize: 14 },
+  clearAllButton: { paddingHorizontal: 8, paddingVertical: 4 },
+  clearAllText: { color: "#EF4444", fontSize: 14 },
+  summaryChipsRow: { flexDirection: "row" },
 });
