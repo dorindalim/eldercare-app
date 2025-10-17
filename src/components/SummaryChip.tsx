@@ -1,8 +1,7 @@
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import AppText from "./AppText";
 
 type Variant = "indigo" | "gray" | "amber" | "green";
-
 export type SummaryChipItem = string;
 
 type Props = {
@@ -35,9 +34,33 @@ export default function SummaryChip({
   accessibilityLabel,
   onItemPress,
 }: Props) {
-  const content = (items?.length ? items.filter(Boolean).join(separator) : text) ?? "";
   const colors = palette[variant];
+  const filtered = (items ?? []).filter(Boolean);
 
+  if (onItemPress && filtered.length > 0) {
+    return (
+      <View style={[styles.rowWrap, style]} accessibilityLabel={accessibilityLabel}>
+        {filtered.map((it) => (
+          <Pressable
+            key={it}
+            onPress={() => onItemPress(it)}
+            style={[
+              styles.wrap,
+              dense ? styles.dense : styles.normal,
+              { backgroundColor: colors.bg, borderColor: colors.border },
+            ]}
+            android_ripple={{ color: "rgba(0,0,0,0.06)" }}
+          >
+            <AppText variant="caption" numberOfLines={1} color={colors.text}>
+              {it}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
+    );
+  }
+
+  const content = (filtered.length ? filtered.join(separator) : text) ?? "";
   return (
     <View
       style={[
@@ -46,8 +69,6 @@ export default function SummaryChip({
         { backgroundColor: colors.bg, borderColor: colors.border },
         style,
       ]}
-      pointerEvents="none"
-      accessible
       accessibilityRole="text"
       accessibilityLabel={accessibilityLabel ?? content}
     >
@@ -66,4 +87,5 @@ const styles = StyleSheet.create({
   },
   normal: { paddingVertical: 6, paddingHorizontal: 10 },
   dense: { paddingVertical: 4, paddingHorizontal: 8 },
+  rowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
 });

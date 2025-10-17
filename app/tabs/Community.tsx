@@ -192,6 +192,20 @@ export default function CommunityScreen() {
   const params = useLocalSearchParams<{ openEventId?: string; openEventEventId?: string }>();
   const hasConsumedDeepLinkRef = useRef(false);
   const geoCache = useRef<Map<string, LatLng>>(new Map());
+  const clearAllCommunityFilters = () => {
+    setKeyword("");
+    setCategories([]);
+    setTimeFilter("upcoming");
+    setPricingFilter("all");
+    setDistanceFilter("any");
+    setPage(1);
+  };
+  const hasActiveFilters =
+    keyword.trim().length > 0 ||
+    categories.length > 0 ||
+    timeFilter !== "upcoming" ||
+    pricingFilter !== "all" ||
+    distanceFilter !== "any";
 
   const smoothLayout = () => LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
@@ -851,7 +865,27 @@ export default function CommunityScreen() {
           }}
         />
 
-        <SummaryChip items={summaryItems} variant="indigo" style={{ marginTop: 8 }} />
+        {hasActiveFilters && (
+          <View style={styles.summaryChipContainer}>
+            <View style={styles.summaryChipHeader}>
+              <AppText variant="caption" weight="600" style={styles.summaryChipTitle}>
+                {t("walking.summary.activeFilters")}
+              </AppText>
+              <TouchableOpacity onPress={clearAllCommunityFilters} style={styles.clearAllButton}>
+                <AppText variant="caption" weight="600" style={styles.clearAllText}>
+                  {t("community.summary.clearAll", "Clear all")}
+                </AppText>
+              </TouchableOpacity>
+            </View>
+
+            <SummaryChip
+              items={summaryItems}
+              variant="indigo"
+              dense
+              style={{ marginTop: 0 }}
+            />
+          </View>
+        )}
       </View>
 
       <FlatList
@@ -1094,4 +1128,24 @@ const styles = StyleSheet.create({
   actionsRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
   btnBase: { minHeight: 48, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
   halfBtn: { flex: 1 },
+  summaryChipContainer: {
+  backgroundColor: "#FFF",
+  paddingHorizontal: 12,
+  paddingVertical: 10,
+  borderTopWidth: StyleSheet.hairlineWidth,
+  borderBottomWidth: StyleSheet.hairlineWidth,
+  borderColor: CARD_BORDER,
+  marginTop: 8,
+  borderRadius: 12,
+},
+  summaryChipHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  summaryChipTitle: { color: "#6B7280", fontSize: 14 },
+  clearAllButton: { paddingHorizontal: 8, paddingVertical: 4 },
+  clearAllText: { color: "#EF4444", fontSize: 14 },
+
 });
