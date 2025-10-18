@@ -461,7 +461,7 @@
       "region": "Region",
       "activities": "activit{{count}}ies",
       "amenities": "amenit{{count}}ies",
-      "available": "{{activities}} and {{amenities}} available",
+      "available": "Activities: {{activities}} and Amentities: {{amenities}} available",
       "learnMore": "Learn more at NParks.gov.sg",
       "getDirections": "Get Directions",
       "emptySearch": "No parks match your search criteria",
