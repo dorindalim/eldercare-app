@@ -1023,16 +1023,25 @@ export default function Bulletin() {
         presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
         statusBarTranslucent
       >
-        {chatFor ? (
-          <ActivityChat
-            onClose={() => setChatOpen(false)}
-            activityId={chatFor.id}
-            activityTitle={chatFor.title}
-            currentUserId={currentUserId}
-            currentUserName={myName ?? null}
-          />
-        ) : null}
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFFFF" }} edges={["bottom"]}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={insets.top}
+          >
+            {chatFor ? (
+              <ActivityChat
+                onClose={() => setChatOpen(false)}
+                activityId={chatFor.id}
+                activityTitle={chatFor.title}
+                currentUserId={currentUserId}
+                currentUserName={myName ?? null}
+              />
+            ) : null}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
+      {/* >>> END CHANGE <<< */}
 
       {interestedFor && (
         <InterestedModal

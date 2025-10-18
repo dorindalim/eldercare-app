@@ -20,6 +20,7 @@
       "bundleIdentifier": "com.dorindalim.eldercareapp"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "package": "com.dorindalim.eldercareapp",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
