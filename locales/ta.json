@@ -15,7 +15,7 @@
   "alerts": {
     "noAccountTitle": "கணக்கு காணப்படவில்லை",
     "noAccountBody": "நீங்கள் பதிவு செய்யும் பக்கத்திற்கு மாற்றப்படுவீர்கள்.",
-    "codeSentTitle": "குறியீடு அனுப்பப்பட்டது",
+    "codeSentTitle":"குறியீடு அனுப்பப்பட்டது",
     "codeSentBody": "தற்காலிகமாக 123456 (மொக்) பயன்படுத்தவும்.",
     "invalidCodeTitle": "தவறான குறியீடு",
     "invalidCodeBody": "சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
@@ -461,7 +461,7 @@
       "region": "பகுதி",
       "activities": "செயல{{count}}",
       "amenities": "வசத{{count}}",
-      "available": "{{activities}} மற்றும் {{amenities}} கிடைக்கும்",
+      "available": "செயல்கள்: {{activities}} & வசதிகள்: {{amenities}} உள்ளன",
       "learnMore": "NParks.gov.sg இல் மேலும் அறிக",
       "getDirections": "வழி பெற",
       "emptySearch": "உங்கள் தேடலுக்கு பொருந்தும் பூங்காக்கள் இல்லை",

@@ -461,7 +461,7 @@
       "region": "Kawasan",
       "activities": "aktivit{{count}}",
       "amenities": "kemudah{{count}}",
-      "available": "{{activities}} dan {{amenities}} tersedia",
+      "available": "Aktiviti: {{activities}} & Kemudahan: {{amenities}} tersedia",
       "learnMore": "Ketahui lebih lanjut di NParks.gov.sg",
       "getDirections": "Dapatkan Arah",
       "emptySearch": "Tiada taman yang sepadan dengan carian anda",

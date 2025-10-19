@@ -461,7 +461,7 @@
       "region": "区域",
       "activities": "活{{count}}动",
       "amenities": "设{{count}}施",
-      "available": "有 {{activities}} 与 {{amenities}}",
+      "available": "活动: {{activities}} · 设施: {{amenities}} 可用",
       "learnMore": "在 NParks.gov.sg 了解更多",
       "getDirections": "获取路线",
       "emptySearch": "没有符合条件的公园",
