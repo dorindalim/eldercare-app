@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -359,14 +360,18 @@ export default function WalkingScreen() {
   const handleUrlPress = async (url: string) => {
     if (!url) return;
     try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert(t("common.error"), t("walking.errors.cannotOpenUrl"));
-      }
+      await WebBrowser.openBrowserAsync(url);
     } catch {
-      Alert.alert(t("common.error"), t("walking.errors.openUrlFailed"));
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert(t("common.error"), t("walking.errors.cannotOpenUrl"));
+        }
+      } catch {
+        Alert.alert(t("common.error"), t("walking.errors.openUrlFailed"));
+      }
     }
   };
 

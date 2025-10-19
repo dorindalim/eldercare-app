@@ -1,3 +1,4 @@
+import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { Image, Linking, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,24 +48,32 @@ const ParkDetailsModal = ({ park, visible, onClose, userLocation, onGetDirection
   const handleUrlPress = async (url: string) => {
     if (!url) return;
     try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      }
+      await WebBrowser.openBrowserAsync(url);
     } catch (err) {
-      console.error('Failed to open URL:', err);
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+        }
+      } catch (err2) {
+        console.error('Failed to open URL:', err2);
+      }
     }
   };
 
   const handleEtiquettePress = async (url: string) => {
     if (!url) return;
     try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      }
+      await WebBrowser.openBrowserAsync(url);
     } catch (err) {
-      console.error('Failed to open etiquette link:', err);
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+        }
+      } catch (err2) {
+        console.error('Failed to open etiquette link:', err2);
+      }
     }
   };
 

@@ -7,7 +7,7 @@
     "pleaseLoginAgain": "Please log in again.",
     "save": "Save",
     "hide": "Hide",
-    "show": "Show",
+    "show": "Steps",
     "loading": "Loading…",
     "close": "Close",
     "edit": "Edit"
@@ -75,9 +75,9 @@
     "profile": "Profile",
     "rewards": "Rewards",
     "sos": "SOS",
-    "imActive": "Tap to Check In!",
-    "youreCheckedIn": "You're Checked In!",
-    "tapToCheckIn": "Tap to check in",
+    "imActive": "Tap to check in!",
+    "youreCheckedIn": "You're checked in!",
+    "tapToCheckIn": "Ready to check in?",
     "checkedIn": "Have a nice day!"
   },
   "clinics": {
@@ -186,7 +186,7 @@
       "destination": "Destination",
       "loading": "Loading...",
       "requesting": "Requesting location permission...",
-      "eta": "ETA: {{duration}} ({{distance}})",
+      "eta": "{{duration}} ({{distance}})",
       "nextStepShort": "Next",
       "then": "Then",
       "repeat": "Repeat",
@@ -195,7 +195,7 @@
       "started": "Navigation started",
       "stopped": "Navigation stopped",
       "arrived": "You have arrived at your destination",
-      "destinationSet": "Destination set",
+      "destinationSet": "Destination Set",
       "startNav": "Start Navigation",
       "filter": {
         "everything": "Everything",
