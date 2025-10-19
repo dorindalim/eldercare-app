@@ -308,19 +308,16 @@ export default function NavigationScreen() {
     };
   }, [navigating, destination, mode, steps, currentStepIndex]);
 
-  // NEW: If lat/lng are passed directly, set destination immediately
   useEffect(() => {
     if (presetLat != null && presetLng != null) {
       const dest = { latitude: presetLat, longitude: presetLng };
       setDestinationOnly(dest);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetLat, presetLng]);
 
-  // UPDATED: Wait for BOTH presetQuery and location before auto-filling/searching
   useEffect(() => {
     if (!presetQuery || presetQuery === prevPresetQueryRef.current) return;
-    if (!location) return; // wait until we have location so geocode/places are consistent
+    if (!location) return; 
 
     prevPresetQueryRef.current = presetQuery;
     resetNavigationState();
@@ -336,10 +333,8 @@ export default function NavigationScreen() {
         searchDestination(presetQuery);
       }, 200);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetQuery, fillOnly, location]);
 
-  // NEW: Auto-start once destination and location are ready
   useEffect(() => {
     if (!autoStart || !destination || !location || navigating) return;
     if (autoRanRef.current) return;
@@ -657,7 +652,6 @@ export default function NavigationScreen() {
   const startNavigation = () => {
     if (!location || !destination)
       return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
-    // Default to DRIVING unless user selected otherwise
     const navigationMode = userSelectedMode || "driving";
     setMode(navigationMode);
     setNavigating(true);

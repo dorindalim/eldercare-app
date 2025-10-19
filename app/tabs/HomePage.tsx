@@ -144,7 +144,7 @@ export default function ElderlyHome() {
         await Linking.openURL(`sms:${to}?body=${encodeURIComponent(body)}`);
       }
     } catch {
-      Alert.alert("SMS failed", "Could not open your SMS app.");
+      Alert.alert(t("errors.smsTitle"), t("errors.smsBody"));
     }
   };
 
@@ -184,7 +184,7 @@ export default function ElderlyHome() {
         .eq("user_id", session?.userId ?? "")
         .maybeSingle()).data?.name ?? "Your loved one";
 
-    const timeStr = new Date().toLocaleString("en-SG", { hour12: false });
+    const timeStr = new Date().toLocaleString(i18n.language || "en-SG", { hour12: false });
     const message =
       `${elderName} has sent an SOS.\n` +
       (mapsUrl ? `Live location: ${mapsUrl}\n` : "") +

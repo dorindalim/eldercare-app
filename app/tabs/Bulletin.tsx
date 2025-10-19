@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -45,8 +45,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
-    shouldShowBanner: true as any,
-    shouldShowList: true as any,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -171,7 +171,12 @@ async function upsertPushToken({
   );
 }
 
-async function pushToTokens(tokens: string[], title: string, body: string, data?: Record<string, any>) {
+async function pushToTokens(
+  tokens: string[],
+  title: string,
+  body: string,
+  data?: Record<string, any>
+) {
   if (!tokens.length) return;
   try {
     await fetch("https://exp.host/--/api/v2/push/send", {
@@ -182,7 +187,10 @@ async function pushToTokens(tokens: string[], title: string, body: string, data?
   } catch {}
 }
 
-async function getTokensForUser(userId: string | null, deviceId: string | null) {
+async function getTokensForUser(
+  userId: string | null,
+  deviceId: string | null
+) {
   if (!userId && !deviceId) return [];
   const or = [
     userId ? `user_id.eq.${userId}` : null,
@@ -217,7 +225,10 @@ async function ensureLocalNotifPermission(t: any) {
   if (cur.status === "granted") return true;
   const req = await Notifications.requestPermissionsAsync();
   if (req.status === "granted") return true;
-  Alert.alert(t("navigation.reminders.permTitle"), t("navigation.reminders.permBody"));
+  Alert.alert(
+    t("navigation.reminders.permTitle"),
+    t("navigation.reminders.permBody")
+  );
   return false;
 }
 function fmtWhen(dt: Date, locale?: string) {
@@ -233,6 +244,7 @@ function fmtWhen(dt: Date, locale?: string) {
     return dt.toISOString();
   }
 }
+
 async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: string) {
   const ok = await ensureLocalNotifPermission(t);
   if (!ok) return;
@@ -240,7 +252,6 @@ async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: st
   const start = new Date(row.starts_at);
   let fireAt = new Date(start.getTime() - 60 * 60 * 1000);
   const now = new Date();
-
   if (fireAt.getTime() <= now.getTime() + 10000) {
     fireAt = new Date(now.getTime() + 5000);
   }
@@ -249,17 +260,32 @@ async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: st
     content: {
       title: row.title || t("navigation.reminders.untitled"),
       body: t("navigation.reminders.fireBody"),
-      data: { kind: "activity_reminder", activityId: row.id, title: row.title },
-      sound: "default" as any,
+      data: {
+        kind: "activity_reminder",
+        activityId: row.id,
+        title: row.title,
+        at: start.toISOString(),
+      },
+      sound: true,
       ...(Platform.OS === "android" ? { channelId: "event-reminders" } : null),
     },
-    trigger: (fireAt as unknown) as Notifications.NotificationTriggerInput,
+    trigger: ({ type: "date", date: fireAt } as any), 
   });
 
-  Alert.alert(
-    t("common.ok"),
-    t("navigation.reminders.scheduledBody", { when: fmtWhen(fireAt, locale) })
-  );
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: row.title || t("navigation.reminders.untitled"),
+      body: t("navigation.reminders.scheduledBody", { when: fmtWhen(fireAt, locale) }),
+      data: {
+        kind: "reminder_scheduled",
+        activityId: row.id,
+        fireAt: fireAt.toISOString(),
+      },
+      sound: true,
+      ...(Platform.OS === "android" ? { channelId: "event-reminders" } : null),
+    },
+    trigger: null,
+  });
 }
 
 export default function Bulletin() {
@@ -327,6 +353,7 @@ export default function Bulletin() {
     })();
   }, [deviceId, currentUserId]);
 
+  // Android notification channel for reminders
   useEffect(() => {
     if (Platform.OS === "android") {
       Notifications.setNotificationChannelAsync("event-reminders", {
@@ -337,7 +364,7 @@ export default function Bulletin() {
         lightColor: "#FF231F7C",
       }).catch(() => {});
     }
-  }, [i18n.language]); 
+  }, [i18n.language]);
 
   const [myLoc, setMyLoc] = useState<LatLng | null>(null);
   useEffect(() => {
@@ -437,9 +464,7 @@ export default function Bulletin() {
                 }
               : { ...r, distance_m: null }
           )
-          .sort(
-            (a, b) => (a.distance_m ?? 1e15) - (b.distance_m ?? 1e15)
-          );
+          .sort((a, b) => (a.distance_m ?? 1e15) - (b.distance_m ?? 1e15));
       }
 
       setRows(out);
@@ -590,21 +615,31 @@ export default function Bulletin() {
       setCreating(false);
       resetForm();
       loadActivities();
-      Alert.alert(t("bulletin.alerts.postedTitle"), t("bulletin.alerts.postedBody"));
+      Alert.alert(
+        t("bulletin.alerts.postedTitle"),
+        t("bulletin.alerts.postedBody")
+      );
     } catch {
       Alert.alert(t("common.error"), t("bulletin.errors.postFailed"));
     }
   }
 
-  async function notifyInterestedUsersOnUpdate(activityId: string, titleForPush: string) {
+  async function notifyInterestedUsersOnUpdate(
+    activityId: string,
+    titleForPush: string
+  ) {
     try {
       const { data: subs } = await supabase
         .from("activity_interests")
         .select("interested_user_id, interested_device_id")
         .eq("activity_id", activityId);
 
-      const userIds = (subs || []).map((s: any) => s.interested_user_id).filter(Boolean);
-      const deviceIds = (subs || []).map((s: any) => s.interested_device_id).filter(Boolean);
+      const userIds = (subs || [])
+        .map((s: any) => s.interested_user_id)
+        .filter(Boolean);
+      const deviceIds = (subs || [])
+        .map((s: any) => s.interested_device_id)
+        .filter(Boolean);
 
       const tokenSet = new Set<string>();
 
@@ -613,14 +648,18 @@ export default function Bulletin() {
           .from("push_tokens")
           .select("expo_push_token")
           .in("user_id", userIds);
-        (data || []).forEach((r: any) => r?.expo_push_token && tokenSet.add(r.expo_push_token));
+        (data || []).forEach(
+          (r: any) => r?.expo_push_token && tokenSet.add(r.expo_push_token)
+        );
       }
       if (deviceIds.length) {
         const { data } = await supabase
           .from("push_tokens")
           .select("expo_push_token")
           .in("device_id", deviceIds);
-        (data || []).forEach((r: any) => r?.expo_push_token && tokenSet.add(r.expo_push_token));
+        (data || []).forEach(
+          (r: any) => r?.expo_push_token && tokenSet.add(r.expo_push_token)
+        );
       }
 
       const tokens = Array.from(tokenSet);
@@ -661,7 +700,10 @@ export default function Bulletin() {
         .eq("id", editingRow.id);
       if (error) throw error;
 
-      await notifyInterestedUsersOnUpdate(editingRow.id, upd.title || editingRow.title);
+      await notifyInterestedUsersOnUpdate(
+        editingRow.id,
+        upd.title || editingRow.title
+      );
 
       setCreating(false);
       setEditingRow(null);
@@ -688,7 +730,10 @@ export default function Bulletin() {
       if (error) throw error;
       setInterestedList(data as InterestRow[]);
     } catch {
-      Alert.alert(t("common.error"), t("bulletin.errors.interestedLoadFailed"));
+      Alert.alert(
+        t("common.error"),
+        t("bulletin.errors.interestedLoadFailed")
+      );
       setInterestedList([]);
     } finally {
       setInterestedLoading(false);
@@ -696,29 +741,40 @@ export default function Bulletin() {
   }
 
   async function pushHostOnInterest(row: ActivityRow, interestedName: string) {
-    const tokens = await getTokensForUser(row.user_id ?? null, row.owner_device_id ?? null);
+    const tokens = await getTokensForUser(
+      row.user_id ?? null,
+      row.owner_device_id ?? null
+    );
     await pushToTokens(
       tokens,
       t("bulletin.push.newInterestTitle"),
-      t("bulletin.push.newInterestBody", { name: interestedName, title: row.title }),
+      t("bulletin.push.newInterestBody", {
+        name: interestedName,
+        title: row.title,
+      }),
       { kind: "new_interest", activityId: row.id }
     );
   }
 
   async function markInterested(row: ActivityRow) {
     if (interestedSet.has(row.id)) {
-      Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
+      Alert.alert(
+        t("bulletin.alerts.alreadyInterestedTitle"),
+        t("bulletin.alerts.alreadyInterestedBody")
+      );
       return;
     }
     try {
-      const { error } = await supabase.from("activity_interests").insert([{
-        activity_id: row.id,
-        activity_title: row.title,
-        owner_user_id: row.user_id ?? null,
-        interested_user_id: currentUserId ?? null,
-        interested_device_id: deviceId || null,
-        interested_name: myName ?? t("chat.neighbour"),
-      }]);
+      const { error } = await supabase.from("activity_interests").insert([
+        {
+          activity_id: row.id,
+          activity_title: row.title,
+          owner_user_id: row.user_id ?? null,
+          interested_user_id: currentUserId ?? null,
+          interested_device_id: deviceId || null,
+          interested_name: myName ?? t("chat.neighbour"),
+        },
+      ]);
       if (error) throw error;
 
       setInterestedSet((prev) => new Set([...prev, row.id]));
@@ -728,21 +784,33 @@ export default function Bulletin() {
 
       scheduleReminderForActivity(row, t, locale).catch(() => {});
 
-      Alert.alert(t("bulletin.alerts.interestedSavedTitle"), t("bulletin.alerts.interestedSavedBody"));
+      Alert.alert(
+        t("bulletin.alerts.interestedSavedTitle"),
+        t("bulletin.alerts.interestedSavedBody")
+      );
     } catch (e: any) {
       const msg = String(e?.message || "").toLowerCase();
       if (msg.includes("duplicate") || msg.includes("unique")) {
         setInterestedSet((prev) => new Set([...prev, row.id]));
         scheduleReminderForActivity(row, t, locale).catch(() => {});
-        Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
+        Alert.alert(
+          t("bulletin.alerts.alreadyInterestedTitle"),
+          t("bulletin.alerts.alreadyInterestedBody")
+        );
         return;
       }
-      Alert.alert(t("common.error"), t("bulletin.errors.markInterestedFailed"));
+      Alert.alert(
+        t("common.error"),
+        t("bulletin.errors.markInterestedFailed")
+      );
     }
   }
 
   async function canOpenChat(row: ActivityRow): Promise<boolean> {
-    if ((currentUserId && row.user_id === currentUserId) || row.owner_device_id === deviceId) {
+    if (
+      (currentUserId && row.user_id === currentUserId) ||
+      row.owner_device_id === deviceId
+    ) {
       return true;
     }
     if (interestedSet.has(row.id)) return true;
@@ -784,14 +852,21 @@ export default function Bulletin() {
 
   const catLabel = (k: string) => t(`bulletin.categories.${k}`);
 
-  const identityKey = useMemo(() => identityKeyFor(currentUserId, deviceId), [currentUserId, deviceId]);
-  const [unreadByActivity, setUnreadByActivity] = useState<Record<string, number>>({});
-  const [lastReadByActivity, setLastReadByActivity] = useState<Record<string, number>>({});
+  const identityKey = useMemo(
+    () => identityKeyFor(currentUserId, deviceId),
+    [currentUserId, deviceId]
+  );
+  const [unreadByActivity, setUnreadByActivity] = useState<
+    Record<string, number>
+  >({});
+  const [lastReadByActivity, setLastReadByActivity] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     if (!rows.length || !deviceId) return;
     (async () => {
-      const keys = rows.map(r => lastReadStorageKey(r.id, identityKey));
+      const keys = rows.map((r) => lastReadStorageKey(r.id, identityKey));
       const kv = await AsyncStorage.multiGet(keys);
       const map: Record<string, number> = {};
       kv.forEach(([k, v]) => {
@@ -838,29 +913,39 @@ export default function Bulletin() {
         { event: "INSERT", schema: "public", table: "activity_messages" },
         (payload) => {
           const m = payload.new as MsgRow;
-          const isVisible = rows.some(r => r.id === m.activity_id);
+          const isVisible = rows.some((r) => r.id === m.activity_id);
           if (!isVisible) return;
 
-          if (currentUserId ? m.sender_user_id === currentUserId : m.sender_device_id === deviceId) return;
+          if (
+            currentUserId
+              ? m.sender_user_id === currentUserId
+              : m.sender_device_id === deviceId
+          )
+            return;
 
           const createdMs = new Date(m.created_at).getTime();
           const last = lastReadByActivity[m.activity_id] ?? 0;
           if (createdMs <= last) return;
 
-          setUnreadByActivity(prev => ({ ...prev, [m.activity_id]: (prev[m.activity_id] || 0) + 1 }));
+          setUnreadByActivity((prev) => ({
+            ...prev,
+            [m.activity_id]: (prev[m.activity_id] || 0) + 1,
+          }));
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [rows, lastReadByActivity, currentUserId, deviceId]);
 
   async function markActivityReadNow(activityId: string) {
     const now = Date.now();
     const key = lastReadStorageKey(activityId, identityKey);
     await AsyncStorage.setItem(key, String(now));
-    setLastReadByActivity(prev => ({ ...prev, [activityId]: now }));
-    setUnreadByActivity(prev => ({ ...prev, [activityId]: 0 }));
+    setLastReadByActivity((prev) => ({ ...prev, [activityId]: now }));
+    setUnreadByActivity((prev) => ({ ...prev, [activityId]: 0 }));
   }
 
   return (
@@ -898,7 +983,11 @@ export default function Bulletin() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingLeft: 6 }}
         >
-          <Chip label={t("community.all")} active={!filterCat} onPress={() => setFilterCat(null)} />
+          <Chip
+            label={t("community.all")}
+            active={!filterCat}
+            onPress={() => setFilterCat(null)}
+          />
           {CATS.map((c) => (
             <Chip
               key={c.key}
@@ -912,7 +1001,9 @@ export default function Bulletin() {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <ActivityIndicator />
           <AppText style={{ marginTop: 8 }}>{t("common.loading")}</AppText>
         </View>
@@ -926,7 +1017,9 @@ export default function Bulletin() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <>
-              {mine.length > 0 && <Section title={t("bulletin.sections.yours")} />}
+              {mine.length > 0 && (
+                <Section title={t("bulletin.sections.yours")} />
+              )}
               {mine.map((row) => (
                 <ActivityCard
                   key={row.id}
@@ -940,7 +1033,10 @@ export default function Bulletin() {
                         t("bulletin.alerts.chatGateBody"),
                         [
                           { text: t("common.cancel"), style: "cancel" },
-                          { text: t("bulletin.cta.imInterested"), onPress: () => markInterested(row) },
+                          {
+                            text: t("bulletin.cta.imInterested"),
+                            onPress: () => markInterested(row),
+                          },
                         ]
                       );
                       return;
@@ -982,7 +1078,10 @@ export default function Bulletin() {
                     t("bulletin.alerts.chatGateBody"),
                     [
                       { text: t("common.cancel"), style: "cancel" },
-                      { text: t("bulletin.cta.imInterested"), onPress: () => markInterested(item) },
+                      {
+                        text: t("bulletin.cta.imInterested"),
+                        onPress: () => markInterested(item),
+                      },
                     ]
                   );
                   return;
@@ -1023,7 +1122,10 @@ export default function Bulletin() {
         presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
         statusBarTranslucent
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFFFF" }} edges={["bottom"]}>
+        <SafeAreaView
+          style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+          edges={["bottom"]}
+        >
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -1041,7 +1143,6 @@ export default function Bulletin() {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
-      {/* >>> END CHANGE <<< */}
 
       {interestedFor && (
         <InterestedModal
@@ -1066,7 +1167,9 @@ export default function Bulletin() {
         >
           <View style={s.modalHead}>
             <AppText variant="h1" weight="900">
-              {editingRow ? t("bulletin.form.titleEdit") : t("bulletin.form.titleNew")}
+              {editingRow
+                ? t("bulletin.form.titleEdit")
+                : t("bulletin.form.titleNew")}
             </AppText>
             <AppText style={{ color: "#6B7280", marginTop: 4 }}>
               {t("bulletin.form.subtitleHint")}
@@ -1203,7 +1306,10 @@ export default function Bulletin() {
                             size={18}
                             color="#0EA5E9"
                           />
-                          <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>
+                          <Text
+                            style={{ marginLeft: 8, flex: 1 }}
+                            numberOfLines={1}
+                          >
                             {main}
                             {sec ? ` · ${sec}` : ""}
                           </Text>
@@ -1367,7 +1473,13 @@ function Chip({
   );
 }
 
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
+function Labeled({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <View style={{ marginBottom: 12 }}>
       <AppText weight="800" style={{ marginBottom: 6 }}>
@@ -1426,7 +1538,12 @@ function ActivityCard({
               <Ionicons name={catInfo.icon} size={16} color="#0F172A" />
             </View>
           )}
-          <AppText variant="title" weight="900" numberOfLines={1} style={{ flex: 1 }}>
+          <AppText
+            variant="title"
+            weight="900"
+            numberOfLines={1}
+            style={{ flex: 1 }}
+          >
             {row.title}
           </AppText>
         </View>
@@ -1479,20 +1596,34 @@ function ActivityCard({
           label={t("bulletin.actions.chat")}
           badge={unreadCount}
         />
-        <IconCircle onPress={onDirections} icon="navigate-outline" label={t("bulletin.actions.go")} />
+        <IconCircle
+          onPress={onDirections}
+          icon="navigate-outline"
+          label={t("bulletin.actions.go")}
+        />
         {!isMine && !!onInterested && (
           <Pressable
             onPress={() => {
               if (alreadyInterested) {
-                Alert.alert(t("bulletin.alerts.alreadyInterestedTitle"), t("bulletin.alerts.alreadyInterestedBody"));
+                Alert.alert(
+                  t("bulletin.alerts.alreadyInterestedTitle"),
+                  t("bulletin.alerts.alreadyInterestedBody")
+                );
               } else {
                 onInterested();
               }
             }}
-            style={[stylesCard.circleBtn, alreadyInterested ? { backgroundColor: "#16A34A" } : null]}
+            style={[
+              stylesCard.circleBtn,
+              alreadyInterested ? { backgroundColor: "#16A34A" } : null,
+            ]}
             accessibilityLabel={t("bulletin.actions.interested")}
           >
-            <Ionicons name={alreadyInterested ? "heart" : "heart-outline"} size={18} color={alreadyInterested ? "#fff" : "#0F172A"} />
+            <Ionicons
+              name={alreadyInterested ? "heart" : "heart-outline"}
+              size={18}
+              color={alreadyInterested ? "#fff" : "#0F172A"}
+            />
           </Pressable>
         )}
         {isMine && (
@@ -1568,14 +1699,25 @@ function InterestedModal({
           <Pressable onPress={onClose} hitSlop={8} style={{ padding: 6 }}>
             <Ionicons name="chevron-back" size={24} color="#111827" />
           </Pressable>
-          <Text style={{ fontWeight: "800", fontSize: 16, flex: 1, textAlign: "center" }}>
-            {title ? t("bulletin.modal.interestedWith", { title }) : t("bulletin.modal.interested")}
+          <Text
+            style={{
+              fontWeight: "800",
+              fontSize: 16,
+              flex: 1,
+              textAlign: "center",
+            }}
+          >
+            {title
+              ? t("bulletin.modal.interestedWith", { title })
+              : t("bulletin.modal.interested")}
           </Text>
           <View style={{ width: 30 }} />
         </View>
 
         {loading ? (
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <View
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          >
             <ActivityIndicator />
           </View>
         ) : rows.length === 0 ? (
@@ -1720,7 +1862,12 @@ const s = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
   },
-  publishText: { color: "#fff", fontWeight: "900", marginLeft: 8, fontSize: 16 },
+  publishText: {
+    color: "#fff",
+    fontWeight: "900",
+    marginLeft: 8,
+    fontSize: 16,
+  },
   cancelBtn: { alignSelf: "center", marginTop: 10, padding: 10 },
   cancelText: { color: "#6B7280", fontWeight: "800" },
 });
@@ -1756,7 +1903,12 @@ const stylesCard = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#F1F5F9",
   },
-  metaText: { fontSize: 12, fontWeight: "800", color: "#0F172A", maxWidth: 180 },
+  metaText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0F172A",
+    maxWidth: 180,
+  },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
