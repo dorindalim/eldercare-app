@@ -42,3 +42,4 @@ insert_clinics.sql.txt
 *.sql.txt
 
 app-example
+plantUML.txt
