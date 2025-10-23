@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -24,11 +25,15 @@ export default function Signup() {
   const { t, i18n } = useTranslation();
 
   const MIN_PWD = 8;
+  const PHONE_DIGITS = 8;
   const getDigits = (s: string) => s.replace(/\D/g, "");
 
   const [phone, setPhone] = useState("+65 ");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (params.phone && typeof params.phone === "string") {
@@ -46,19 +51,30 @@ export default function Signup() {
     [phone]
   );
 
-  const canSubmit = useMemo(
-    () =>
-      phoneDigits.length === 8 &&
-      password.length >= MIN_PWD &&
-      password === confirm,
-    [phoneDigits.length, password, confirm]
-  );
+  const phoneError = useMemo(() => {
+    if (!phone.trim()) return undefined;
+    return phoneDigits.length !== PHONE_DIGITS
+      ? t("auth.signup.phoneInvalidLength", { digits: PHONE_DIGITS })
+      : undefined;
+  }, [phone, phoneDigits.length, t]);
+
+  const pwdError = useMemo(() => {
+    if (!password) return undefined;
+    return password.length < MIN_PWD
+      ? t("auth.signup.passwordTooShort", { min: MIN_PWD })
+      : undefined;
+  }, [password, t]);
+
+  const confirmError = useMemo(() => {
+    if (!confirm) return undefined;
+    return password !== confirm ? t("auth.signup.passwordMismatch") : undefined;
+  }, [password, confirm, t]);
 
   const onSubmit = async () => {
-    if (phoneDigits.length !== 8) {
+    if (phoneDigits.length !== PHONE_DIGITS) {
       return Alert.alert(
         t("alerts.signupInvalidTitle"),
-        t("auth.signup.phoneInvalidLength", { digits: 8 })
+        t("auth.signup.phoneInvalidLength", { digits: PHONE_DIGITS })
       );
     }
 
@@ -125,35 +141,54 @@ export default function Signup() {
             onChangeText={handlePhoneChange}
             style={s.input}
           />
+          {!!phoneError && <Text style={s.error}>{phoneError}</Text>}
 
           <Text style={s.label}>{t("auth.signup.passwordLabel")}</Text>
-          <TextInput
-            placeholder={t("auth.signup.passwordPH")}
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            style={s.input}
-          />
+          <View style={s.inputWrap}>
+            <TextInput
+              placeholder={t("auth.signup.passwordPH")}
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry={!showPwd}
+              value={password}
+              onChangeText={setPassword}
+              style={[s.input, s.inputWithIcon]}
+            />
+            <Pressable
+              onPress={() => setShowPwd((v) => !v)}
+              style={s.eyeBtn}
+              accessibilityRole="button"
+              accessibilityLabel={showPwd ? t("common.hide") : t("common.show")}
+            >
+              <Ionicons name={showPwd ? "eye-off" : "eye"} size={20} color="#6B7280" />
+            </Pressable>
+          </View>
           <Text style={s.hint}>
             {t("auth.signup.passwordHint", { min: MIN_PWD })}
           </Text>
+          {!!pwdError && <Text style={s.error}>{pwdError}</Text>}
 
           <Text style={s.label}>{t("auth.signup.confirmLabel")}</Text>
-          <TextInput
-            placeholder={t("auth.signup.confirmPH")}
-            placeholderTextColor="#9CA3AF"
-            secureTextEntry
-            value={confirm}
-            onChangeText={setConfirm}
-            style={s.input}
-          />
+          <View style={s.inputWrap}>
+            <TextInput
+              placeholder={t("auth.signup.confirmPH")}
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry={!showConfirm}
+              value={confirm}
+              onChangeText={setConfirm}
+              style={[s.input, s.inputWithIcon]}
+            />
+            <Pressable
+              onPress={() => setShowConfirm((v) => !v)}
+              style={s.eyeBtn}
+              accessibilityRole="button"
+              accessibilityLabel={showConfirm ? t("common.hide") : t("common.show")}
+            >
+              <Ionicons name={showConfirm ? "eye-off" : "eye"} size={20} color="#6B7280" />
+            </Pressable>
+          </View>
+          {!!confirmError && <Text style={s.error}>{confirmError}</Text>}
 
-          <Pressable
-            onPress={onSubmit}
-            disabled={!canSubmit}
-            style={[s.btn, !canSubmit && s.btnDisabled]}
-          >
+          <Pressable onPress={onSubmit} style={s.btn}>
             <Text style={s.btnText}>{t("auth.signup.button")}</Text>
           </Pressable>
 
@@ -185,7 +220,19 @@ const s = StyleSheet.create({
     color: "#111827",
     marginBottom: 4,
   },
-  hint: { color: "#6B7280", fontSize: 12, marginBottom: 8 },
+  inputWrap: { position: "relative" },
+  inputWithIcon: { paddingRight: 40 }, 
+  eyeBtn: {
+    position: "absolute",
+    right: 10,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  hint: { color: "#6B7280", fontSize: 12, marginBottom: 6 },
+  error: { color: "#DC2626", fontSize: 12, marginTop: 2, marginBottom: 6 },
+
   btn: {
     backgroundColor: "#111827",
     paddingVertical: 14,
@@ -193,8 +240,8 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 6,
   },
-  btnDisabled: { backgroundColor: "#9CA3AF" },
   btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+
   footerRow: { flexDirection: "row", justifyContent: "center", marginTop: 16 },
   footerText: { color: "#6B7280" },
   link: { color: "#111827", fontWeight: "800" },
