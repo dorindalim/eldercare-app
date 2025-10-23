@@ -146,7 +146,6 @@ export default function NavigationScreen() {
   const fillOnly = params.fillOnly === "true";
   const [userSelectedMode, setUserSelectedMode] = useState<"driving" | "walking" | "bicycling" | "transit" | null>(null);
 
-  // NEW: normalize autoStart from params
   const autoStart =
     String((params as any).autoStart ?? "").toLowerCase() === "1" ||
     String((params as any).autoStart ?? "").toLowerCase() === "true";
@@ -206,6 +205,10 @@ export default function NavigationScreen() {
     } catch (e) {
       Alert.alert(t("common.error"), String(e));
     }
+  };
+  const speakStep = (idx: number) => {
+    const s = steps[idx];
+    if (s) Speech.speak(toUserInstruction(s.html));
   };
 
   const resetNavigationState = () => {
@@ -1000,30 +1003,48 @@ export default function NavigationScreen() {
                 </AppText>
               )}
 
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 10, alignItems: "center" }}>
                 <TouchableOpacity
-                  style={[s.pillBtn, { backgroundColor: "#F3F4F6" }]}
-                  onPress={() => Speech.speak(toUserInstruction(steps[currentStepIndex].html))}
+                  style={[s.pillBtn, { backgroundColor: "#F3F4F6", width: 40, justifyContent: "center" }]}
+                  onPress={() => speakStep(currentStepIndex)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("navigation.search.repeat")}
                 >
                   <Ionicons name="volume-high" size={16} color="#111827" />
-                  <AppText variant="button" weight="800" style={{ marginLeft: 6 }}>
-                    {t("navigation.search.repeat")}
-                  </AppText>
                 </TouchableOpacity>
+
+                {currentStepIndex > 0 && (
+                  <TouchableOpacity
+                    style={[s.pillBtn, { backgroundColor: "#F3F4F6" }]}
+                    onPress={() => {
+                      setCurrentStepIndex((prev) => {
+                        const next = Math.max(0, prev - 1);
+                        setTimeout(() => speakStep(next), 50);
+                        return next;
+                      });
+                    }}
+                  >
+                    <Ionicons name="play-skip-back" size={16} color="#111827" />
+                    <AppText variant="button" weight="800" style={{ marginLeft: 6 }}>
+                      {t("common.back")}
+                    </AppText>
+                  </TouchableOpacity>
+                )}
 
                 {currentStepIndex < steps.length - 1 && (
                   <TouchableOpacity
                     style={[s.pillBtn, { backgroundColor: "#E5F2FF" }]}
                     onPress={() => {
-                      const nextIdx = Math.min(currentStepIndex + 1, steps.length - 1);
-                      setCurrentStepIndex(nextIdx);
-                      const nxt = steps[nextIdx];
-                      Speech.speak(toUserInstruction(nxt.html));
+                      setCurrentStepIndex((prev) => {
+                        const next = Math.min(prev + 1, steps.length - 1);
+                        setTimeout(() => speakStep(next), 50);
+                        return next;
+                      });
                     }}
                   >
                     <Ionicons name="play-skip-forward" size={16} color="#007AFF" />
                     <AppText variant="button" weight="800" color="#007AFF" style={{ marginLeft: 6 }}>
-                      {t("navigation.search.skip")}
+                      {t("navigation.search.nextStepShort")}
                     </AppText>
                   </TouchableOpacity>
                 )}

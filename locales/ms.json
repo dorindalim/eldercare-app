@@ -10,7 +10,8 @@
     "show": "Langkah",
     "loading": "Memuatkan…",
     "close": "Tutup",
-    "edit": "Edit"
+    "edit": "Edit",
+    "back": "Kembali"
   },
   "alerts": {
     "noAccountTitle": "Tiada akaun ditemui",

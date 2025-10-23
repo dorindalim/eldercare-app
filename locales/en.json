@@ -10,7 +10,8 @@
     "show": "Steps",
     "loading": "Loading…",
     "close": "Close",
-    "edit": "Edit"
+    "edit": "Edit",
+    "back": "Back"
   },
   "alerts": {
     "noAccountTitle": "No account found",
