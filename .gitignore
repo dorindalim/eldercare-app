@@ -41,6 +41,7 @@ yarn-error.*
 .temp/
 insert_clinics.sql.txt
 *.sql.txt
+Supabase Performance Security Lints (ilwcrkwdmzfwoyjknrkl).csv
 
 app-example
 plantUML.txt
