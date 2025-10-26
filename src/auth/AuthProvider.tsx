@@ -175,34 +175,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return true;
   };
 
-  // 2) Sign-up (phone + password)
   const registerWithPhone = async (phone: string, password: string) => {
     const normalized = phone.trim();
     if (!normalized || password.length < 8) return false;
 
-    const { data: existing, error: checkErr } = await supabase
-      .from("users")
-      .select("id")
-      .eq("phone", normalized)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("register_user", {
+      p_phone: normalized,
+      p_password: password,
+    });
 
-    if (checkErr) {
-      console.error("registerWithPhone check error:", checkErr);
-      return false;
-    }
-    if (existing) return false;
-
-    const { data: user, error: insertErr } = await supabase
-      .from("users")
-      .insert([{ phone: normalized, password, onboarding_completed: false }])
-      .select("*")
-      .single();
-
-    if (insertErr || !user) {
-      console.error("registerWithPhone insert error:", insertErr);
+    if (error || !data?.[0]) {
+      console.error("register_user RPC error:", error);
       return false;
     }
 
+    const user = data[0]; 
     const next: Session = {
       userId: user.id,
       phone: user.phone,
@@ -211,7 +198,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setSession(next);
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
-
     return true;
   };
 
