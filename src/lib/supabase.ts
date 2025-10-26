@@ -1,21 +1,25 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import Constants from "expo-constants";
 import "react-native-get-random-values";
 import "react-native-url-polyfill/auto";
 
-const supabaseUrl = 'https://ilwcrkwdmzfwoyjknrkl.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4';
+const extra = (Constants.expoConfig ?? Constants.manifest)?.extra ?? {};
+const supabaseUrl = extra.SUPABASE_URL as string;
+const supabaseAnonKey = extra.SUPABASE_ANON_KEY as string;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn("Supabase env not set. Check app.config.ts and your .env/EAS secrets.");
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    storage: AsyncStorage,     // IMPORTANT on RN
+    storage: AsyncStorage,    
     autoRefreshToken: true,
-    detectSessionInUrl: false, // IMPORTANT for native (no URL callback)
+    detectSessionInUrl: false,
   },
 });
-
-// ── Tables: elderly_profiles / elderly_conditions / elderly_medications ──
 export interface ElderlyProfile {
   id: string;                 
   user_id: string;

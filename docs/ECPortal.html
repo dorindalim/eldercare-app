@@ -124,8 +124,8 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  const PROJECT_URL = "https://ilwcrkwdmzfwoyjknrkl.supabase.co";
-  const ANON_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsd2Nya3dkbXpmd295amtucmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjQ3MTcsImV4cCI6MjA3MjY0MDcxN30.SMXOZoShZ7pNd4fNF8PwyevLj0SjLXALaoF8H8ZwOi4";
+  const PROJECT_URL = "__SUPABASE_URL__";
+  const ANON_KEY    = "__SUPABASE_ANON_KEY__";
   const supabase = createClient(PROJECT_URL, ANON_KEY);
 
   const token = new URLSearchParams(location.search).get('token') || '';
