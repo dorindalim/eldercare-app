@@ -11,9 +11,14 @@
     "loading": "Loading…",
     "close": "Close",
     "edit": "Edit",
-    "back": "Back"
+    "back": "Back",
+    "showText": "Show",
+    "hideText": "Hide"
   },
   "alerts": {
+    "loginInvalidTitle": "Invalid",
+    "invalidCredentialsTitle": "Sign in failed",
+    "invalidCredentialsBody": "Phone or password is incorrect.",
     "noAccountTitle": "No account found",
     "noAccountBody": "You’ll be redirected to sign up.",
     "codeSentTitle": "Code sent",
@@ -39,7 +44,8 @@
       "codePH": "Enter 6-digit code",
       "verify": "Verify & Sign In",
       "noAccount": "Don’t have an account?",
-      "signup": "Sign up"
+      "signup": "Sign up",
+      "passwordPH": "Enter your password"
     },
     "signup": {
       "title": "Create your account",

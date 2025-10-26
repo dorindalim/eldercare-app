@@ -14,6 +14,9 @@
     "back": "Kembali"
   },
   "alerts": {
+    "loginInvalidTitle": "Tidak sah",
+    "invalidCredentialsTitle": "Log masuk gagal",
+    "invalidCredentialsBody": "Nombor telefon atau kata laluan tidak betul.",
     "noAccountTitle": "Tiada akaun ditemui",
     "noAccountBody": "Anda akan dialihkan untuk mendaftar.",
     "codeSentTitle": "Kod dihantar",
@@ -39,7 +42,8 @@
       "codePH": "Masukkan kod 6 digit",
       "verify": "Sahkan & Log Masuk",
       "noAccount": "Tiada akaun?",
-      "signup": "Daftar"
+      "signup": "Daftar",
+      "passwordPH": "Masukkan kata laluan anda"
     },
     "signup": {
       "title": "Cipta akaun anda",

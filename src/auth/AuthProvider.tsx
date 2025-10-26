@@ -1,16 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "react-native";
 import { supabase } from "../lib/supabase";
 
-export type Session = {
+export type AppSession = {
   userId: string;
   phone: string;
   onboardingCompleted?: boolean;
@@ -33,10 +27,7 @@ export type ElderlyProfileInput = {
   emergency_email?: string;
 };
 
-export type ElderlyMedicationInput = {
-  name: string;
-  frequency?: string;
-};
+export type ElderlyMedicationInput = { name: string; frequency?: string };
 
 export type ElderlyConditionInput = {
   condition: string;
@@ -55,10 +46,10 @@ export type ElderlyHealthExtras = {
 type SaveResult = { success: boolean; error?: string };
 
 type AuthCtx = {
-  session: Session | null;
+  session: AppSession | null;
   loading: boolean;
 
-  startPhoneSignIn: (phone: string) => Promise<boolean>;
+  startPhoneSignIn: (phone: string, password: string) => Promise<boolean>;
   confirmPhoneCode: (code: string) => Promise<boolean>;
   registerWithPhone: (phone: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -75,12 +66,18 @@ const Ctx = createContext<AuthCtx>({} as any);
 export const useAuth = () => useContext(Ctx);
 
 const SESSION_KEY = "auth_session_v1";
-
 let pendingPhone: string | null = null;
+
+const toE164 = (raw: string) => {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return "";
+  const withCC = digits.startsWith("65") ? digits : `65${digits}`;
+  return `+${withCC}`;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { t } = useTranslation();
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<AppSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,36 +86,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const raw = await AsyncStorage.getItem(SESSION_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed?.userId && parsed?.phone) {
-            setSession(parsed);
-          }
+          if (parsed?.userId && parsed?.phone) setSession(parsed);
         }
-      } catch (e) {
-        console.warn("Load session failed:", e);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const startPhoneSignIn = async (phone: string) => {
-    const normalized = phone.trim();
-    if (!normalized) return false;
+  const startPhoneSignIn = async (phone: string, password: string) => {
+    const normalized = toE164(phone);
+    if (!normalized || !password) return false;
 
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("phone", normalized)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("verify_user_credentials_v2", {
+      p_phone: normalized,
+      p_password: password,
+    });
 
-    if (error) {
-      console.error("startPhoneSignIn error:", error);
+    if (error || !data?.[0]) {
       return false;
     }
 
-    if (!user) return false;
-
-    pendingPhone = normalized; 
+    pendingPhone = data[0].out_phone;
     return true;
   };
 
@@ -127,47 +116,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: user, error } = await supabase
       .from("users")
-      .select("*")
+      .select("id, phone, onboarding_completed")
       .eq("phone", pendingPhone)
       .single();
 
     if (error || !user) {
-      console.error("confirmPhoneCode fetch error:", error);
       pendingPhone = null;
       return false;
     }
 
-    const next: Session = {
+    try {
+      const { data: prof } = await supabase
+        .from("elderly_profiles")
+        .select("scheduled_for, deletion_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const scheduledDate = prof?.scheduled_for ? new Date(prof.scheduled_for) : null;
+      const now = new Date();
+      const needsRestore =
+        (scheduledDate && scheduledDate > now) ||
+        prof?.deletion_status === "deletion_scheduled";
+
+      if (needsRestore) {
+        await supabase
+          .from("elderly_profiles")
+          .update({
+            scheduled_for: null,
+            deletion_reason: null,
+            deletion_requested_at: null,
+            deletion_status: null,
+          })
+          .eq("user_id", user.id);
+
+        Alert.alert(t("auth.restore.restoredTitle"), t("auth.restore.restoredBody"));
+      }
+    } catch {
+    }
+
+    const next: AppSession = {
       userId: user.id,
       phone: user.phone,
       onboardingCompleted: user.onboarding_completed,
     };
-
-    try {
-    const { data: prof } = await supabase
-      .from('elderly_profiles')
-      .select('scheduled_for')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    const profAny: any = prof;
-    if (profAny?.scheduled_for || profAny?.deletion_status === 'deletion_scheduled') {
-      const scheduledDate = profAny?.scheduled_for ? new Date(profAny.scheduled_for) : null;
-      const now = new Date();
-      const needsRestore = (scheduledDate && scheduledDate > now) || profAny.deletion_status === 'deletion_scheduled';
-      if (needsRestore) {
-        await supabase
-          .from('elderly_profiles')
-          .update({ scheduled_for: null, deletion_reason: null, deletion_requested_at: null, deletion_status: null })
-          .eq('user_id', user.id);
-
-        Alert.alert(t('auth.restore.restoredTitle'), t('auth.restore.restoredBody'));
-      }
-    }
-    } catch (e) {
-      console.warn("restore-on-login check failed:", e);
-    }
-
     setSession(next);
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
 
@@ -175,25 +166,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return true;
   };
 
+
   const registerWithPhone = async (phone: string, password: string) => {
-    const normalized = phone.trim();
+    const normalized = toE164(phone);
     if (!normalized || password.length < 8) return false;
 
-    const { data, error } = await supabase.rpc("register_user", {
+    const { data, error } = await supabase.rpc("register_user_v2", {
       p_phone: normalized,
       p_password: password,
     });
 
     if (error || !data?.[0]) {
-      console.error("register_user RPC error:", error);
+      console.error("register_user_v2 RPC error:", error);
       return false;
     }
 
-    const user = data[0]; 
-    const next: Session = {
-      userId: user.id,
-      phone: user.phone,
-      onboardingCompleted: user.onboarding_completed,
+    const row = data[0]; 
+    const next: AppSession = {
+      userId: row.out_user_id,
+      phone: row.out_phone,
+      onboardingCompleted: row.out_onboarding_completed,
     };
 
     setSession(next);
@@ -213,13 +205,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .update({ onboarding_completed: done })
       .eq("id", session.userId);
 
-    if (error) {
-      console.error("markOnboarding error:", error);
-      return;
+    if (!error) {
+      const next = { ...session, onboardingCompleted: done };
+      setSession(next);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
     }
-    const next = { ...session, onboardingCompleted: done };
-    setSession(next);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(next));
   };
 
   const saveElderlyProfile = async (
@@ -269,7 +259,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const saveElderlyConditions = async (
     conds: ElderlyConditionInput[],
     extras?: ElderlyHealthExtras
-  ) => {
+  ): Promise<{ success: boolean }> => {
     if (!session) return { success: false };
     {
       const { error: profErr } = await supabase
