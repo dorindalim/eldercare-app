@@ -1,0 +1,37 @@
+name: Deploy EC Portal
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docs/ECPortal.html"
+      - ".github/workflows/deploy-ec-portal.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare site
+        run: |
+          mkdir site
+          cp -R docs/* site/
+          # replace placeholders in the HTML
+          sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" site/ECPortal.html
+          sed -i "s|__SUPABASE_ANON_KEY__|${{ secrets.SUPABASE_ANON_KEY }}|g" site/ECPortal.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
