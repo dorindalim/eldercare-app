@@ -6,6 +6,7 @@ on:
     paths:
       - "docs/ECPortal.html"
       - ".github/workflows/deploy-ec-portal.yml"
+  workflow_dispatch: {} 
 
 permissions:
   contents: read
@@ -20,11 +21,18 @@ jobs:
 
       - name: Prepare site
         run: |
+          set -euo pipefail
           mkdir site
           cp -R docs/* site/
-          # replace placeholders in the HTML
+          # Inject secrets (must be raw values, no quotes in the secrets)
           sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" site/ECPortal.html
           sed -i "s|__SUPABASE_ANON_KEY__|${{ secrets.SUPABASE_ANON_KEY }}|g" site/ECPortal.html
+          # Optional: silence favicon 404
+          sed -i 's|</head>|<link rel="icon" href="data:,"></head>|' site/ECPortal.html
+          # Validate
+          if grep -q "__SUPABASE_URL__" site/ECPortal.html || grep -q "__SUPABASE_ANON_KEY__" site/ECPortal.html; then
+            echo "Placeholder replacement failed."; exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -34,4 +42,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
