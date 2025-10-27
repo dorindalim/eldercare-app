@@ -7,7 +7,7 @@ export default function Index() {
   if (loading) return null;
 
   if (!session) {
-    return <Redirect href="/Authentication/LogIn" />;
+    return <Redirect href="/Authentication/Welcome" />;
   }
 
   if (!session.onboardingCompleted) {

@@ -57,6 +57,14 @@
       },
       "link": "Lupa kata laluan?"
     },
+  "language": {
+    "change": "Tukar bahasa",
+    "select": "Pilih bahasa",
+    "en": "Inggeris",
+    "zh": "Cina",
+    "ms": "Melayu",
+    "ta": "Tamil"
+  },
   "auth": {
     "login": {
       "title": "Selamat kembali",
@@ -72,21 +80,22 @@
       "passwordPH": "Masukkan kata laluan anda"
     },
     "signup": {
-      "title": "Cipta akaun anda",
-      "subtitle": "Daftar menggunakan nombor telefon anda",
+      "title": "Selamat datang kawan!",
+      "subtitle": "Kami hanya memerlukan beberapa maklumat cepat untuk memulakan. Anda boleh menambah lebih banyak kemudian.",
       "phoneLabel": "Nombor telefon",
       "phonePH": "+65 91234567",
       "passwordLabel": "Kata laluan",
       "passwordPH": "Cipta kata laluan",
       "confirmLabel": "Sahkan kata laluan",
       "confirmPH": "Masukkan semula kata laluan",
-      "button": "Daftar",
+      "button": "Cipta Akaun Percuma",
       "haveAccount": "Sudah ada akaun?",
       "login": "Log Masuk",
       "phoneInvalidLength": "Nombor telefon mesti tepat {{digits}} digit.",
       "passwordTooShort": "Kata laluan mesti sekurang-kurangnya {{min}} aksara.",
       "passwordMismatch": "Kata laluan tidak sepadan.",
-      "passwordHint": "Sekurang-kurangnya {{min}} aksara"
+      "passwordHint": "Sekurang-kurangnya {{min}} aksaras",
+      "createAccount": "Cipta Akaun Percuma"
     },
     "notLoggedInTitle": "Belum log masuk",
     "notLoggedInBody": "Sila log masuk semula.",

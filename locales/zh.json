@@ -59,6 +59,14 @@
     },
     "link": "忘记密码？"
   },
+  "language": {
+    "change": "更改语言",
+    "select": "选择语言",
+    "en": "英语",
+    "zh": "中文",
+    "ms": "马来语",
+    "ta": "Tamil"
+  },
   "auth": {
     "login": {
       "title": "欢迎回来",
@@ -74,21 +82,22 @@
       "passwordPH": "输入您的密码"
     },
     "signup": {
-      "title": "创建您的账号",
-      "subtitle": "使用您的手机号注册",
-      "phoneLabel": "手机号",
+      "title": "欢迎来到我们的大家庭！",
+      "subtitle": "我们只需要一些快速信息即可开始。您可以稍后添加更多信息。",
+      "phoneLabel": "手机号码",
       "phonePH": "+65 91234567",
       "passwordLabel": "密码",
       "passwordPH": "创建密码",
       "confirmLabel": "确认密码",
       "confirmPH": "再次输入密码",
-      "button": "注册",
-      "haveAccount": "已有账号？",
+      "button": "创建免费账号",
+      "haveAccount": "已经有账号？",
       "login": "登录",
-      "phoneInvalidLength": "手机号必须正好 {{digits}} 位。",
+      "phoneInvalidLength": "手机号码必须正好 {{digits}} 位。",
       "passwordTooShort": "密码至少要有 {{min}} 个字符。",
       "passwordMismatch": "密码不匹配。",
-      "passwordHint": "至少 {{min}} 个字符"
+      "passwordHint": "至少 {{min}} 个字符",
+      "createAccount": "创建免费账号"
     },
     "notLoggedInTitle": "未登录",
     "notLoggedInBody": "请重新登录。",
