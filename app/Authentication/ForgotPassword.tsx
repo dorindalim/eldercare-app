@@ -4,14 +4,14 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import AuthTopBar, { LangCode } from "../../src/components/AuthTopBar";
 import Screen from "../../src/components/Screen";
@@ -62,7 +62,6 @@ export default function ForgotPassword() {
       });
 
       if (error) {
-        // surface nice messages
         const msg = (error as any)?.message || "";
         if (msg.includes("USER_NOT_FOUND")) {
           Alert.alert(t("forgot.errors.notFoundTitle"), t("forgot.errors.notFoundBody"));
