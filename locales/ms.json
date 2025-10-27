@@ -31,6 +31,32 @@
       "body": "Sila tambah nombor telefon kenalan kecemasan dalam profil anda."
     }
   },
+    "forgot": {
+      "title": "Lupa Kata Laluan",
+      "subtitle": "Masukkan nombor telefon anda dan tetapkan kata laluan baru.",
+      "newPwdLabel": "Kata laluan baru",
+      "newPwdPH": "Cipta kata laluan baru",
+      "confirmLabel": "Sahkan kata laluan",
+      "confirmPH": "Masukkan semula kata laluan baru",
+      "hint": "Sekurang-kurangnya {{min}} aksara",
+      "submit": "Tetapkan semula kata laluan",
+      "success": {
+        "title": "Kata laluan dikemas kini",
+        "body": "Anda kini boleh log masuk dengan kata laluan baru anda."
+      },
+      "errors": {
+        "invalidPhoneTitle": "Telefon tidak sah",
+        "invalidPhoneBody": "Sila masukkan nombor telefon yang sah.",
+        "shortPwdTitle": "Kata laluan terlalu pendek",
+        "shortPwdBody": "Kata laluan mesti sekurang-kurangnya {{min}} aksara.",
+        "mismatchTitle": "Kata laluan tidak sepadan",
+        "mismatchBody": "Sila pastikan kedua-dua kata laluan sepadan.",
+        "notFoundTitle": "Akaun tidak ditemui",
+        "notFoundBody": "Tiada akaun wujud dengan nombor telefon itu.",
+        "generic": "Tidak dapat menetapkan semula kata laluan anda. Sila cuba lagi."
+      },
+      "link": "Lupa kata laluan?"
+    },
   "auth": {
     "login": {
       "title": "Selamat kembali",

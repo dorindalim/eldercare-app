@@ -33,6 +33,32 @@
       "body": "Please add an emergency contact phone in your profile."
     }
   },
+    "forgot": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your phone and set a new password.",
+      "newPwdLabel": "New password",
+      "newPwdPH": "Create a new password",
+      "confirmLabel": "Confirm password",
+      "confirmPH": "Re-enter new password",
+      "hint": "At least {{min}} characters",
+      "submit": "Reset password",
+      "success": {
+        "title": "Password updated",
+        "body": "You can now sign in with your new password."
+      },
+      "errors": {
+        "invalidPhoneTitle": "Invalid phone",
+        "invalidPhoneBody": "Please enter a valid phone number.",
+        "shortPwdTitle": "Password too short",
+        "shortPwdBody": "Password must be at least {{min}} characters.",
+        "mismatchTitle": "Passwords don’t match",
+        "mismatchBody": "Please make sure both passwords match.",
+        "notFoundTitle": "Account not found",
+        "notFoundBody": "No account exists with that phone number.",
+        "generic": "Could not reset your password. Please try again."
+      },
+      "link": "Forgot password?"
+    },
   "auth": {
     "login": {
       "title": "Welcome back",

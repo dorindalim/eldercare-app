@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -18,13 +18,17 @@ import AuthTopBar, { LangCode } from "../../src/components/AuthTopBar";
 import Screen from "../../src/components/Screen";
 
 const FIELD_HEIGHT = 44;
+const PHONE_DIGITS = 8;
+const PREFIX = "+65 ";
+
+const getDigits = (s: string) => s.replace(/\D/g, "");
 
 export default function Login() {
   const router = useRouter();
   const { startPhoneSignIn, confirmPhoneCode } = useAuth();
   const { t, i18n } = useTranslation();
 
-  const [phone, setPhone] = useState("+65 ");
+  const [phone, setPhone] = useState(PREFIX);
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -35,12 +39,30 @@ export default function Login() {
     await AsyncStorage.setItem("lang", code);
   };
 
+  // Keep "+65 " and allow only digits after it
+  const handlePhoneChange = (text: string) => {
+    if (!text.startsWith(PREFIX)) text = PREFIX + text;
+    const after = text.slice(PREFIX.length);
+    const digitsOnly = getDigits(after);
+    setPhone(PREFIX + digitsOnly);
+  };
+
+  const phoneDigits = useMemo(
+    () => getDigits(phone.startsWith(PREFIX) ? phone.slice(PREFIX.length) : phone),
+    [phone]
+  );
+
   const goHome = () => router.replace("/tabs/HomePage");
 
   const onSendCode = async () => {
-    if (!phone.trim()) {
-      return Alert.alert(t("alerts.loginInvalidTitle"), t("auth.login.phonePH"));
+    // 1) Require exactly 8 digits
+    if (phoneDigits.length !== PHONE_DIGITS) {
+      return Alert.alert(
+        t("alerts.loginInvalidTitle"),
+        t("auth.signup.phoneInvalidLength", { digits: PHONE_DIGITS })
+      );
     }
+    // 2) Password checks
     if (!password || password.length < 8) {
       return Alert.alert(
         t("alerts.loginInvalidTitle"),
@@ -48,6 +70,7 @@ export default function Login() {
       );
     }
 
+    // 3) Try step 1 (password check)
     const ok = await startPhoneSignIn(phone, password);
     if (!ok) {
       return Alert.alert(
@@ -57,7 +80,7 @@ export default function Login() {
     }
 
     setOtpSent(true);
-    Alert.alert(t("alerts.codeSentTitle"), t("alerts.codeSentBody"));
+    Alert.alert(t("alerts.codeSentTitle"), t("alerts.codeSentBody")); // “Use 123456 for now (mock).”
   };
 
   const onVerify = async () => {
@@ -77,7 +100,10 @@ export default function Login() {
         />
       }
     >
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={s.card}>
           <Text style={s.title}>{t("auth.login.title")}</Text>
           <Text style={s.sub}>{t("auth.login.subtitle")}</Text>
@@ -88,13 +114,23 @@ export default function Login() {
             placeholderTextColor="#9CA3AF"
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={handlePhoneChange}
             style={s.input}
+            maxLength={PREFIX.length + PHONE_DIGITS} // "+65 " + 8 digits
           />
 
           {!otpSent && (
             <>
-              <Text style={s.label}>{t("auth.signup.passwordLabel")}</Text>
+              <View style={s.labelRow}>
+                <Text style={s.label}>{t("auth.signup.passwordLabel")}</Text>
+                <Pressable
+                  onPress={() => router.push("/Authentication/ForgotPassword")}
+                  accessibilityRole="button"
+                >
+                  <Text style={s.forgotText}>{t("forgot.link")}</Text>
+                </Pressable>
+              </View>
+
               <View style={s.inputRow}>
                 <TextInput
                   placeholder={t("auth.login.passwordPH")}
@@ -105,7 +141,7 @@ export default function Login() {
                   style={s.inputFlex}
                 />
                 <Pressable
-                  onPress={() => setShowPwd((v) => !v)}
+                  onPress={() => setShowPwd(v => !v)}
                   style={s.eyeBtnRow}
                   accessibilityRole="button"
                   accessibilityLabel={showPwd ? t("common.hide") : t("common.show")}
@@ -156,7 +192,15 @@ const s = StyleSheet.create({
   card: { marginTop: 12, paddingHorizontal: 20 },
   title: { fontSize: 24, fontWeight: "800", color: "#111827" },
   sub: { marginTop: 4, marginBottom: 16, color: "#6B7280" },
+
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
   label: { fontWeight: "700", color: "#111827", marginBottom: 6 },
+  forgotText: { color: "#1650ccff", fontWeight: "700" },
 
   input: {
     borderWidth: 1,
@@ -170,7 +214,6 @@ const s = StyleSheet.create({
     paddingVertical: 0,
     textAlignVertical: "center",
   },
-
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -183,14 +226,12 @@ const s = StyleSheet.create({
     paddingRight: 6,
     marginBottom: 12,
   },
-
   inputFlex: {
     flex: 1,
     color: "#111827",
     paddingVertical: 0,
     textAlignVertical: "center",
   },
-
   eyeBtnRow: {
     height: "100%",
     minWidth: 40,
