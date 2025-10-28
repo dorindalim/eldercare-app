@@ -1,4 +1,3 @@
-// app/Onboarding/ElderlyConditions.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -65,7 +64,6 @@ export default function ElderlyConditions() {
   const [publicNote, setPublicNote] = useState("");
   const [noConditions, setNoConditions] = useState(false);
 
-  // Load draft
   useEffect(() => {
     (async () => {
       try {
@@ -81,7 +79,6 @@ export default function ElderlyConditions() {
         }
       } catch {}
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setCond = (idx: number, patch: Partial<ConditionCard>) =>
@@ -127,7 +124,6 @@ export default function ElderlyConditions() {
   const toggleAssistive = (key: string) =>
     setAssistive((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
-  // enable/disable finish
   const canSubmit = useMemo(() => {
     const hasAnyCondition = noConditions || conditions.some((c) => c.condition.trim());
     const allConditionsPassMedRule =
@@ -137,7 +133,6 @@ export default function ElderlyConditions() {
     return (hasAnyCondition && allConditionsPassMedRule) || anyExtras;
   }, [conditions, noConditions, assistive, assistiveOther, drugAllergies, publicNote]);
 
-  // step progress
   const conditionsProgress = useMemo(() => {
     let p = 0;
     const hasAnyCondition = noConditions || conditions.some((c) => c.condition.trim());
@@ -159,7 +154,6 @@ export default function ElderlyConditions() {
   };
 
   const onSubmit = async () => {
-    // validation
     if (!noConditions) {
       const hasCondition = conditions.some((c) => c.condition.trim());
       if (!hasCondition) return Alert.alert(t("elderlyConditions.errors.missingConditionName"));
@@ -169,7 +163,6 @@ export default function ElderlyConditions() {
     );
     if (hasInvalidMed) return Alert.alert(t("elderlyConditions.errors.invalidMed"));
 
-    // build payload
     let cleanConds: Array<{
       condition: string;
       doctor?: string;
@@ -237,7 +230,6 @@ export default function ElderlyConditions() {
     router.replace("/Onboarding/Success");
   };
 
-  // space to ensure last fields aren't hidden under sticky footer
   const extraBottomSpace = insets.bottom + BUTTON_H + BAR_PAD * 2 + 18;
 
   return (
@@ -245,7 +237,7 @@ export default function ElderlyConditions() {
       <StatusBar translucent barStyle="dark-content" backgroundColor="transparent" />
       <ImageBackground source={BG} style={s.bg} resizeMode="cover">
         <SafeAreaView style={s.safe}>
-          {/* Top bar: back + language chip + progress; NO skip */}
+          {/* Top bar */}
           <AuthTopBar
             onBack={() => {
               if (router.canGoBack?.()) router.back();
@@ -275,9 +267,8 @@ export default function ElderlyConditions() {
             showsVerticalScrollIndicator={false}
           >
             <View style={s.card}>
-              {/* Header line you asked for */}
               <Text style={s.heroTitle}>
-                {t("elderlyConditions.hero") || "Anything to declare?"}
+                {t("elderlyConditions.hero")}
               </Text>
 
               {/* Top switches */}
@@ -571,7 +562,6 @@ const s = StyleSheet.create({
   checkPillText: { color: "#0F1724", fontWeight: "800" },
   checkPillTextOn: { color: "#FFFFFF" },
 
-  // Sticky footer
   footerOverlay: {
     position: "absolute",
     left: 0,

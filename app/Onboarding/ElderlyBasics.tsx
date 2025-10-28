@@ -1,4 +1,3 @@
-// app/Onboarding/ElderlyBasics.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -144,7 +144,6 @@ const s = StyleSheet.create({
     gap: 8,
   },
 
-  // Progress bar pieces
   progressTrack: {
     width: "100%",
     overflow: "hidden",

@@ -12,17 +12,17 @@ type Props = {
 
   saveLabel?: string;
   continueLabel?: string;
-  saveBg?: string;       // default "#FFFAF0"
-  continueBg?: string;   // default "#FED787"
+  saveBg?: string;       
+  continueBg?: string;   
 
-  height?: number;       // default 57
-  radius?: number;       // default 14
-  maxButtonWidth?: number; // default 240
-  edgePadding?: number;  // default 20
+  height?: number;      
+  radius?: number;       
+  maxButtonWidth?: number;
+  edgePadding?: number;  
 
-  showTopCut?: boolean;    // default true
-  cutWidth?: "full" | number; // keep for API compatibility
-  showHomePill?: boolean;  // default true
+  showTopCut?: boolean;    
+  cutWidth?: "full" | number; 
+  showHomePill?: boolean;
 
   containerStyle?: ViewStyle;
   rowStyle?: ViewStyle;
@@ -46,7 +46,7 @@ function BottomActionsBar({
   edgePadding = 20,
 
   showTopCut = true,
-  cutWidth = "full", // kept for compatibility
+  cutWidth = "full",
   showHomePill = true,
 
   containerStyle,
@@ -65,12 +65,11 @@ function BottomActionsBar({
       ]}
       pointerEvents="box-none"
     >
-      {/* Full-width black cut line that spans to screen edges */}
       {showTopCut && (
         <View
           style={[
             styles.barEdgeFull,
-            { left: -edgePadding, right: -edgePadding }, // extend beyond inner padding
+            { left: -edgePadding, right: -edgePadding }, 
           ]}
         />
       )}
@@ -82,11 +81,11 @@ function BottomActionsBar({
           height={height}
           radius={radius}
           disabled={saveDisabled}
-          style={[
+          style={StyleSheet.flatten([
             styles.btn,
             { backgroundColor: saveBg, maxWidth: maxButtonWidth },
             buttonStyle,
-          ]}
+          ])}
         />
         <OffsetButton
           label={continueLabel}
@@ -94,7 +93,7 @@ function BottomActionsBar({
           height={height}
           radius={radius}
           disabled={continueDisabled}
-          style={[
+          style={StyleSheet.flatten([
             styles.btn,
             {
               backgroundColor: continueBg,
@@ -102,7 +101,7 @@ function BottomActionsBar({
               opacity: continueDisabled ? 0.6 : 1,
             },
             buttonStyle,
-          ]}
+          ])}
         />
       </View>
 
@@ -117,12 +116,11 @@ const styles = StyleSheet.create({
   wrap: {
     position: "absolute",
     bottom: 0,
-    backgroundColor: "#CFADE8", // whole bar background
+    backgroundColor: "#CFADE8",
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     paddingTop: 10,
   },
-  // absolute, edge-to-edge black line
   barEdgeFull: {
     position: "absolute",
     top: 0,
