@@ -1,118 +1,167 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 export type LangCode = "en" | "zh" | "ms" | "ta";
 
-export const LANGS: { code: LangCode; label: string }[] = [
-  { code: "en", label: "EN" },
-  { code: "zh", label: "中文" },
-  { code: "ms", label: "BM" },
-  { code: "ta", label: "தமிழ்" },
-];
-
 type Props = {
-  language: LangCode;
-  setLanguage: (code: LangCode) => void;
-  title?: string;
-  showBack?: boolean;
   onBack?: () => void;
+
+  langShort?: string;
+  onOpenLanguage?: () => void;
+
+  backLeftInset?: number;
+  leftAccessory?: React.ReactNode;
+  rightAccessory?: React.ReactNode;
+  maxWidth?: number;
+  horizontalPadding?: number;
+  style?: ViewStyle;
+  contentStyle?: ViewStyle;
+
+  progress?: number;
+  progressHeight?: number;
+  progressRadius?: number;
+  progressTrackColor?: string;
+  progressFillColor?: string;
+  progressBorderColor?: string;
+  progressBorderWidth?: number;
 };
 
 export default function AuthTopBar({
-  language,
-  setLanguage,
-  title = "",
-  showBack,
   onBack,
+  langShort,
+  onOpenLanguage,
+  backLeftInset = 0,
+  leftAccessory,
+  rightAccessory,
+  maxWidth,
+  horizontalPadding,
+  style,
+  contentStyle,
+
+  progress,
+  progressHeight = 12,
+  progressRadius = 6,
+  progressTrackColor = "#FFFFFF",
+  progressFillColor = "#93E6AA",
+  progressBorderColor = "#111827",
+  progressBorderWidth = 2,
 }: Props) {
-  const router = useRouter();
-  const { t } = useTranslation();
+  const showLang = !!(langShort && onOpenLanguage);
+  const showProgress = typeof progress === "number";
 
-  const canGoBack =
-    typeof showBack === "boolean" ? showBack : router.canGoBack();
-
-  const handleBack = () => {
-    if (onBack) return onBack();
-    if (router.canGoBack()) router.back();
-  };
+  const pct = Math.max(0, Math.min(1, progress ?? 0));
 
   return (
-    <View style={s.topBar} accessibilityHint={t("settings.hint")}>
-      {/* Left: Back */}
-      <View style={{ width: 40, height: 40, justifyContent: "center" }}>
-        {canGoBack && (
-          <Pressable
-            onPress={handleBack}
-            style={s.iconBtn}
-            hitSlop={10}
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={22} color="#111827" />
-          </Pressable>
-        )}
-      </View>
+    <View style={[s.rowOuter, style]}>
+      <View
+        style={[
+          s.rowInner,
+          { alignSelf: "center", width: "100%" },
+          maxWidth ? { maxWidth } : null,
+          horizontalPadding ? { paddingHorizontal: horizontalPadding } : null,
+          contentStyle,
+        ]}
+      >
+        {/* Left */}
+        <View style={[s.left, backLeftInset ? { marginLeft: backLeftInset } : null]}>
+          {leftAccessory ?? (
+            onBack ? (
+              <Pressable onPress={onBack} accessibilityRole="button" style={s.backBtn}>
+                <Ionicons name="arrow-back-outline" size={24} color="#111827" />
+              </Pressable>
+            ) : (
+              <View style={{ width: 24, height: 24 }} />
+            )
+          )}
+        </View>
 
-      {/* Center: Title */}
-      <View style={s.center}>
-        {!!title && <Text style={s.title}>{title}</Text>}
-      </View>
-
-      {/* Right: Language */}
-      <View style={s.rightRow}>
-        {LANGS.map((l) => {
-          const active = language?.startsWith(l.code);
-          return (
-            <Pressable
-              key={l.code}
-              onPress={() => setLanguage(l.code)}
-              accessibilityLabel={`${t("settings.switchTo")} ${l.label}`}
-              style={[s.langChip, active && s.langChipActive]}
-              hitSlop={6}
+        {/* Center */}
+        <View style={s.center}>
+          {showProgress ? (
+            <View
+              style={[
+                s.progressTrack,
+                {
+                  height: progressHeight,
+                  borderRadius: progressRadius,
+                  backgroundColor: progressTrackColor,
+                  borderColor: progressBorderColor,
+                  borderWidth: progressBorderWidth,
+                },
+              ]}
             >
-              <Text style={[s.langText, active && s.langTextActive]}>
-                {l.label}
-              </Text>
+              <View
+                style={[
+                  s.progressFill,
+                  {
+                    width: `${pct * 100}%`,
+                    borderRadius: progressRadius - 1,
+                    backgroundColor: progressFillColor,
+                  },
+                ]}
+              />
+            </View>
+          ) : (
+            <View style={{ height: progressHeight }} />
+          )}
+        </View>
+
+        {/* Right */}
+        <View style={s.right}>
+          {rightAccessory}
+          {showLang && (
+            <Pressable onPress={onOpenLanguage} accessibilityRole="button" style={s.langChip}>
+              <Text style={s.langText}>{langShort}</Text>
+              <Ionicons name="chevron-down" size={14} color="#000" style={{ marginLeft: 6 }} />
             </Pressable>
-          );
-        })}
+          )}
+        </View>
       </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  topBar: {
+  rowOuter: {
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  rowInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
   },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+  left: { flexShrink: 0 },
+  backBtn: { paddingVertical: 6, paddingHorizontal: 2 },
+  center: {
+    flex: 1,
+    paddingHorizontal: 12, 
+  },
+  right: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
   },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 16, fontWeight: "700", color: "#111827" },
-  rightRow: { flexDirection: "row", alignItems: "center" },
+
+  // Progress bar pieces
+  progressTrack: {
+    width: "100%",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+  },
+
   langChip: {
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 6 : 5,
-    borderRadius: 14,
-    backgroundColor: "#FFF",
-    minWidth: 40,
+    flexDirection: "row",
     alignItems: "center",
-    marginLeft: 8,
+    backgroundColor: "#FED787",
+    borderColor: "rgba(0,0,0,0.2)",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
   },
-  langChipActive: { backgroundColor: "#111827", borderColor: "#111827" },
-  langText: { fontSize: 12, fontWeight: "700", color: "#111827" },
-  langTextActive: { color: "#FFFFFF" },
+  langText: { color: "#000", fontWeight: "800", fontSize: 12 },
 });

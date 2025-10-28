@@ -14,10 +14,10 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import OffsetButton from "../../src/components/OffsetButton";
 
-const BG = require("../../assets/photos/HomePage.png");
-
-const BOTTOM_OFFSET = 46; 
+const BG = require("../../assets/photos/screens/HomePage.png");
+const BOTTOM_OFFSET = 46;
 
 type LangCode = "en" | "zh" | "ms" | "ta";
 
@@ -33,8 +33,11 @@ const STORAGE_KEY = "btnLang";
 export default function Welcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t, i18n } = useTranslation(); 
-  const [lang, setLang] = useState<LangCode>((i18n.language as LangCode) || "en");
+  const { t, i18n } = useTranslation();
+
+  const [lang, setLang] = useState<LangCode>(
+    (i18n.language as LangCode) || "en",
+  );
 
   useEffect(() => {
     (async () => {
@@ -88,8 +91,17 @@ export default function Welcome() {
                   accessibilityLabel={`Change button language to ${l.a11y}`}
                   accessibilityState={{ selected: active }}
                 >
-                  <Text style={[s.langText, active && s.langTextActive]}>{l.label}</Text>
-                  {active && <Ionicons name="checkmark" size={14} color="#000" style={{ marginLeft: 4 }} />}
+                  <Text style={[s.langText, active && s.langTextActive]}>
+                    {l.label}
+                  </Text>
+                  {active && (
+                    <Ionicons
+                      name="checkmark"
+                      size={14}
+                      color="#000"
+                      style={{ marginLeft: 4 }}
+                    />
+                  )}
                 </Pressable>
               );
             })}
@@ -99,29 +111,32 @@ export default function Welcome() {
 
           <View style={s.centerBlock}>
             <Text style={s.brand}>KampungCare</Text>
-            <Text style={s.subtitle}>Connecting you to {"\n"}things that matter</Text>
+            <Text style={s.subtitle}>
+              Connecting you to {"\n"}things that matter
+            </Text>
           </View>
 
           <View style={{ flex: 1 }} />
 
           <View style={[s.actionsBar, { bottom: insets.bottom + BOTTOM_OFFSET }]}>
-            <Pressable
-              style={({ pressed }) => [s.buttonBase, s.primaryBtn, pressed && s.pressed]}
+            <OffsetButton
+              label={t("auth.signup.createAccount")}
               onPress={() => router.push("/Authentication/SignUp")}
-              accessibilityRole="button"
               accessibilityLabel={t("signup.button")}
-            >
-              <Text style={s.primaryText}>{t("auth.signup.createAccount")}</Text>
-            </Pressable>
+              style={[s.buttonLayout, { marginTop: 0, marginBottom: 0 }] as any}
+              height={57}
+              radius={14}
+            />
 
-            <Pressable
-              style={({ pressed }) => [s.buttonBase, s.secondaryBtn, pressed && s.pressed]}
+            <OffsetButton
+              label={t("auth.signup.login")}
               onPress={() => router.push("/Authentication/LogIn")}
-              accessibilityRole="button"
               accessibilityLabel={t("signup.login")}
-            >
-              <Text style={s.secondaryText}>{t("auth.signup.login")}</Text>
-            </Pressable>
+              style={[s.buttonLayout, { marginTop: 14, marginBottom: 0 }] as any}
+              height={57}
+              radius={14}
+              bgColor="#FFFAF0"
+            />
           </View>
         </SafeAreaView>
       </ImageBackground>
@@ -130,14 +145,19 @@ export default function Welcome() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "transparent" },
-  bg: { flex: 1, width: "100%", height: "100%" },
-
+  container: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  bg: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
   safe: {
     flex: 1,
     paddingHorizontal: 20,
   },
-
   langBar: {
     position: "absolute",
     right: 12,
@@ -155,7 +175,7 @@ const s = StyleSheet.create({
     borderColor: "rgba(0,0,0,0.15)",
   },
   langChip: {
-    backgroundColor: "#FED787", 
+    backgroundColor: "#FED787",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
@@ -166,22 +186,20 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   langChipActive: {
-    borderColor: "#000", 
+    borderColor: "#000",
     ...shadow(0.12),
   },
   langText: {
-    color: "#000", 
+    color: "#000",
     fontSize: 12,
     fontWeight: "700",
   },
   langTextActive: {
     textDecorationLine: "underline",
   },
-
   heroSpacer: {
-    height: 440, 
+    height: 440,
   },
-
   centerBlock: {
     alignItems: "center",
     paddingHorizontal: 20,
@@ -201,42 +219,17 @@ const s = StyleSheet.create({
     lineHeight: 24,
     color: "#4B5563",
   },
-
   actionsBar: {
     position: "absolute",
     left: 20,
     right: 20,
     alignItems: "center",
   },
-
-  buttonBase: {
+  buttonLayout: {
     width: "90%",
     maxWidth: 360,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
     alignSelf: "center",
   },
-  primaryBtn: {
-    backgroundColor: "#FED787",
-    borderWidth: 2,
-    borderColor: "#1F2937",
-    ...shadow(),
-  },
-  primaryText: { fontSize: 18, fontWeight: "700", color: "#1F2937" },
-
-  secondaryBtn: {
-    marginTop: 14,
-    backgroundColor: "#FFFAF0",
-    borderWidth: 2,
-    borderColor: "#1F2937",
-    ...shadow(0.06),
-  },
-  secondaryText: { fontSize: 18, fontWeight: "700", color: "#1F2937" },
-
-  pressed: { opacity: 0.9 },
 });
 
 function shadow(opacity = 0.08) {

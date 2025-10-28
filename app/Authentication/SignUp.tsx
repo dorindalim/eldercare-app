@@ -20,15 +20,18 @@ import {
 } from "react-native";
 
 import { useAuth } from "../../src/auth/AuthProvider";
+import AuthTopBar from "../../src/components/AuthTopBar";
+import OffsetButton from "../../src/components/OffsetButton";
 
-const BG = require("../../assets/photos/MediumBlob.png");
+const BG = require("../../assets/photos/screens/MediumBlob.png");
 
 type LangCode = "en" | "zh" | "ms" | "ta";
 const STORAGE_LANG_KEY = "lang";
 
-const SIDE = 20; 
-const MAXW = 560; 
-const INSET = 16;  
+const SIDE = 20;
+const MAXW = 560;
+const INSET = 16;
+const BUTTON_H = 57;
 
 export default function Signup() {
   const router = useRouter();
@@ -135,7 +138,7 @@ export default function Signup() {
       );
     }
 
-    router.replace("/Onboarding/ElderlyForm");
+    router.replace("/Onboarding/ElderlyBasics");
   };
 
   const handlePhoneChange = (text: string) => {
@@ -152,28 +155,14 @@ export default function Signup() {
       <ImageBackground source={BG} style={s.bg} resizeMode="cover">
         <SafeAreaView style={s.safe}>
           <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-            <View style={s.headerRow}>
-              <View style={[s.headerLeft, { marginLeft: formLeftEdgeOffset - SIDE }]}>
-                <Pressable
-                  onPress={() => router.back()}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("common.back")}
-                  style={s.backBtn}
-                >
-                  <Ionicons name="arrow-back-outline" size={24} color="#111827" />
-                </Pressable>
-              </View>
-
-              <Pressable
-                onPress={() => setLangOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel={t("language.change")}
-                style={s.langChip}
-              >
-                <Text style={s.langChipText}>{langShort}</Text>
-                <Ionicons name="chevron-down" size={14} color="#000" />
-              </Pressable>
-            </View>
+            <AuthTopBar
+              onBack={() => router.back()}
+              langShort={langShort}
+              onOpenLanguage={() => setLangOpen(true)}
+              backLeftInset={formLeftEdgeOffset - SIDE - INSET}
+              maxWidth={MAXW}
+              horizontalPadding={INSET}
+            />
 
             <ScrollView
               keyboardShouldPersistTaps="handled"
@@ -238,9 +227,13 @@ export default function Signup() {
                 </View>
                 {!!confirmError && <Text style={s.error}>{confirmError}</Text>}
 
-                <Pressable onPress={onSubmit} style={s.cta}>
-                  <Text style={s.ctaText}>{t("auth.signup.button")}</Text>
-                </Pressable>
+                <OffsetButton
+                  label={t("auth.signup.button")}
+                  onPress={onSubmit}
+                  style={{ width: "100%", marginTop: 16 }}
+                  height={BUTTON_H}  
+                  radius={8}
+                />
 
                 <View style={s.footerRow}>
                   <Text style={s.footerText}>{t("auth.signup.haveAccount")} </Text>
@@ -296,44 +289,13 @@ const s = StyleSheet.create({
   bg: { flex: 1, width: "100%", height: "100%" },
   safe: { flex: 1, paddingHorizontal: SIDE },
 
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  headerLeft: {
-  },
-  backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 2,
-  },
-
-  langChip: {
-    marginRight: SIDE,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#FED787",
-    borderColor: "rgba(0,0,0,0.2)",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  langChipText: { color: "#000", fontWeight: "800", fontSize: 12 },
-
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
+  scrollContent: { flexGrow: 1, justifyContent: "center" },
 
   form: {
     alignSelf: "center",
     width: "100%",
     maxWidth: MAXW,
-    paddingHorizontal: INSET, 
+    paddingHorizontal: INSET,
   },
 
   title: { fontSize: 28, fontWeight: "900", color: "#111827", marginBottom: 4 },
@@ -346,7 +308,7 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#1F2937",
     paddingHorizontal: 14,
-    height: 54,
+    height: BUTTON_H,
     borderRadius: 8,
     backgroundColor: "#FFF",
     color: "#111827",
@@ -366,19 +328,6 @@ const s = StyleSheet.create({
 
   hint: { color: "#6B7280", fontSize: 12, marginBottom: 6 },
   error: { color: "#DC2626", fontSize: 12, marginTop: 2, marginBottom: 6 },
-
-  cta: {
-    marginTop: 6,
-    width: "100%",
-    height: 54,
-    backgroundColor: "#FED787",
-    borderColor: "#1F2937",
-    borderWidth: 2,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ctaText: { color: "#1F2937", fontWeight: "800", fontSize: 16 },
 
   footerRow: { flexDirection: "row", justifyContent: "center", marginTop: 12 },
   footerText: { color: "#6B7280" },

@@ -11,7 +11,7 @@ export default function Index() {
   }
 
   if (!session.onboardingCompleted) {
-    return <Redirect href="/Onboarding/ElderlyForm" />;
+    return <Redirect href="/Onboarding/ElderlyBasics" />;
   }
 
   return <Redirect href="/tabs/HomePage" />;

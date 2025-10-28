@@ -13,7 +13,9 @@
     "edit": "Edit",
     "back": "Back",
     "showText": "Show",
-    "hideText": "Hide"
+    "hideText": "Hide",
+    "skip": "Skip",
+    "continue": "Continue"
   },
   "alerts": {
     "loginInvalidTitle": "Invalid",
@@ -69,7 +71,7 @@
   },
   "auth": {
     "login": {
-      "title": "Welcome back",
+      "title": "Welcome back!",
       "subtitle": "Please enter your phone number",
       "phoneLabel": "Phone number",
       "phonePH": "+65 91234567",
@@ -79,7 +81,9 @@
       "verify": "Verify & Sign In",
       "noAccount": "Don’t have an account?",
       "signup": "Sign up",
-      "passwordPH": "Enter your password"
+      "passwordPH": "Enter your password",
+      "subtitlePrefix": "Login below or",
+      "subtitleLink": "Create Free Account"
     },
     "signup": {
       "title": "Welcome friend!",
@@ -320,6 +324,7 @@
     }
   },
   "elderlyConditions": {
+    "hero": "Any medical conditions we should know about?",
     "noConditions": "I have no medical conditions",
     "conditionTitle": "Condition {{index}}",
     "remove": "Remove",
@@ -344,7 +349,7 @@
     },
     "drugAllergiesPH": "Drug allergies (optional)",
     "publicNotePH": "Public note",
-    "finish": "Save & Continue",
+    "finish": "Finish",
     "errors": {
       "missingConditionName": "Please enter at least one condition name, or select “I have no medical conditions.”",
       "invalidMed": "Medication frequency cannot be filled without a medication name.",
@@ -352,7 +357,7 @@
     }
   },
   "elderlyOnboarding": {
-    "title": "Basic Information",
+    "hero": "Tell us a bit about yourself",
     "namePH": "Full name",
     "yobPH": "Year of birth (e.g. 2000)",
     "genderLabel": "Gender",
@@ -365,6 +370,7 @@
     "ecPhonePH": "Contact phone",
     "ecEmailPH": "Contact email (optional)",
     "finish": "Save & Continue",
+    "draftSaved": "Saved as draft",
     "alertIncompleteTitle": "Please complete all required fields.",
     "saveErrorTitle": "Couldn’t save",
     "saveErrorMsg": "Something went wrong while saving your profile. Please try again."
