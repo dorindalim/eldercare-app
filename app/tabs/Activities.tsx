@@ -11,7 +11,7 @@ import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 
 const BG = "#FFFAF0";
-const EXTRA_BOTTOM = -40; // tweak this to move content closer/farther from the tab bar
+const EXTRA_BOTTOM = -40; 
 
 export default function ActivitiesScreen() {
   const router = useRouter();

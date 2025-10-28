@@ -70,7 +70,7 @@ type EventRow = {
 type LatLng = { latitude: number; longitude: number };
 
 const PAGE_SIZE = 5;
-const BG = "#F8FAFC";
+const BG = "#FFFAF0";
 const CARD_BORDER = "#E5E7EB";
 const DARK = "#111827";
 const MIN_SHEET_RATIO = 0.38;
@@ -629,18 +629,16 @@ export default function CommunityScreen() {
     setDetailsOpen(true);
   };
 
-  const RenderCard = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
+  const RenderCCItem = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
     const scheduledAlready = isEventScheduled(item, ccReminders);
     const timePart = [formatTime(item.start_time), formatTime(item.end_time)].filter(Boolean).join(" - ") || "—";
     const feePart = item.fee?.trim() || t("community.priceOptions.free");
     const distPart = kmStr(item._distance);
     
-    // Get image based on category - using local require images
     const eventImage = item.category ? activityImages[item.category] : fallbackImage;
 
-    // Format the content to match ListItem's expected structure
-    const subtitle = item.location_name 
-      ? `${item.location_name}${distPart ? `${distPart}` : ''}`
+    const subtitle = item.location_name
+      ? `${item.location_name}${distPart ? ` (${distPart})` : ''}`
       : distPart || '';
 
     const details = `${item.start_date} • ${timePart}`;
@@ -657,7 +655,6 @@ export default function CommunityScreen() {
         metadata={metadata}
         showArrow={true} // This will show the arrow-forward icon
         onPress={() => openDetails(item)}
-        isSelected={selectedEvent?.event_id === item.event_id}
         detailsIcon="event" 
         metadataIcon="notifications"
         imageResizeMode="contain" 
@@ -721,14 +718,14 @@ export default function CommunityScreen() {
         backTo="/tabs/Activities"
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        bgColor="#FFEE8C"
+        bgColor="#FFD3CD"
         includeTopInset
         barHeight={44}
         topPadding={2}
         title={t("community.title")}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
@@ -866,7 +863,7 @@ export default function CommunityScreen() {
         ref={listRef}
         data={events}
         keyExtractor={(it) => it.event_id}
-        renderItem={RenderCard}
+        renderItem={RenderCCItem}
         contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
         ListEmptyComponent={
           <View style={{ padding: 16 }}>

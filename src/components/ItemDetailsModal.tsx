@@ -80,7 +80,6 @@ const ItemDetailsModal = ({
   const item = park || event;
   if (!item) return null;
 
-  // Check if it's an event
   const isEvent = !!(item as EventItem).event_id;
   const eventItem = item as EventItem;
   const parkItem = item as ParkLocation;
@@ -121,7 +120,6 @@ const ItemDetailsModal = ({
     if (!userLocation) return '';
     
     if (isEvent && eventItem.address) {
-      // For events, we'd need to geocode the address - for now return empty
       return '';
     }
     
@@ -148,7 +146,6 @@ const ItemDetailsModal = ({
     return `${h}${mm !== "00" ? ":" + mm : ""} ${ampm}`;
   };
 
-  // Translate functions for parks
   const translateActivity = (activityTitle: string) => {
     const activities = t('walking.filters.activities', { returnObjects: true });
     if (typeof activities === 'object' && activities !== null) {

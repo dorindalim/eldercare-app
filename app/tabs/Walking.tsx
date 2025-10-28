@@ -437,7 +437,6 @@ export default function WalkingScreen() {
         metadata={finalMetadata}
         showArrow={true}
         onPress={() => handleParkSelect(item)}
-        isSelected={selectedPark?.title === item.title}
         imageResizeMode="cover" 
       />
       );

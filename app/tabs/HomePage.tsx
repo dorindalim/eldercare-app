@@ -26,7 +26,6 @@ import TopBar, { LangCode } from "../../src/components/TopBar";
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 
-/** ---------- THEME ---------- */
 const BG = "#FFFAF0";
 const STROKE = "#1F1930";
 const LILAC = "#CFADE8";
@@ -34,10 +33,8 @@ const GREEN = "#BFE8C6";
 const ORANGE = "#FED787";
 const BLUE = "#CFE7FF";
 
-/** change this to recolor the Check-in offset outline */
 const CHECKIN_OFFSET_STROKE = "#1F1930";
 
-/** ---------- helpers ---------- */
 function normalizeSGToE164(local: string | null | undefined) {
   const d = String(local ?? "").replace(/\D/g, "");
   if (!d) return null;
@@ -46,7 +43,6 @@ function normalizeSGToE164(local: string | null | undefined) {
   return null;
 }
 
-/** Offset frame wrapper (used ONLY for the Check-in card) */
 function OffsetWrap({
   children,
   radius = 18,
@@ -85,7 +81,6 @@ function OffsetWrap({
   );
 }
 
-/** White face, colored offset behind; no outer wrapper */
 function HomePill({
   label,
   color,
@@ -109,7 +104,6 @@ function HomePill({
     <Pressable onPress={onPress} style={{ marginRight: 12 }}>
       {({ pressed }) => (
         <View style={{ width, height, position: "relative" }}>
-          {/* colored offset behind */}
           <View
             pointerEvents="none"
             style={{
@@ -124,7 +118,6 @@ function HomePill({
               borderColor: STROKE,
             }}
           />
-          {/* white face */}
           <View
             style={{
               flex: 1,
@@ -235,7 +228,6 @@ export default function ElderlyHome() {
       const f = await fetchEmergencyContact();
       setElderName(f.elderName ?? null);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getLiveLocationUrl = async () => {
@@ -391,7 +383,6 @@ export default function ElderlyHome() {
           />
         }
       >
-        {/* 1) GREETING + 4 PILLS */}
         <View style={{ width: "100%", maxWidth: 520, alignSelf: "center", marginBottom: 20 }}>
           <AppText variant="h1" weight="800" style={{ marginBottom: 10 }}>
             {t("home.lepakGreeting", { name: elderName ?? t("home.friend", "friend") })}
@@ -425,8 +416,7 @@ export default function ElderlyHome() {
           </ScrollView>
         </View>
 
-        {/* 2) CHECK-IN CARD (with offset) */}
-        <OffsetWrap /* stroke="#3B2F4D" fill="#FFF0F1"  <- optional overrides */>
+        <OffsetWrap>
           <CheckinCard
             titleKey="home.imActive"
             titleWhenCheckedKey="home.youreCheckedIn"
@@ -440,7 +430,6 @@ export default function ElderlyHome() {
           />
         </OffsetWrap>
 
-        {/* 3) SOS */}
         <View style={s.sosWrap}>
           <Pressable style={s.sos} onPress={startSOS}>
             <AppText variant="h1" weight="900" color="#FFF">
@@ -450,7 +439,6 @@ export default function ElderlyHome() {
         </View>
       </ScrollView>
 
-      {/* SOS overlay */}
       {sosVisible && (
         <View style={s.overlay}>
           <View style={s.modal}>
@@ -502,13 +490,11 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BG },
   scroll: { flexGrow: 1, paddingHorizontal: 18, paddingBottom: 24, paddingTop: 6 },
 
-  /* pills row */
   pillRow: {
     paddingVertical: 6,
     paddingRight: 6,
   },
 
-  /* SOS */
   sosWrap: { alignItems: "center", marginTop: 20, marginBottom: 12 },
   sos: {
     width: 140,
@@ -524,7 +510,6 @@ const s = StyleSheet.create({
     elevation: 4,
   },
 
-  /* SOS overlay */
   overlay: {
     position: "absolute",
     left: 0,

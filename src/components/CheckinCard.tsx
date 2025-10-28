@@ -111,7 +111,6 @@ const s = StyleSheet.create({
     paddingVertical: 18,
     alignItems: "center",
     paddingHorizontal: 14,
-    // marginBottom removed so OffsetWrap controls spacing
   },
   checkCardDone: { backgroundColor: "#EEF9F1", borderColor: "#66BB6A" },
   checkCardNotDone: { backgroundColor: "#FFF5F5", borderColor: "#EF9A9A" },

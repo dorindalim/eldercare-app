@@ -357,7 +357,6 @@ export default function Bulletin() {
     })();
   }, [deviceId, currentUserId]);
 
-  // Android notification channel for reminders
   useEffect(() => {
     if (Platform.OS === "android") {
       Notifications.setNotificationChannelAsync("event-reminders", {
@@ -969,7 +968,6 @@ export default function Bulletin() {
         }}
       />
       <View style={s.headerRow}>
-        {/* Create with offset */}
         <View style={s.createBtnWrap}>
           <View style={s.createBtnOffset} />
           <Pressable
@@ -980,7 +978,7 @@ export default function Bulletin() {
             }}
             style={({ pressed }) => [
               s.createBtn,
-              pressed && { transform: [{ translateY: 6 }] }, // press down to meet the shadow
+              pressed && { transform: [{ translateY: 6 }] }, 
             ]}
             accessibilityRole="button"
             accessibilityLabel={t("bulletin.create")}
@@ -991,7 +989,6 @@ export default function Bulletin() {
           </Pressable>
         </View>
 
-        {/* category chips scroll stays the same */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 6 }}>
           <Chip label={t("community.all")} active={!filterCat} onPress={() => setFilterCat(null)} />
           {CATS.map((c) => (
@@ -1238,10 +1235,12 @@ export default function Bulletin() {
                 <CalendarTimePicker
                   inline
                   value={startDate}
-                  onConfirm={(d) => setStartDate(d)}
+                  onConfirm={setStartDate}
                   minuteStep={5}
                   locale={(i18n.language as string) || "en-SG"}
-                  title={t("bulletin.form.start")}
+                  showTitle={false}   
+                  framed={false}      
+                  style={{ alignSelf: "stretch" }} 
                 />
               </Labeled>
               <Labeled label={t("bulletin.form.location")}>
@@ -1307,7 +1306,6 @@ export default function Bulletin() {
 
               <View style={{ height: 12 }} />
 
-              {/* POST button color changed to #FED787 with dark content */}
               <Pressable
                 onPress={editingRow ? submitEdit : submitCreate}
                 style={[s.publishBtn]}
@@ -1366,11 +1364,11 @@ function Chip({
         <Ionicons
           name={icon}
           size={14}
-          color={"#111"} // keep dark icon for contrast
+          color={"#111"} 
           style={{ marginRight: 6 }}
         />
       )}
-      <Text style={[s.chipText /* keep dark text even when active */]}>
+      <Text style={[s.chipText]}>
         {label}
       </Text>
     </Pressable>
@@ -1761,7 +1759,6 @@ const s = StyleSheet.create({
     borderBottomColor: "#F3F4F6",
   },
 
-  // POST button new color
   publishBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -1783,12 +1780,12 @@ const s = StyleSheet.create({
   },
   createBtnOffset: {
     position: "absolute",
-    top: 6,            // how far the “shadow” sits (offset amount)
+    top: 6,            
     left: 0,
     right: 0,
-    height: Platform.OS === "ios" ? 40 : 38, // match the Pressable height
+    height: Platform.OS === "ios" ? 40 : 38, 
     borderRadius: 10,
-    backgroundColor: "#F6C96D", // slightly darker than FED787 for the offset layer
+    backgroundColor: "#F6C96D", 
   },
 });
 
@@ -1882,17 +1879,16 @@ const stylesCard = StyleSheet.create({
     gap: 8,
   },
 
-  // the button itself (sits above the offset)
   createBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FED787",  // your requested color
+    backgroundColor: "#FED787", 
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 10 : 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#11182720",
-    transform: [{ translateY: 0 }], // default height
+    transform: [{ translateY: 0 }], 
   },
   createText: { color: "#000", fontWeight: "800", marginLeft: 6 },
 });

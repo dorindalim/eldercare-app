@@ -1,4 +1,3 @@
-// this creates the visual card for each park/clinic/cc
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { Image, ImageResizeMode, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -13,12 +12,9 @@ export type ListItemProps = {
   metadata?: string;
   showArrow?: boolean;
   onPress: () => void;
-  isSelected?: boolean;
-  // Optional custom icons for different use cases
   subtitleIcon?: string;
   detailsIcon?: string;
   metadataIcon?: string;
-  // New prop to control image resize behavior
   imageResizeMode?: ImageResizeMode;
 };
 
@@ -31,33 +27,30 @@ const ListItem = ({
   metadata,
   showArrow = true,
   onPress,
-  isSelected = false,
   subtitleIcon = 'location-on',
   detailsIcon = 'access-time',  
   metadataIcon = 'person',
-  imageResizeMode = 'cover', // Default to cover (stretched for parks)
+  imageResizeMode = 'cover', 
 }: ListItemProps) => {
   const [textHeight, setTextHeight] = useState<number>(80);
   const hasMeasuredRef = useRef(false);
 
   const handleTextLayout = (event: any) => {
-    if (hasMeasuredRef.current) return; // Only measure once
+    if (hasMeasuredRef.current) return; 
     
     const { height } = event.nativeEvent.layout;
-    // Set a reasonable maximum height to prevent infinite growth
-    const calculatedHeight = Math.min(Math.max(80, height), 200); // Min 80px, Max 200px
+    const calculatedHeight = Math.min(Math.max(80, height), 200); 
     setTextHeight(calculatedHeight);
     hasMeasuredRef.current = true;
   };
 
-  // Reset measurement when content changes
   useEffect(() => {
     hasMeasuredRef.current = false;
   }, [title, subtitle, details, metadata]);
 
   return (
     <TouchableOpacity
-      style={[styles.container, isSelected && styles.selected]}
+      style={[styles.container]}
       onPress={onPress}
     >
       {/* Image/Icon on the left */}
@@ -66,8 +59,8 @@ const ListItem = ({
           style={[
             styles.imageContainer, 
             imageResizeMode === 'cover' 
-              ? { height: textHeight } // For parks: stretch to text height
-              : styles.centeredImageContainer // For CC: fixed height, centered
+              ? { height: textHeight } 
+              : styles.centeredImageContainer 
           ]}
         >
           {image ? (
@@ -169,26 +162,18 @@ const styles = StyleSheet.create({
     elevation: 2,
     minHeight: 120,
   },
-  selected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#F0F8FF',
-    marginBottom: 8,
-  },
-  // Wrapper to help with positioning
   imageWrapper: {
     justifyContent: 'center',
     marginRight: 12,
   },
-  // Image container for parks (stretched)
   imageContainer: {
     width: 80,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  // Image container for CC (centered, fixed height)
   centeredImageContainer: {
     width: 80,
-    height: 80, // Fixed height for CC
+    height: 80, 
     borderRadius: 8,
     overflow: 'hidden',
     justifyContent: 'center',
@@ -196,7 +181,6 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    // Height is set dynamically for parks, not for CC
   },
   placeholder: {
     width: '100%',
@@ -207,19 +191,17 @@ const styles = StyleSheet.create({
   },
   centeredPlaceholder: {
     width: '100%',
-    height: 80, // Fixed height for CC
+    height: 80, 
     borderRadius: 8,
     backgroundColor: '#E9ECEF',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Content area with text and arrow
   content: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  // Text content area - this gets measured
   textContent: {
     flex: 1,
     marginRight: 8,
@@ -230,11 +212,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 8,
   },
-  // Info content area
   infoContent: {
     gap: 6,
   },
-  // Info rows
   infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -245,7 +225,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     lineHeight: 20,
   },
-  // Arrow container - centered vertically
   arrowContainer: {
     justifyContent: 'center',
     alignItems: 'center',
