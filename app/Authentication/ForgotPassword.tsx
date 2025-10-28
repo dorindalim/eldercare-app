@@ -47,7 +47,7 @@ export default function ForgotPassword() {
   const { width: screenW } = useWindowDimensions();
   const usableW = Math.max(0, screenW - 2 * SIDE);
   const formW = Math.min(MAXW, usableW);
-  const formLeftEdgeOffset = SIDE + (usableW - formW) / 2 + INSET; // same calc used elsewhere
+  const formLeftEdgeOffset = SIDE + (usableW - formW) / 2 + INSET; 
 
   const [lang, setLang] = useState<LangCode>((i18n.language as LangCode) || "en");
   const [langOpen, setLangOpen] = useState(false);
