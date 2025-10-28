@@ -1,4 +1,3 @@
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
@@ -22,6 +21,8 @@ import AppText from "../../src/components/AppText";
 import FilterSheet, {
   type FilterSection,
 } from "../../src/components/FilterSheet";
+import ItemDetailsModal from '../../src/components/ItemDetailsModal';
+import ListItem from "../../src/components/ListItems";
 import Pagination from "../../src/components/Pagination";
 import SearchBar from "../../src/components/SearchBar";
 import SummaryChip from "../../src/components/SummaryChip";
@@ -79,6 +80,8 @@ const getRegionFromPostalCode = (postalCode) => {
   return null;
 };
 
+const chasLogo = require('../../assets/photos/icons/chas-logo.png'); 
+
 export default function ClinicScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -96,6 +99,8 @@ export default function ClinicScreen() {
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [tempFilters, setTempFilters] = useState({ regions: [] as string[] });
   const [selectedFilterItems, setSelectedFilterItems] = useState<string[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedClinic, setSelectedClinic] = useState(null);
 
   const setLang = (code) => {
     i18n.changeLanguage(code);
@@ -293,63 +298,36 @@ export default function ClinicScreen() {
     ];
   };
 
-  const renderClinicItem = ({ item }) => (
-    <View style={s.clinicItem}>
-      <View style={s.titleContainer}>
-        <AppText variant="title" weight="700" style={s.clinicName}>
-          {item.name}
-        </AppText>
-        {userLocation && item.distance != null && (
-          <AppText variant="caption" weight="600" style={s.distanceText}>
-            ({kmStr(item.distance)} {t('walking.location.away', { distance: '' })})
-          </AppText>
-        )}
-      </View>
+  const RenderClinicItem = ({ item }: { item: any }) => {
+    const subtitle = item.distance != null ? `${kmStr(item.distance)}` : '';
+    
+    const details = [
+      item.minutes != null ? `${t('clinics.waitingTime')}: ${item.minutes}${t('clinics.minutes')}` : null
+    ].filter(Boolean).join('\n'); 
 
-      <AppText
-        variant="body"
-        weight="400"
-        style={item.minutes ? s.waitingTime : s.waitingTimeUnavailable}
-      >
-        {item.minutes
-          ? `${t('clinics.waitingTime')}: ${item.minutes} ${t('clinics.minutes')}`
-          : `${t('clinics.waitingTime')}: ${t('clinics.unavailable')}`}
-      </AppText>
+    const metadata = item.totalTime != null ? 
+    `${t('clinics.totalEstTime')}: ${Math.round(item.totalTime)}${t('clinics.mins')}` : '';
 
-      {item.totalTime != null && (
-        <AppText variant="body" weight="600" style={s.totalTime}>
-          {t('clinics.totalEstTime')}: {Math.round(item.totalTime)} {t('clinics.mins')}
-        </AppText>
-      )}
-
-      {item.phone && (
-        <AppText variant="body" weight="400" style={s.contactText}>
-          {t('clinics.contact')}: {item.phone}
-        </AppText>
-      )}
-
-      <View style={s.buttonContainer}>
-        <TouchableOpacity
-          style={s.directionButton}
-          onPress={() => handleGetDirections(item)}
-        >
-          <AppText variant="button" weight="700" style={s.directionButtonText}>
-            {t('walking.parks.getDirections')}
-          </AppText>
-        </TouchableOpacity>
-        {item.phone && (
-          <TouchableOpacity
-            style={s.callButton}
-            onPress={() => handleCallClinic(item.phone)}
-          >
-            <AppText variant="button" weight="700" style={s.callButtonText}>
-              {t('clinics.callToEnquire')}
-            </AppText>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
+    return (
+      <ListItem
+        title={item.name}
+        image={chasLogo}
+        placeholderIcon="local-hospital" 
+        subtitle={subtitle}
+        details={details}
+        metadata={metadata} 
+        showArrow={true}
+        onPress={() => {
+          setSelectedClinic(item);
+          setDetailsOpen(true);
+        }}
+        subtitleIcon="location-on"
+        detailsIcon="access-time" 
+        metadataIcon="timer"
+        imageResizeMode="contain"
+      />
+    );
+  };
 
   const clinicsPerPage = 10;
   const totalPages = Math.ceil(filteredClinics.length / clinicsPerPage);
@@ -357,36 +335,6 @@ export default function ClinicScreen() {
     (currentPage - 1) * clinicsPerPage,
     currentPage * clinicsPerPage
   );
-
-  if (error) {
-    return (
-      <SafeAreaView style={s.safe}>
-        <TopBar
-          language={i18n.language as LangCode}
-          setLanguage={setLang as (c: LangCode) => void}
-          bgColor="#FAE6D4"
-          includeTopInset={true}
-          barHeight={44}
-          topPadding={2}
-          title={t("home.clinics")}
-          onLogout={async () => {
-            await logout();
-            router.replace("/Authentication/Welcome");
-          }}
-        />
-        <View style={s.errorContainer}>
-          <AppText variant="body" weight="600" style={s.errorText}>
-            {error}
-          </AppText>
-          <TouchableOpacity style={s.retryButton} onPress={fetchClinics}>
-            <AppText variant="button" weight="700" style={s.retryButtonText}>
-              Try Again
-            </AppText>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
@@ -444,7 +392,7 @@ export default function ClinicScreen() {
       <FlatList
         ref={flatListRef}
         data={currentClinics}
-        renderItem={renderClinicItem}
+        renderItem={RenderClinicItem}
         keyExtractor={(item, index) => `${item.name}-${index}`}
         contentContainerStyle={s.listContainer}
         showsVerticalScrollIndicator={false}
@@ -490,6 +438,22 @@ export default function ClinicScreen() {
         }
         ListFooterComponentStyle={{ padding: 16 }}
       />
+
+      {/* Modal */}
+      <ItemDetailsModal
+        clinic={selectedClinic}
+        visible={detailsOpen}
+        onClose={() => {
+          setDetailsOpen(false);
+          setSelectedClinic(null);
+        }}
+        userLocation={userLocation}
+        onGetDirections={handleGetDirections}
+        onCallClinic={handleCallClinic}
+        distanceMeters={distanceMeters}
+        kmStr={kmStr}
+        chasLogo={chasLogo}
+      />
     </SafeAreaView>
   );
 }
@@ -508,86 +472,6 @@ const s = StyleSheet.create({
   listContainer: {
     padding: 16,
     flexGrow: 1,
-  },
-  clinicItem: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  titleContainer: {
-    marginBottom: 8,
-  },
-  clinicName: {
-    marginBottom: 4,
-  },
-  distanceText: {
-    color: "#6C757D",
-    fontSize: 14,
-  },
-  totalTime: {
-    color: "#007AFF",
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  waitingTime: {
-    color: "#28A745",
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 4,
-  },
-  waitingTimeUnavailable: {
-    color: "#6C757D",
-    fontSize: 16,
-    fontWeight: "400",
-    marginBottom: 4,
-  },
-  contactText: {
-    color: "#6C757D",
-    fontSize: 14,
-    fontWeight: "400",
-    marginBottom: 8,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  directionButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flex: 1,
-    minWidth: 150,
-    alignItems: 'center',
-  },
-  directionButtonText: {
-    color: "#FFF",
-    textAlign: 'center',
-  },
-  callButton: {
-    backgroundColor: "#E7F3FF",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flex: 1,
-    minWidth: 150,
-    alignItems: 'center',
-  },
-  callButtonText: {
-    color: "#007AFF",
-    fontWeight: "600",
-    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,

@@ -293,7 +293,7 @@ export default function Bulletin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const bottomPad = Math.max(24, tabBarHeight + insets.bottom + 8);
+  const bottomPad = Math.max(24, tabBarHeight + insets.bottom - 100);
 
   const { t, i18n } = useTranslation();
   const locale = (i18n.language as string) || undefined;

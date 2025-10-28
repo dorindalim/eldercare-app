@@ -3,15 +3,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import OffsetButton from "../../src/components/OffsetButton";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 
 const BG = "#FFFAF0";
-const EXTRA_BOTTOM = -40; 
+const EXTRA_BOTTOM = -40;
+const MAXW = 560;
 
 export default function ActivitiesScreen() {
   const router = useRouter();
@@ -46,37 +48,62 @@ export default function ActivitiesScreen() {
       />
 
       <View style={[s.wrapper, { paddingBottom: bottomLift }]}>
-        <View style={s.card}>
-          <AppText variant="title" weight="900" style={s.question}>
-            {t("activities.prompt")}
-          </AppText>
+        <AppText variant="title" weight="900" style={s.heading}>
+          {t("activities.prompt")}
+        </AppText>
+        <AppText variant="body" color="#6B7280" style={s.sub}>
+          {t("activities.subPrompt")}
+        </AppText>
 
-          <Pressable
-            style={s.btn}
-            onPress={() => router.push("/tabs/Walking")}
-            accessibilityRole="button"
-            accessibilityLabel={t("activities.parks")}
-          >
-            <Ionicons name="walk-outline" size={20} color="#FFFFFF" style={s.btnIcon} />
-            <AppText variant="button" color="#FFFFFF" style={s.btnText}>
+        {/* PARKS */}
+        <OffsetButton
+          style={s.btnWrap}                 
+          onPress={() => router.push("/tabs/Walking")}
+          accessibilityLabel={t("activities.parks")}
+          height={96}
+          radius={16}
+          bgColor="#FFFFFF"
+          borderColor="#111827"
+          borderColorActive="#000"
+          offsetLeft={5}
+          offsetTop={5}
+          offsetRight={-7}
+          offsetBottom={-7}
+          contentStyle={s.btnContent}
+        >
+          <View style={s.row}>
+            <Ionicons name="walk-outline" size={40} color="#111827" style={s.leftIcon} />
+            <AppText variant="button" weight="900" style={s.bigLabel} numberOfLines={1}>
               {t("activities.parks")}
             </AppText>
-            <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-          </Pressable>
+            <Ionicons name="chevron-forward" size={30} color="#111827" />
+          </View>
+        </OffsetButton>
 
-          <Pressable
-            style={s.btn}
-            onPress={() => router.push("/tabs/Community")}
-            accessibilityRole="button"
-            accessibilityLabel={t("activities.ccActivities")}
-          >
-            <Ionicons name="people-outline" size={20} color="#FFFFFF" style={s.btnIcon} />
-            <AppText variant="button" color="#FFFFFF" style={s.btnText}>
+        {/* COMMUNITY CENTRE ACTIVITIES */}
+        <OffsetButton
+          style={s.btnWrap}                 
+          onPress={() => router.push("/tabs/Community")}
+          accessibilityLabel={t("activities.ccActivities")}
+          height={96}
+          radius={16}
+          bgColor="#FFFFFF"
+          borderColor="#111827"
+          borderColorActive="#000"
+          offsetLeft={5}
+          offsetTop={5}
+          offsetRight={-7}
+          offsetBottom={-7}
+          contentStyle={s.btnContent}
+        >
+          <View style={s.row}>
+            <Ionicons name="people-outline" size={40} color="#111827" style={s.leftIcon} />
+            <AppText variant="button" weight="900" style={s.bigLabel} numberOfLines={2}>
               {t("activities.ccActivities")}
             </AppText>
-            <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-          </Pressable>
-        </View>
+            <Ionicons name="chevron-forward" size={30} color="#111827" />
+          </View>
+        </OffsetButton>
       </View>
     </SafeAreaView>
   );
@@ -84,41 +111,20 @@ export default function ActivitiesScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BG },
-
   wrapper: {
     flex: 1,
     paddingHorizontal: 16,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
+    gap: 14,
   },
+  heading: { textAlign: "left", width: "100%", maxWidth: MAXW, marginBottom: 2 },
+  sub:     { textAlign: "left", width: "100%", maxWidth: MAXW, marginBottom: 8 },
 
-  card: {
-    width: "100%",
-    maxWidth: 520,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 18,
-    alignItems: "stretch",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
+  btnWrap:    { width: "100%", maxWidth: MAXW },       
+  btnContent: { width: "100%", paddingHorizontal: 18, paddingVertical: 14 },
 
-  question: { textAlign: "center", marginBottom: 16 },
-
-  btn: {
-    backgroundColor: "#0F172A",
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-
-  btnIcon: { marginRight: 8 },
-  btnText: { flex: 1, marginLeft: 8 },
+  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  leftIcon: { marginRight: 12 },
+  bigLabel: { flex: 1, lineHeight: 30, color: "#111827", textAlign: "left", marginRight: 12 },
 });

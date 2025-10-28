@@ -43,8 +43,6 @@ const genCode = () =>
     .slice(2, 6)
     .toUpperCase()}`;
 
-const EXTRA_BOTTOM = -60;
-
 export default function RewardsScreen() {
   const { t } = useTranslation();
   const { session, logout } = useAuth();
@@ -53,7 +51,7 @@ export default function RewardsScreen() {
 
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const bottomLift = Math.max(0, tabBarHeight + insets.bottom + EXTRA_BOTTOM);
+  const bottomLift = Math.max(8, insets.bottom + 8);
 
   const OWNED_KEY = `rewards_owned_${userId}_v1`;
   const [owned, setOwned] = useState<OwnedVoucher[]>([]);
@@ -209,7 +207,7 @@ export default function RewardsScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right", "bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
       <TopBar
         title={t("rewards.title")}
         language={i18n.language as LangCode}

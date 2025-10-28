@@ -80,7 +80,10 @@ export default function NavigationScreen() {
 
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const bottomLift = Math.max(0, tabBarHeight + insets.bottom - 14); 
+  const bottomLift = Math.max(0, tabBarHeight + insets.bottom - 100);
+  const SCENE_EXTRA_PAD = 110;   
+  const DESIRED_GAP = 0;         
+  const bottomGap = Math.max(0, tabBarHeight - SCENE_EXTRA_PAD) + DESIRED_GAP; 
 
   const [location, setLocation] = useState<LatLng | null>(null);
   const [query, setQuery] = useState("");
@@ -968,7 +971,7 @@ export default function NavigationScreen() {
       </MapView>
 
       {navigating && (
-        <View style={[s.navOverlay, { bottom: tabBarHeight }]}>
+        <View style={[s.navOverlay, { bottom: bottomGap }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <AppText variant="label" weight="900">
               {eta ? t("navigation.search.eta", { duration: eta.duration, distance: eta.distance }) : t("navigation.search.loading")}
@@ -1086,7 +1089,7 @@ export default function NavigationScreen() {
       )}
 
       {destination && !navigating && (
-        <View style={[s.bottomBar, { bottom: bottomLift }]}>
+        <View style={[s.bottomBar, { bottom: bottomGap }]}>
           <AppText variant="label" weight="800" style={{ marginBottom: 8 }}>
             {t("navigation.search.destinationSet")}
           </AppText>
@@ -1127,7 +1130,7 @@ export default function NavigationScreen() {
       )}
 
       {showPoiOptions && selectedPOI && (
-        <View style={[s.optionsSheet, { bottom: bottomLift }]}>
+        <View style={[s.optionsSheet, { bottom: bottomGap }]}>
           <View style={{ alignItems: "center" }}>
             <View style={s.grabber} />
           </View>
@@ -1172,7 +1175,7 @@ export default function NavigationScreen() {
       )}
 
       {sheetOpen && (
-        <View style={[s.activitiesSheet, { bottom: bottomLift }]}>
+        <View style={[s.activitiesSheet, { bottom: bottomGap }]}>
           <View style={{ alignItems: "center" }}>
             <View style={s.grabber} />
           </View>

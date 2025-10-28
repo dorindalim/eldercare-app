@@ -62,11 +62,9 @@ export default function ElderlyProfile() {
   const { coins, streak, refresh: refreshCheckins } = useCheckins(session?.userId);
   const { textScale, setTextScale } = useAppSettings();
 
-  // Insets + tab bar height to lift content above the bottom bar
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  // remove the last card's 12px margin from the final padding so there's no visible gap
-  const bottomPad = Math.max(0, tabBarHeight + insets.bottom - 12);
+  const bottomPad = Math.max(0, tabBarHeight + insets.bottom - 100);
 
   const [name, setName] = useState<string>("-");
   const [yob, setYob] = useState<string>("-");

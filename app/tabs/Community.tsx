@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -18,14 +19,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   UIManager,
-  View
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../src/auth/AuthProvider";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
-import FilterSheet, { type ChipOpt, type FilterSection } from "../../src/components/FilterSheet";
-import ItemDetailsModal from '../../src/components/ItemDetailsModal';
+import FilterSheet, { type ChipOpt } from "../../src/components/FilterSheet";
+import ItemDetailsModal from "../../src/components/ItemDetailsModal";
 import ListItem from "../../src/components/ListItems";
 import Pagination from "../../src/components/Pagination";
 import SearchBar from "../../src/components/SearchBar";
@@ -34,21 +35,19 @@ import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { presentNow } from "../../src/lib/notifications";
 import { supabase } from "../../src/lib/supabase";
 
-// Import all images at the top with your other imports
 const activityImages: { [key: string]: any } = {
-  "Health & Fitness": require('../../assets/photos/icons/health-fitness.png'),
-  "Arts & Culture": require('../../assets/photos/icons/arts-culture.png'),
-  "Active Aging": require('../../assets/photos/icons/active-aging.png'),
-  "Parenting & Education": require('../../assets/photos/icons/parenting-education.png'),
-  "Exhibition & Fair": require('../../assets/photos/icons/exhibition-fair.png'),
-  "Neighbourhood Events": require('../../assets/photos/icons/neighbourhood-events.png'),
-  "Celebration & Festivity": require('../../assets/photos/icons/celebration-festivity.png'),
-  "Kopi Talks & Dialogues": require('../../assets/photos/icons/kopi-talks.png'),
-  "Charity & Volunteerism": require('../../assets/photos/icons/charity-volunteerism.png'), // FIXED
-  "Overseas Outings & Tours": require('../../assets/photos/icons/overseas-tours.png'),
+  "Health & Fitness": require("../../assets/photos/icons/health-fitness.png"),
+  "Arts & Culture": require("../../assets/photos/icons/arts-culture.png"),
+  "Active Aging": require("../../assets/photos/icons/active-aging.png"),
+  "Parenting & Education": require("../../assets/photos/icons/parenting-education.png"),
+  "Exhibition & Fair": require("../../assets/photos/icons/exhibition-fair.png"),
+  "Neighbourhood Events": require("../../assets/photos/icons/neighbourhood-events.png"),
+  "Celebration & Festivity": require("../../assets/photos/icons/celebration-festivity.png"),
+  "Kopi Talks & Dialogues": require("../../assets/photos/icons/kopi-talks.png"),
+  "Charity & Volunteerism": require("../../assets/photos/icons/charity-volunteerism.png"),
+  "Overseas Outings & Tours": require("../../assets/photos/icons/overseas-tours.png"),
 };
-
-const fallbackImage = require('../../assets/photos/icons/onepa-logo.png');
+const fallbackImage = require("../../assets/photos/icons/onepa-logo.png");
 
 type EventRow = {
   id?: string;
@@ -66,16 +65,11 @@ type EventRow = {
   fee: string | null;
   registration_link: string | null;
 };
-
 type LatLng = { latitude: number; longitude: number };
 
 const PAGE_SIZE = 5;
 const BG = "#FFFAF0";
 const CARD_BORDER = "#E5E7EB";
-const DARK = "#111827";
-const MIN_SHEET_RATIO = 0.38;
-const MAX_SHEET_RATIO = 0.68;
-
 const GOOGLE_WEB_API_KEY = "AIzaSyDaNhQ7Ah-mlf2j4qHZTjXgtzrP-uBokGs";
 const REMINDERS_KEY = "cc:reminders";
 
@@ -120,11 +114,23 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+const formatTime = (hhmmss?: string | null) => {
+  if (!hhmmss) return "";
+  const [hStr, mStr = "0"] = hhmmss.split(":");
+  let h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (isNaN(h)) return "";
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  const mm = String(isNaN(m) ? 0 : m).padStart(2, "0");
+  return `${h}${mm !== "00" ? `:${mm}` : ""} ${ampm}`;
+};
+
 const parseEventStart = (evt: EventRow): Date | null => {
   if (!evt.start_date) return null;
   const [y, m, d] = evt.start_date.split("-").map(Number);
-  let hh = 9,
-    mm = 0;
+  let hh = 9, mm = 0;
   if (evt.start_time) {
     const [h, min] = evt.start_time.split(":").map(Number);
     if (!isNaN(h)) hh = h;
@@ -148,10 +154,7 @@ const ensureNotifPermission = async (t: (k: string, p?: any) => string): Promise
 const isEventScheduled = (
   evt: EventRow,
   list: { id?: string; title?: string | null; at?: string; cc?: string | null }[]
-) => {
-  if (!evt?.id) return false;
-  return list.some((r) => r.id === evt.id);
-};
+) => (evt?.id ? list.some((r) => r.id === evt.id) : false);
 
 export default function CommunityScreen() {
   const router = useRouter();
@@ -159,6 +162,12 @@ export default function CommunityScreen() {
   const { t, i18n } = useTranslation();
 
   const listRef = useRef<FlatList<any>>(null);
+  const hasConsumedDeepLinkRef = useRef(false);
+  const geoCache = useRef<Map<string, LatLng>>(new Map());
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomPad = Math.max(0, tabBarHeight + insets.bottom - 100);
 
   const setLang = async (code: LangCode) => {
     await i18n.changeLanguage(code);
@@ -166,7 +175,6 @@ export default function CommunityScreen() {
   };
 
   const [myLoc, setMyLoc] = useState<LatLng | null>(null);
-
   const [keyword, setKeyword] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("upcoming");
@@ -195,16 +203,7 @@ export default function CommunityScreen() {
   const [notifBusy, setNotifBusy] = useState(false);
 
   const params = useLocalSearchParams<{ openEventId?: string; openEventEventId?: string }>();
-  const hasConsumedDeepLinkRef = useRef(false);
-  const geoCache = useRef<Map<string, LatLng>>(new Map());
-  const clearAllCommunityFilters = () => {
-    setKeyword("");
-    setCategories([]);
-    setTimeFilter("upcoming");
-    setPricingFilter("all");
-    setDistanceFilter("any");
-    setPage(1);
-  };
+
   const hasActiveFilters =
     keyword.trim().length > 0 ||
     categories.length > 0 ||
@@ -240,7 +239,6 @@ export default function CommunityScreen() {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => false);
     return () => sub.remove();
   }, []);
-  
 
   useEffect(() => {
     fetchEvents();
@@ -256,88 +254,6 @@ export default function CommunityScreen() {
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, [page]);
-
-  const handleScrollBegin = () => {
-    if (notifPanelOpen) {
-      smoothLayout();
-      setNotifPanelOpen(false);
-    }
-  };
-
-  const formatTime = (hhmmss?: string | null) => {
-    if (!hhmmss) return "";
-    const [hStr, mStr] = hhmmss.split(":");
-    let h = parseInt(hStr, 10);
-    const m = parseInt(mStr, 10);
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12;
-    if (h === 0) h = 12;
-    const mm = String(m).padStart(2, "0");
-    return `${h}${mm !== "00" ? ":" + mm : ""} ${ampm}`;
-  };
-
-  const toISODate = (d: Date) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const timeRange = (): { from?: string; to?: string } => {
-    const now = new Date();
-    if (timeFilter === "today") {
-      const d = toISODate(now);
-      return { from: d, to: d };
-    }
-    if (timeFilter === "week") {
-      const from = toISODate(now);
-      const end = new Date(now);
-      end.setDate(end.getDate() + 7);
-      return { from, to: toISODate(end) };
-    }
-    return { from: toISODate(now) };
-  };
-
-  const distanceMeters = (a: LatLng, b: LatLng) => {
-    const R = 6371e3;
-    const φ1 = (a.latitude * Math.PI) / 180;
-    const φ2 = (b.latitude * Math.PI) / 180;
-    const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
-    const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
-    const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-  };
-
-  const kmStr = (m?: number | null) => (m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`);
-
-  const geocode = async (q: string): Promise<LatLng | null> => {
-    if (!q.trim()) return null;
-    if (geoCache.current.has(q)) return geoCache.current.get(q)!;
-    try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        q
-      )}&key=${GOOGLE_WEB_API_KEY}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      const loc = json?.results?.[0]?.geometry?.location;
-      if (loc) {
-        const pt = { latitude: loc.lat, longitude: loc.lng };
-        geoCache.current.set(q, pt);
-        AsyncStorage.setItem(`geo:${q}`, JSON.stringify(pt)).catch(() => {});
-        return pt;
-      }
-    } catch {}
-    return null;
-  };
-
-  const distanceOk = (meters?: number | null) => {
-    if (meters == null || distanceFilter === "any") return true;
-    const km = meters / 1000;
-    if (distanceFilter === "2") return km <= 2;
-    if (distanceFilter === "5") return km <= 5;
-    if (distanceFilter === "10") return km <= 10;
-    return true;
-  };
 
   const clearOpenParams = useCallback(() => {
     try {
@@ -386,6 +302,67 @@ export default function CommunityScreen() {
     const anyId = params.openEventId ?? params.openEventEventId;
     if (anyId && events.length) openEventByAnyId(anyId);
   }, [events, params.openEventId, params.openEventEventId, openEventByAnyId]);
+
+  const toISODate = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const timeRange = (): { from?: string; to?: string } => {
+    const now = new Date();
+    if (timeFilter === "today") {
+      const d = toISODate(now);
+      return { from: d, to: d };
+    }
+    if (timeFilter === "week") {
+      const from = toISODate(now);
+      const end = new Date(now);
+      end.setDate(end.getDate() + 7);
+      return { from, to: toISODate(end) };
+    }
+    return { from: toISODate(now) };
+  };
+
+  const distanceMeters = (a: LatLng, b: LatLng) => {
+    const R = 6371e3;
+    const φ1 = (a.latitude * Math.PI) / 180;
+    const φ2 = (b.latitude * Math.PI) / 180;
+    const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
+    const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
+    const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  };
+
+  const kmStr = (m?: number | null) => (m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`);
+
+  const geocode = async (q: string): Promise<LatLng | null> => {
+    if (!q.trim()) return null;
+    if (geoCache.current.has(q)) return geoCache.current.get(q)!;
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${GOOGLE_WEB_API_KEY}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      const loc = json?.results?.[0]?.geometry?.location;
+      if (loc) {
+        const pt = { latitude: loc.lat, longitude: loc.lng };
+        geoCache.current.set(q, pt);
+        AsyncStorage.setItem(`geo:${q}`, JSON.stringify(pt)).catch(() => {});
+        return pt;
+      }
+    } catch {}
+    return null;
+  };
+
+  const distanceOk = (meters?: number | null) => {
+    if (meters == null || distanceFilter === "any") return true;
+    const km = meters / 1000;
+    if (distanceFilter === "2") return km <= 2;
+    if (distanceFilter === "5") return km <= 5;
+    if (distanceFilter === "10") return km <= 10;
+    return true;
+  };
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -438,12 +415,11 @@ export default function CommunityScreen() {
       };
 
       withDist.sort((a, b) => {
-        const ta = toDateValue(a),
-          tb = toDateValue(b);
+        const ta = toDateValue(a), tb = toDateValue(b);
         if (ta !== tb) return ta - tb;
         const da = a._distance ?? Number.POSITIVE_INFINITY;
         const db = b._distance ?? Number.POSITIVE_INFINITY;
-        return da - db;
+        return da - db; 
       });
 
       setEvents(withDist);
@@ -544,7 +520,12 @@ export default function CommunityScreen() {
     });
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const handleScrollBegin = () => {
+    if (notifPanelOpen) {
+      smoothLayout();
+      setNotifPanelOpen(false);
+    }
+  };
 
   const timingText = (tf: TimeFilter) =>
     tf === "today" ? t("community.timing.today") : tf === "week" ? t("community.timing.week") : t("community.timing.upcoming");
@@ -579,137 +560,53 @@ export default function CommunityScreen() {
     setDetailsOpen(false);
     const q = (evt.address && evt.address.trim()) || (evt.location_name && evt.location_name.trim());
     if (!q) return Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
-
-    router.push({
-      pathname: "/tabs/Navigation",
-      params: { presetQuery: q, autoStart: "1" }, // 👈 new
-    });
-  };
-
-  const openNativeDirections = async (q: string) => {
-    let latlng: LatLng | null = null;
-    try {
-      latlng = await geocode(q);
-    } catch {}
-
-    if (Platform.OS === "android") {
-      const navTarget = latlng ? `${latlng.latitude},${latlng.longitude}` : q;
-      const googleNavUrl = `google.navigation:q=${encodeURIComponent(navTarget)}&mode=d`;
-      const geoFallback = latlng
-        ? `geo:${latlng.latitude},${latlng.longitude}?q=${latlng.latitude},${latlng.longitude}(${encodeURIComponent(q)})`
-        : `geo:0,0?q=${encodeURIComponent(q)}`;
-
-      try {
-        const canNav = await Linking.canOpenURL("google.navigation:");
-        if (canNav) {
-          await Linking.openURL(googleNavUrl);
-          return;
-        }
-      } catch {}
-      await Linking.openURL(geoFallback);
-      return;
-    }
-
-    const appleTarget = latlng ? `${latlng.latitude},${latlng.longitude}` : q;
-    const gmapsUrl = `comgooglemaps://?daddr=${encodeURIComponent(appleTarget)}&directionsmode=driving`;
-    const appleUrl = `http://maps.apple.com/?daddr=${encodeURIComponent(appleTarget)}&dirflg=d`;
-
-    try {
-      const canG = await Linking.canOpenURL("comgooglemaps://");
-      if (canG) {
-        await Linking.openURL(gmapsUrl);
-        return;
-      }
-    } catch {}
-    await Linking.openURL(appleUrl);
-  };
-
-  const openDetails = (e: EventRow) => {
-    setSelectedEvent(e);
-    setDetailsOpen(true);
+    router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q, autoStart: "1" } });
   };
 
   const RenderCCItem = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
-    const scheduledAlready = isEventScheduled(item, ccReminders);
     const timePart = [formatTime(item.start_time), formatTime(item.end_time)].filter(Boolean).join(" - ") || "—";
     const feePart = item.fee?.trim() || t("community.priceOptions.free");
     const distPart = kmStr(item._distance);
-    
     const eventImage = item.category ? activityImages[item.category] : fallbackImage;
 
     const subtitle = item.location_name
-      ? `${item.location_name}${distPart ? ` (${distPart})` : ''}`
-      : distPart || '';
+      ? `${item.location_name}${distPart ? `: ${distPart}` : ""}`
+      : distPart || "";
 
     const details = `${item.start_date} • ${timePart}`;
-
-    const metadata = `${feePart.includes('Free') || !feePart ? 'FREE' : `$${feePart}`} • ${scheduledAlready ? t("community.notifs.scheduled") : t("community.notifs.remindMe")}`;
+    const metadata = `${feePart.includes("Free") || !feePart ? "FREE" : `${feePart}`}`;
 
     return (
       <ListItem
         title={item.title}
-        image={eventImage} 
-        placeholderIcon="event" // Use "event" icon for community events
+        image={eventImage}
+        placeholderIcon="event"
         subtitle={subtitle}
         details={details}
         metadata={metadata}
-        showArrow={true} // This will show the arrow-forward icon
-        onPress={() => openDetails(item)}
-        detailsIcon="event" 
-        metadataIcon="notifications"
-        imageResizeMode="contain" 
+        showArrow
+        onPress={() => {
+          setSelectedEvent(item);
+          setDetailsOpen(true);
+        }}
+        detailsIcon="event"
+        metadataIcon="local-atm"
+        imageResizeMode="contain"
       />
     );
   };
 
-  const filterSections: FilterSection[] = [
-    {
-      id: "categories",
-      type: "chips-multi",
-      title: t("community.filters.categories"),
-      options: (CATEGORIES as readonly string[]).map<ChipOpt>((c) => ({ key: c, label: catLabel(c as any, t) })),
-      selected: tmpCategories,
-      onToggle: (key) =>
-        setTmpCategories((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key])),
-    },
-    {
-      id: "time",
-      type: "chips-single",
-      title: t("community.filters.timing"),
-      options: [
-        { key: "today", label: t("community.timing.today") },
-        { key: "week", label: t("community.timing.week") },
-        { key: "upcoming", label: t("community.timing.upcoming") },
-      ],
-      selected: tmpTimeFilter,
-      onSelect: (k) => setTmpTimeFilter(k as TimeFilter),
-    },
-    {
-      id: "price",
-      type: "chips-single",
-      title: t("community.filters.price"),
-      options: [
-        { key: "all", label: t("community.price.all") },
-        { key: "free", label: t("community.price.freeOnly") },
-        { key: "paid", label: t("community.price.paidOnly") },
-      ],
-      selected: tmpPricingFilter,
-      onSelect: (k) => setTmpPricingFilter(k as PricingFilter),
-    },
-    {
-      id: "distance",
-      type: "chips-single",
-      title: t("community.filters.distance"),
-      options: [
-        { key: "any", label: t("community.distance.any") },
-        { key: "2", label: t("community.distance.le2") },
-        { key: "5", label: t("community.distance.le5") },
-        { key: "10", label: t("community.distance.le10") },
-      ],
-      selected: tmpDistanceFilter,
-      onSelect: (k) => setTmpDistanceFilter(k as DistanceFilter),
-    },
-  ];
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const footerVisible = totalPages > 1;
+
+  const clearAllCommunityFilters = () => {
+    setKeyword("");
+    setCategories([]);
+    setTimeFilter("upcoming");
+    setPricingFilter("all");
+    setDistanceFilter("any");
+    setPage(1);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
@@ -818,53 +715,47 @@ export default function CommunityScreen() {
         )}
       </View>
 
-      <View style={{ padding: 12 }}>
-        <SearchBar
-          value={keyword}
-          placeholder={t("community.searchPlaceholder")}
-          onChangeText={(txt) => {
-            setKeyword(txt);
-            setPage(1);
-          }}
-          onSubmit={() => setPage(1)}
-          onPressFilter={() => {
-            setTmpCategories(categories);
-            setTmpTimeFilter(timeFilter);
-            setTmpPricingFilter(pricingFilter);
-            setTmpDistanceFilter(distanceFilter);
-            setFiltersOpen(true);
-          }}
-        />
+      <SearchBar
+        value={keyword}
+        placeholder={t("community.searchPlaceholder")}
+        onChangeText={(txt) => {
+          setKeyword(txt);
+          setPage(1);
+        }}
+        onSubmit={() => setPage(1)}
+        onPressFilter={() => {
+          setTmpCategories(categories);
+          setTmpTimeFilter(timeFilter);
+          setTmpPricingFilter(pricingFilter);
+          setTmpDistanceFilter(distanceFilter);
+          setFiltersOpen(true);
+        }}
+        style={{ margin: 12 }}
+      />
 
-        {hasActiveFilters && (
-          <View style={styles.summaryChipContainer}>
-            <View style={styles.summaryChipHeader}>
-              <AppText variant="caption" weight="600" style={styles.summaryChipTitle}>
-                {t("walking.summary.activeFilters")}
+      {hasActiveFilters && (
+        <View style={styles.summaryChipContainer}>
+          <View style={styles.summaryChipHeader}>
+            <AppText variant="caption" weight="600" style={styles.summaryChipTitle}>
+              {t("walking.summary.activeFilters")}
+            </AppText>
+            <TouchableOpacity onPress={clearAllCommunityFilters} style={styles.clearAllButton}>
+              <AppText variant="caption" weight="600" style={styles.clearAllText}>
+                {t("community.summary.clearAll", "Clear all")}
               </AppText>
-              <TouchableOpacity onPress={clearAllCommunityFilters} style={styles.clearAllButton}>
-                <AppText variant="caption" weight="600" style={styles.clearAllText}>
-                  {t("community.summary.clearAll", "Clear all")}
-                </AppText>
-              </TouchableOpacity>
-            </View>
-
-            <SummaryChip
-              items={summaryItems}
-              variant="indigo"
-              dense
-              style={{ marginTop: 0 }}
-            />
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
+
+          <SummaryChip items={summaryItems} variant="indigo" dense style={{ marginTop: 0 }} />
+        </View>
+      )}
 
       <FlatList
         ref={listRef}
         data={events}
         keyExtractor={(it) => it.event_id}
         renderItem={RenderCCItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: footerVisible ? 0 : bottomPad }}
         ListEmptyComponent={
           <View style={{ padding: 16 }}>
             <AppText variant="label" color="#6B7280">
@@ -876,20 +767,65 @@ export default function CommunityScreen() {
         onRefresh={() => fetchEvents()}
         onScrollBeginDrag={handleScrollBegin}
         ListFooterComponent={
-          totalPages > 1 ? (
-            <View style={{ paddingHorizontal: 12 }}>
+          footerVisible ? (
+            <View style={{ paddingHorizontal: 12, paddingBottom: bottomPad }}>
               <Pagination page={page} total={totalPages} onChange={(p) => setPage(p)} />
             </View>
-          ) : (
-            <View />
-          )
+          ) : null
         }
       />
 
       <FilterSheet
         visible={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        sections={filterSections}
+        sections={[
+          {
+            id: "categories",
+            type: "chips-multi",
+            title: t("community.filters.categories"),
+            options: (CATEGORIES as readonly string[]).map<ChipOpt>((c) => ({ key: c, label: catLabel(c as any, t) })),
+            selected: tmpCategories,
+            onToggle: (key) =>
+              setTmpCategories((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key])),
+          },
+          {
+            id: "time",
+            type: "chips-single",
+            title: t("community.filters.timing"),
+            options: [
+              { key: "today", label: t("community.timing.today") },
+              { key: "week", label: t("community.timing.week") },
+              { key: "upcoming", label: t("community.timing.upcoming") },
+            ],
+            selected: tmpTimeFilter,
+            onSelect: (k) => setTmpTimeFilter(k as TimeFilter),
+          },
+          {
+            id: "price",
+            type: "chips-single",
+            title: t("community.filters.price"),
+            options: [
+              { key: "all", label: t("community.price.all") },
+              { key: "free", label: t("community.price.freeOnly") },
+              { key: "paid", label: t("community.price.paidOnly") },
+            ],
+            selected: tmpPricingFilter,
+            onSelect: (k) => setTmpPricingFilter(k as PricingFilter),
+          },
+          {
+            id: "distance",
+            type: "chips-single",
+            title: t("community.filters.distance"),
+            options: [
+              { key: "any", label: t("community.distance.any") },
+              { key: "2", label: t("community.distance.le2") },
+              { key: "5", label: t("community.distance.le5") },
+              { key: "10", label: t("community.distance.le10") },
+            ],
+            selected: tmpDistanceFilter,
+            onSelect: (k) => setTmpDistanceFilter(k as DistanceFilter),
+          },
+        ]}
         onReset={() => {
           setTmpCategories([]);
           setTmpTimeFilter("upcoming");
@@ -919,8 +855,10 @@ export default function CommunityScreen() {
         isScheduled={(evt) => isEventScheduled(evt, ccReminders)}
         distanceMeters={distanceMeters}
         kmStr={kmStr}
+        activityImages={activityImages}
+        fallbackImage={fallbackImage}
       />
-       </SafeAreaView>
+    </SafeAreaView>
   );
 }
 
@@ -941,102 +879,6 @@ const styles = StyleSheet.create({
   },
   notifPanel: { marginTop: 8, backgroundColor: "#FFF", borderRadius: 12, borderWidth: 1, borderColor: CARD_BORDER, padding: 12 },
 
-  card: {
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    marginBottom: 12,
-    overflow: 'hidden',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  
-  cardContent: {
-    flexDirection: 'row',
-    padding: 16,
-    alignItems: 'flex-start',
-  },
-
-  textContent: {
-    flex: 1,
-    marginRight: 12,
-  },
-  
-  activityTitle: {
-    flex: 1,
-    fontSize: 16,
-    color: "#111827",
-    marginRight: 8,
-    lineHeight: 20,
-  },
-  
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  
-  infoText: {
-    marginLeft: 6,
-    flex: 1,
-    fontSize: 14,
-  },
-  
-  distanceText: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-
-  costContainer: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    minWidth: 60,
-    alignItems: 'center',
-  },
-
-  costText: {
-    color: '#FFF',
-    fontSize: 12,
-  },
-  
-  notificationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  
-  notificationText: {
-    marginLeft: 4,
-    fontSize: 12,
-  },
-
-  eventImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-  },
-  
-  arrowContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 24,
-    height: 24,
-  },
-
-
   reminderRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1047,16 +889,17 @@ const styles = StyleSheet.create({
   },
 
   actionBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
+
   summaryChipContainer: {
-  backgroundColor: "#FFF",
-  paddingHorizontal: 12,
-  paddingVertical: 10,
-  borderTopWidth: StyleSheet.hairlineWidth,
-  borderBottomWidth: StyleSheet.hairlineWidth,
-  borderColor: CARD_BORDER,
-  marginTop: 8,
-  borderRadius: 12,
-},
+    backgroundColor: "#FFF",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: CARD_BORDER,
+    marginTop: 8,
+    borderRadius: 12,
+  },
   summaryChipHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1066,6 +909,4 @@ const styles = StyleSheet.create({
   summaryChipTitle: { color: "#6B7280", fontSize: 14 },
   clearAllButton: { paddingHorizontal: 8, paddingVertical: 4 },
   clearAllText: { color: "#EF4444", fontSize: 14 },
-
-
 });

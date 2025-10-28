@@ -44,14 +44,14 @@ export default function ElderlyTabs() {
     <Tabs
       key={i18n.language}
       initialRouteName="HomePage"
-      sceneContainerStyle={{ paddingBottom: 110 }}
       screenOptions={{
+        sceneStyle: { paddingBottom: 90 },
         headerShown: false,
         tabBarStyle: {
           backgroundColor: LILAC,
-          height: 90,              // taller bar
+          height: 90,            
           paddingTop: 8,
-          paddingBottom: 14,       // room for home indicator
+          paddingBottom: 14,       
           borderTopWidth: 0,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
@@ -60,7 +60,7 @@ export default function ElderlyTabs() {
           overflow: "hidden",
         },
         tabBarItemStyle: {
-          paddingTop: 6,           // space above label+icon
+          paddingTop: 6,           
         },
         tabBarLabelStyle: {
           fontSize: 12,

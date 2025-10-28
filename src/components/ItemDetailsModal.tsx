@@ -48,41 +48,64 @@ type EventItem = {
   registration_link: string | null;
 };
 
+type ClinicItem = {
+  title: string;
+  phone: string | null;
+  lat: number;
+  lon: number;
+  distance: number | null;
+  minutes: number | null;
+  totalTime: number | null;
+  region: string | null;
+};
+
 type Props = {
   park?: ParkLocation | null;
   event?: EventItem | null;
+  clinic?: ClinicItem | null;
   visible: boolean;
   onClose: () => void;
   userLocation: {latitude: number; longitude: number} | null;
-  onGetDirections: (item: ParkLocation | EventItem) => void;
+  onGetDirections: (item: ParkLocation | EventItem | ClinicItem) => void; 
   onRegister?: (url?: string | null) => void;
   onSetReminder?: (event: EventItem) => void;
   isScheduled?: (event: EventItem) => boolean;
+  onCallClinic?: (phone: string) => void; 
   distanceMeters: (a: {latitude: number; longitude: number}, b: {latitude: number; longitude: number}) => number;
   kmStr: (m?: number | null) => string;
+  activityImages?: { [key: string]: any };
+  fallbackImage?: any;
+  chasLogo?: any; 
 };
 
 const ItemDetailsModal = ({ 
   park, 
   event, 
+  clinic,
   visible, 
   onClose, 
   userLocation, 
   onGetDirections, 
   onRegister,
   onSetReminder,
+  onCallClinic,
   isScheduled,
   distanceMeters, 
-  kmStr 
+  kmStr,
+  activityImages = {},
+  fallbackImage = null,
+  chasLogo = null
 }: Props) => {
   const { t } = useTranslation();
   
-  const item = park || event;
+  const item = park || event || clinic;
   if (!item) return null;
 
   const isEvent = !!(item as EventItem).event_id;
+  const isClinic = !!(item as ClinicItem).phone; 
   const eventItem = item as EventItem;
   const parkItem = item as ParkLocation;
+  const clinicItem = item as ClinicItem;
 
   const handleUrlPress = async (url: string) => {
     if (!url) return;
@@ -123,14 +146,21 @@ const ItemDetailsModal = ({
       return '';
     }
     
-    if (!isEvent && parkItem.latitude && parkItem.longitude) {
+    if (isClinic && clinicItem.lat && clinicItem.lon) {
+      const distance = distanceMeters(userLocation, { 
+        latitude: clinicItem.lat, 
+        longitude: clinicItem.lon 
+      });
+      return kmStr(distance);
+    }
+    
+    if (!isEvent && !isClinic && parkItem.latitude && parkItem.longitude) {
       const distance = distanceMeters(userLocation, { 
         latitude: parkItem.latitude, 
         longitude: parkItem.longitude 
       });
       return kmStr(distance);
     }
-    
     return '';
   };
 
@@ -211,25 +241,50 @@ const ItemDetailsModal = ({
             <AppText style={styles.closeButtonText}>×</AppText>
           </TouchableOpacity>
           <AppText variant="h2" weight="800" style={styles.title}>
-            {isEvent ? t('community.details.title') : t('walking.parkDetails.title')}
+            {isEvent ? t('community.details.title') : 
+            isClinic ? t('clinics.details.title') : 
+            t('walking.parkDetails.title')}
           </AppText>
           <View style={styles.placeholder} />
         </View>
         
         <ScrollView style={styles.content}>
           {/* Image */}
-          {!isEvent && parkItem.image ? (
-            <Image 
-              source={{ uri: parkItem.image }} 
-              style={styles.itemImage}
-              resizeMode="cover"
-            />
+          {isEvent ? (
+            eventItem.category && activityImages[eventItem.category] ? (
+              <Image 
+                source={activityImages[eventItem.category]} 
+                style={styles.itemImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <View style={[styles.itemImage, styles.noImage]}>
+                <AppText variant="caption" weight="400" style={styles.noImageText}>
+                  {t('community.details.noImage')}
+                </AppText>
+              </View>
+            )
+            ): isClinic ? (
+              <Image 
+                source={chasLogo} 
+                style={styles.itemImage}
+                resizeMode="contain"
+              />
           ) : (
-            <View style={[styles.itemImage, styles.noImage]}>
-              <AppText variant="caption" weight="400" style={styles.noImageText}>
-                {isEvent ? t('community.details.noImage') : t('walking.parkDetails.noImage')}
-              </AppText>
-            </View>
+            // Park Image Logic
+            parkItem.image ? (
+              <Image 
+                source={{ uri: parkItem.image }} 
+                style={styles.itemImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.itemImage, styles.noImage]}>
+                <AppText variant="caption" weight="400" style={styles.noImageText}>
+                  {t('walking.parkDetails.noImage')}
+                </AppText>
+              </View>
+            )
           )}
 
           {/* Title with Distance */}
@@ -243,6 +298,138 @@ const ItemDetailsModal = ({
               </AppText>
             )}
           </View>
+
+          {/* Buttons Container - Single Row Layout */}
+          <View style={styles.buttonsContainer}>
+            {/* Event-specific buttons */}
+            {isEvent && (
+              <>
+                {/* Register Button */}
+                {eventItem.registration_link && onRegister && (
+                  <TouchableOpacity 
+                    style={styles.registerButton}
+                    onPress={() => onRegister(eventItem.registration_link)}
+                  >
+                    <AppText variant="button" weight="700" style={styles.registerButtonText}>
+                      {t('community.register')}
+                    </AppText>
+                  </TouchableOpacity>
+                )}
+
+                {/* Set Reminder Button */}
+                {onSetReminder && (
+                  <TouchableOpacity 
+                    style={[
+                      styles.reminderButton,
+                      isScheduled && isScheduled(eventItem) && styles.reminderButtonScheduled
+                    ]}
+                    onPress={() => onSetReminder(eventItem)}
+                  >
+                    <AppText variant="button" weight="700" style={styles.reminderButtonText}>
+                      {isScheduled && isScheduled(eventItem) 
+                        ? t('community.notifs.scheduled') 
+                        : t('community.notifs.setReminder')
+                      }
+                    </AppText>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
+            {/* Clinic-specific buttons */}
+            {isClinic && (
+              <>
+                {/* Call Clinic Button */}
+                {clinicItem.phone && onCallClinic && (
+                  <TouchableOpacity 
+                    style={styles.callButton}
+                    onPress={() => onCallClinic(clinicItem.phone!)}
+                  >
+                    <AppText variant="button" weight="700" style={styles.callButtonText}>
+                      {t('clinics.callToEnquire')}
+                    </AppText>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
+            {/* Park-specific button */}
+            {!isEvent && !isClinic && parkItem.url && (
+              <TouchableOpacity 
+                onPress={() => handleUrlPress(parkItem.url)}
+                style={styles.learnMoreButton}
+              >
+                <AppText variant="button" weight="700" style={styles.learnMoreButtonText}>
+                  {t('walking.parkDetails.learnMore')}
+                </AppText>
+              </TouchableOpacity>
+            )}
+
+            {/* Get Directions Button - Always shown */}
+            <TouchableOpacity 
+              style={styles.directionsButton}
+              onPress={() => onGetDirections(item)}
+            >
+              <AppText variant="button" weight="700" style={styles.directionsButtonText}>
+                {isEvent ? t('community.getDirections') : 
+                isClinic ? t('walking.parks.getDirections') : 
+                t('walking.parkDetails.getDirections')}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+
+          {/* Clinic Specific Info */}
+          {isClinic && (
+            <>
+              {/* Waiting Time */}
+              {clinicItem.minutes != null && (
+                <View style={styles.section}>
+                  <AppText variant="title" weight="700" style={styles.sectionTitle}>
+                    {t('clinics.waitingTime')}
+                  </AppText>
+                  <AppText variant="body" weight="400" style={styles.sectionContent}>
+                    {clinicItem.minutes} {t('clinics.minutes')}
+                  </AppText>
+                </View>
+              )}
+
+              {/* Total Estimated Time */}
+              {clinicItem.totalTime != null && (
+                <View style={styles.section}>
+                  <AppText variant="title" weight="700" style={styles.sectionTitle}>
+                    {t('clinics.totalEstTime')}
+                  </AppText>
+                  <AppText variant="body" weight="400" style={styles.sectionContent}>
+                    {Math.round(clinicItem.totalTime)} {t('clinics.mins')}
+                  </AppText>
+                </View>
+              )}
+
+              {/* Contact Information */}
+              {clinicItem.phone && (
+                <View style={styles.section}>
+                  <AppText variant="title" weight="700" style={styles.sectionTitle}>
+                    {t('clinics.contact')}
+                  </AppText>
+                  <AppText variant="body" weight="400" style={styles.sectionContent}>
+                    {clinicItem.phone}
+                  </AppText>
+                </View>
+              )}
+
+              {/* Region */}
+              {clinicItem.region && (
+                <View style={styles.section}>
+                  <AppText variant="title" weight="700" style={styles.sectionTitle}>
+                    {t('walking.parkDetails.region')}
+                  </AppText>
+                  <AppText variant="body" weight="400" style={styles.sectionContent}>
+                    {clinicItem.region}
+                  </AppText>
+                </View>
+              )}
+            </>
+          )}
 
           {/* Event Specific Info */}
           {isEvent && (
@@ -298,7 +485,7 @@ const ItemDetailsModal = ({
           )}
 
           {/* Park Specific Info */}
-          {!isEvent && (
+          {!isEvent && !isClinic && (
             <>
               {/* Region */}
               {parkItem.region && (
@@ -381,74 +568,13 @@ const ItemDetailsModal = ({
           {(isEvent ? eventItem.description : true) && (
             <View style={styles.section}>
               <AppText variant="title" weight="700" style={styles.sectionTitle}>
-                {isEvent ? t('community.details.description') : t('walking.parkDetails.description')}
+                {isEvent ? t('community.details.description') : ''}
               </AppText>
               <AppText variant="body" weight="400" style={styles.sectionContent}>
                 {isEvent ? (eventItem.description || t('community.details.noDescription')) : parkItem.description}
               </AppText>
             </View>
           )}
-
-          {/* Buttons Container */}
-          <View style={styles.buttonsContainer}>
-            {/* Event-specific buttons */}
-            {isEvent && (
-              <>
-                {/* Register Button */}
-                {eventItem.registration_link && onRegister && (
-                  <TouchableOpacity 
-                    style={styles.registerButton}
-                    onPress={() => onRegister(eventItem.registration_link)}
-                  >
-                    <AppText variant="button" weight="700" style={styles.registerButtonText}>
-                      {t('community.register')}
-                    </AppText>
-                  </TouchableOpacity>
-                )}
-
-                {/* Set Reminder Button */}
-                {onSetReminder && (
-                  <TouchableOpacity 
-                    style={[
-                      styles.reminderButton,
-                      isScheduled && isScheduled(eventItem) && styles.reminderButtonScheduled
-                    ]}
-                    onPress={() => onSetReminder(eventItem)}
-                  >
-                    <AppText variant="button" weight="700" style={styles.reminderButtonText}>
-                      {isScheduled && isScheduled(eventItem) 
-                        ? t('community.notifs.scheduled') 
-                        : t('community.notifs.setReminder')
-                      }
-                    </AppText>
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-
-            {/* Park-specific buttons */}
-            {!isEvent && parkItem.url && (
-              <TouchableOpacity 
-                onPress={() => handleUrlPress(parkItem.url)}
-                style={styles.learnMoreButton}
-              >
-                <AppText variant="button" weight="700" style={styles.learnMoreButtonText}>
-                  {t('walking.parkDetails.learnMore')}
-                </AppText>
-              </TouchableOpacity>
-            )}
-
-            {/* Get Directions Button */}
-            <TouchableOpacity 
-              style={styles.directionsButton}
-              onPress={() => onGetDirections(item)}
-            >
-              <AppText variant="button" weight="700" style={styles.directionsButtonText}>
-                {t(isEvent ? 'community.getDirections' : 'walking.parkDetails.getDirections')}
-              </AppText>
-            </TouchableOpacity>
-          </View>
-
           {/* Spacer */}
           <View style={styles.spacer} />
         </ScrollView>
@@ -585,58 +711,87 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
     lineHeight: 18,
-  },
-  buttonsContainer: {
-    flexDirection: 'column',
-    gap: 12,
-    margin: 16,
-  },
-  learnMoreButton: {
-    backgroundColor: '#6C757D',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  learnMoreButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  registerButton: {
-    backgroundColor: '#10B981',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  registerButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  reminderButton: {
-    backgroundColor: '#F59E0B',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  reminderButtonScheduled: {
-    backgroundColor: '#6B7280',
-  },
-  reminderButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  directionsButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  directionsButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
+  },buttonsContainer: {
+  flexDirection: 'row',
+  gap: 8,
+  margin: 16,
+},
+learnMoreButton: {
+  flex: 1,
+  backgroundColor: '#6C757D',
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  minHeight: 44,
+  justifyContent: 'center',
+},
+learnMoreButtonText: {
+  color: '#FFF',
+  fontSize: 14,
+  textAlign: 'center',
+},
+registerButton: {
+  flex: 1,
+  backgroundColor: '#10B981',
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  minHeight: 44,
+  justifyContent: 'center',
+},
+registerButtonText: {
+  color: '#FFF',
+  fontSize: 14,
+  textAlign: 'center',
+},
+reminderButton: {
+  flex: 1,
+  backgroundColor: '#F59E0B',
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  minHeight: 44,
+  justifyContent: 'center',
+},
+reminderButtonScheduled: {
+  backgroundColor: '#6B7280',
+},
+reminderButtonText: {
+  color: '#FFF',
+  fontSize: 14,
+  textAlign: 'center',
+},
+directionsButton: {
+  flex: 1,
+  backgroundColor: '#007AFF',
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  minHeight: 44,
+  justifyContent: 'center',
+},
+directionsButtonText: {
+  color: '#FFF',
+  fontSize: 14,
+  textAlign: 'center',
+},
   spacer: {
     height: 20,
   },
+  callButton: {
+  flex: 1,
+  backgroundColor: '#10B981',
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  minHeight: 44,
+  justifyContent: 'center',
+},
+callButtonText: {
+  color: '#FFF',
+  fontSize: 14,
+  textAlign: 'center',
+},
 });
 
 export default ItemDetailsModal;

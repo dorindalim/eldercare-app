@@ -18,23 +18,37 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
-  View
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "../../src/components/AppText";
 import { supabase } from "../../src/lib/supabase";
 
 const DEVICE_ID_KEY = "bulletin:device_id_v1";
+const MSG_TEXT = "#111827";
+const MSG_TIME = "#6B7280";
 
-async function fetchTokensForUsers(supabaseClient: any, userIds: string[]): Promise<string[]> {
+async function fetchTokensForUsers(
+  supabaseClient: any,
+  userIds: string[]
+): Promise<string[]> {
   if (!userIds.length) return [];
-  const { data } = await supabaseClient.from("push_tokens").select("expo_push_token").in("user_id", userIds);
+  const { data } = await supabaseClient
+    .from("push_tokens")
+    .select("expo_push_token")
+    .in("user_id", userIds);
   return (data || []).map((r: any) => r.expo_push_token).filter(Boolean);
 }
 
-async function fetchTokensForDevices(supabaseClient: any, deviceIds: string[]): Promise<string[]> {
+async function fetchTokensForDevices(
+  supabaseClient: any,
+  deviceIds: string[]
+): Promise<string[]> {
   if (!deviceIds.length) return [];
-  const { data } = await supabaseClient.from("push_tokens").select("expo_push_token").in("device_id", deviceIds);
+  const { data } = await supabaseClient
+    .from("push_tokens")
+    .select("expo_push_token")
+    .in("device_id", deviceIds);
   return (data || []).map((r: any) => r.expo_push_token).filter(Boolean);
 }
 
@@ -44,7 +58,12 @@ function chunk<T>(arr: T[], size = 90): T[][] {
   return out;
 }
 
-async function sendExpoPush(toTokens: string[], title: string, body: string, data?: Record<string, any>) {
+async function sendExpoPush(
+  toTokens: string[],
+  title: string,
+  body: string,
+  data?: Record<string, any>
+) {
   if (!toTokens.length) return;
   const payload = toTokens.map((to) => ({
     to,
@@ -117,7 +136,11 @@ async function notifyChatMessageClientSide({
   const tokens = Array.from(new Set([...userTokens, ...devTokens]));
   if (!tokens.length) return;
 
-  const preview = body.startsWith("[img]") ? "📷 Photo" : (body.length > 120 ? body.slice(0, 120) + "…" : body);
+  const preview = body.startsWith("[img]")
+    ? "📷 Photo"
+    : body.length > 120
+    ? body.slice(0, 120) + "…"
+    : body;
   const sender = senderName || "Neighbour";
 
   await sendExpoPush(tokens, title, `${sender}: ${preview}`, {
@@ -130,7 +153,9 @@ async function notifyChatMessageClientSide({
 async function getDeviceId(): Promise<string> {
   const cur = await AsyncStorage.getItem(DEVICE_ID_KEY);
   if (cur) return cur;
-  const id = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  const id = `dev_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
   await AsyncStorage.setItem(DEVICE_ID_KEY, id);
   return id;
 }
@@ -146,14 +171,17 @@ type Msg = {
   image_url?: string | null;
 };
 
-type ListItem = { type: "msg"; key: string; msg: Msg } | { type: "sep"; key: "unread-sep" };
+type ListItem =
+  | { type: "msg"; key: string; msg: Msg }
+  | { type: "sep"; key: "unread-sep" };
 
 function normalizeImageUrl(u: string | null | undefined) {
   if (!u) return null;
   try {
     const url = new URL(u);
     if (url.hostname.includes(".supabase.co")) {
-      if (!url.searchParams.has("v")) url.searchParams.set("v", String(Date.now() % 1e9));
+      if (!url.searchParams.has("v"))
+        url.searchParams.set("v", String(Date.now() % 1e9));
       return url.toString();
     }
   } catch {}
@@ -183,17 +211,24 @@ function dedupeMessages(list: Msg[]) {
   return drop.size ? list.filter((m) => !drop.has(m.id)) : list;
 }
 
-const USER_COLORS = ["#FDE68A", "#BFDBFE", "#FBCFE8", "#C7D2FE", "#BBF7D0", "#FECACA", "#F5D0FE", "#A7F3D0"];
+const OTHER_PALETTE = [
+  "#C9F3D5",
+  "#C7E7EA",
+  "#FFD38A",
+  "#FFEBC3",
+  "#FFD3CD",
+  "#E5E1D8",
+];
 function hash(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
+  return h >>> 0;
 }
 function colorFor(id: string | null | undefined, mine: boolean) {
-  if (mine) return "#0EA5E9";
+  if (mine) return "#E2CEF1";
   const base = id || "anon";
-  const idx = hash(base) % USER_COLORS.length;
-  return USER_COLORS[idx];
+  const idx = hash(base) % OTHER_PALETTE.length;
+  return OTHER_PALETTE[idx];
 }
 function textColorFor(bg: string) {
   return "#111827";
@@ -228,12 +263,21 @@ export default function ActivityChat({
     }
   }, []);
 
-  const identityKey = useMemo(() => `${currentUserId || "dev:" + deviceId}`, [currentUserId, deviceId]);
-  const lastReadKey = useMemo(() => `activity:lastread:${activityId}:${identityKey}`, [activityId, identityKey]);
+  const identityKey = useMemo(
+    () => `${currentUserId || "dev:" + deviceId}`,
+    [currentUserId, deviceId]
+  );
+  const lastReadKey = useMemo(
+    () => `activity:lastread:${activityId}:${identityKey}`,
+    [activityId, identityKey]
+  );
 
-  const [headerTitle, setHeaderTitle] = useState<string>(activityTitle ?? t("chat.headerDefault"));
+  const [headerTitle, setHeaderTitle] = useState<string>(
+    activityTitle ?? t("chat.headerDefault")
+  );
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [ownerName, setOwnerName] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!activityId) return;
@@ -246,7 +290,11 @@ export default function ActivityChat({
       setOwnerId(act?.user_id ?? null);
       setHeaderTitle(act?.title ?? activityTitle ?? t("chat.headerDefault"));
       if (act?.user_id) {
-        const { data: prof } = await supabase.from("elderly_profiles").select("name").eq("user_id", act.user_id).maybeSingle();
+        const { data: prof } = await supabase
+          .from("elderly_profiles")
+          .select("name")
+          .eq("user_id", act.user_id)
+          .maybeSingle();
         setOwnerName(prof?.name ?? null);
       }
     })();
@@ -285,7 +333,12 @@ export default function ActivityChat({
       .channel(`activity_messages:${activityId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "activity_messages", filter: `activity_id=eq.${activityId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "activity_messages",
+          filter: `activity_id=eq.${activityId}`,
+        },
         (payload) => {
           const msg = payload.new as Msg;
           setMessages((prev) => dedupeMessages([...prev, msg]));
@@ -304,11 +357,16 @@ export default function ActivityChat({
 
   const [nameByUserId, setNameByUserId] = useState<Record<string, string>>({});
   useEffect(() => {
-    const ids = Array.from(new Set(messages.map((m) => m.sender_user_id).filter(Boolean))) as string[];
+    const ids = Array.from(
+      new Set(messages.map((m) => m.sender_user_id).filter(Boolean))
+    ) as string[];
     const unknown = ids.filter((id) => !(id in nameByUserId));
     if (!unknown.length) return;
     (async () => {
-      const { data } = await supabase.from("elderly_profiles").select("user_id,name").in("user_id", unknown);
+      const { data } = await supabase
+        .from("elderly_profiles")
+        .select("user_id,name")
+        .in("user_id", unknown);
       const map: Record<string, string> = {};
       (data || []).forEach((r: any) => {
         if (r.user_id) map[r.user_id] = r.name ?? t("chat.neighbour");
@@ -317,21 +375,37 @@ export default function ActivityChat({
     })();
   }, [messages]);
 
-  const [typingPeers, setTypingPeers] = useState<Record<string, { name?: string | null; at: number }>>({});
-  const typingChanRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [typingPeers, setTypingPeers] = useState<
+    Record<string, { name?: string | null; at: number }>
+  >({});
+  const typingChanRef = useRef<ReturnType<typeof supabase.channel> | null>(
+    null
+  );
   function broadcastTyping() {
     const ch = typingChanRef.current;
     if (!ch) return;
-    ch.send({ type: "broadcast", event: "typing", payload: { device_id: deviceId, name: currentUserName ?? t("chat.neighbour") } });
+    ch.send({
+      type: "broadcast",
+      event: "typing",
+      payload: {
+        device_id: deviceId,
+        name: currentUserName ?? t("chat.neighbour"),
+      },
+    });
   }
   useEffect(() => {
     if (!activityId) return;
     const ch = supabase
-      .channel(`activity_typing:${activityId}`, { config: { broadcast: { self: false } } })
+      .channel(`activity_typing:${activityId}`, {
+        config: { broadcast: { self: false } },
+      })
       .on("broadcast", { event: "typing" }, (payload) => {
         const { device_id, name } = (payload as any).payload || {};
         if (!device_id || device_id === deviceId) return;
-        setTypingPeers((prev) => ({ ...prev, [device_id]: { name, at: Date.now() } }));
+        setTypingPeers((prev) => ({
+          ...prev,
+          [device_id]: { name, at: Date.now() },
+        }));
       })
       .subscribe();
     typingChanRef.current = ch;
@@ -370,7 +444,8 @@ export default function ActivityChat({
   }, [lastReadKey]);
 
   const isMine = (m: Msg) =>
-    (currentUserId && m.sender_user_id === currentUserId) || (!currentUserId && m.sender_device_id === deviceId);
+    (currentUserId && m.sender_user_id === currentUserId) ||
+    (!currentUserId && m.sender_device_id === deviceId);
 
   const myLatestTs = useMemo(() => {
     let ts = 0;
@@ -383,7 +458,10 @@ export default function ActivityChat({
     return ts || null;
   }, [messages, currentUserId, deviceId]);
 
-  const effectiveLastRead = useMemo(() => Math.max(lastReadAt ?? 0, myLatestTs ?? 0), [lastReadAt, myLatestTs]);
+  const effectiveLastRead = useMemo(
+    () => Math.max(lastReadAt ?? 0, myLatestTs ?? 0),
+    [lastReadAt, myLatestTs]
+  );
 
   const unreadFirstIndex = useMemo(() => {
     if (!messages.length) return -1;
@@ -401,7 +479,8 @@ export default function ActivityChat({
     }
     const out: ListItem[] = [];
     messages.forEach((m, idx) => {
-      if (idx === unreadFirstIndex) out.push({ type: "sep", key: "unread-sep" });
+      if (idx === unreadFirstIndex)
+        out.push({ type: "sep", key: "unread-sep" });
       out.push({ type: "msg", key: m.id, msg: m });
     });
     return out;
@@ -412,7 +491,11 @@ export default function ActivityChat({
     const sepIndex = listData.findIndex((it) => it.type === "sep");
     requestAnimationFrame(() => {
       if (sepIndex >= 0) {
-        listRef.current?.scrollToIndex({ index: sepIndex, animated: false, viewPosition: 0 });
+        listRef.current?.scrollToIndex({
+          index: sepIndex,
+          animated: false,
+          viewPosition: 0,
+        });
       } else {
         listRef.current?.scrollToEnd({ animated: false });
       }
@@ -434,7 +517,8 @@ export default function ActivityChat({
 
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-    const bottomGap = contentSize.height - (contentOffset.y + layoutMeasurement.height);
+    const bottomGap =
+      contentSize.height - (contentOffset.y + layoutMeasurement.height);
     const nowAtBottom = bottomGap < 20;
     setAtBottom(nowAtBottom);
     if (nowAtBottom) {
@@ -443,11 +527,18 @@ export default function ActivityChat({
     }
   }
 
-  function onScrollToIndexFailed(info: { index: number; averageItemLength: number }) {
+  function onScrollToIndexFailed(info: {
+    index: number;
+    averageItemLength: number;
+  }) {
     const offset = Math.max(0, info.averageItemLength * info.index);
     listRef.current?.scrollToOffset({ offset, animated: false });
     setTimeout(() => {
-      listRef.current?.scrollToIndex({ index: info.index, animated: false, viewPosition: 0 });
+      listRef.current?.scrollToIndex({
+        index: info.index,
+        animated: false,
+        viewPosition: 0,
+      });
     }, 80);
   }
 
@@ -507,7 +598,8 @@ export default function ActivityChat({
 
   async function pickAndSendImage() {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(t("errors.permissionTitle"), t("errors.permissionBody"));
         return;
@@ -531,13 +623,21 @@ export default function ActivityChat({
       }
       const ab = await res.arrayBuffer();
       const path = `${activityId}/${deviceId}/${Date.now()}.jpg`;
-      const up = await supabase.storage.from("activity_uploads").upload(path, ab, { contentType: "image/jpeg", upsert: true });
+      const up = await supabase.storage
+        .from("activity_uploads")
+        .upload(path, ab, { contentType: "image/jpeg", upsert: true });
       if (up.error) {
-        Alert.alert(t("errors.uploadTitle"), up.error.message || t("errors.uploadGenericBody"));
+        Alert.alert(
+          t("errors.uploadTitle"),
+          up.error.message || t("errors.uploadGenericBody")
+        );
         return;
       }
-      const signed = await supabase.storage.from("activity_uploads").createSignedUrl(path, 60 * 5);
-      const pub = supabase.storage.from("activity_uploads").getPublicUrl(path).data.publicUrl;
+      const signed = await supabase.storage
+        .from("activity_uploads")
+        .createSignedUrl(path, 60 * 5);
+      const pub = supabase.storage.from("activity_uploads").getPublicUrl(path)
+        .data.publicUrl;
       const displayUrl = signed.data?.signedUrl ?? `${pub}?v=${Date.now()}`;
 
       const optimistic: Msg = {
@@ -569,7 +669,10 @@ export default function ActivityChat({
         .single();
 
       if (insertErr) {
-        Alert.alert(t("errors.sendTitle"), insertErr.message || t("errors.sendBody"));
+        Alert.alert(
+          t("errors.sendTitle"),
+          insertErr.message || t("errors.sendBody")
+        );
       } else {
         notifyChatMessageClientSide({
           supabaseClient: supabase,
@@ -591,7 +694,9 @@ export default function ActivityChat({
       return (
         <View style={styles.sepWrap}>
           <View style={styles.unreadPill}>
-            <AppText variant="caption" weight="900" color="#6B7280">Unread</AppText>
+            <AppText variant="caption" weight="900" color="#6B7280">
+              Unread
+            </AppText>
           </View>
         </View>
       );
@@ -599,16 +704,29 @@ export default function ActivityChat({
     const m = item.msg;
     const mine = isMine(m);
     const derivedName =
-      m.sender_name ?? (m.sender_user_id ? nameByUserId[m.sender_user_id] : undefined) ?? t("chat.neighbour");
+      m.sender_name ??
+      (m.sender_user_id ? nameByUserId[m.sender_user_id] : undefined) ??
+      t("chat.neighbour");
     const isHost = !!ownerId && m.sender_user_id === ownerId;
     const img = imageUrlOf(m);
     const bg = colorFor(m.sender_user_id || m.sender_device_id || "", mine);
-    const fg = mine ? "#fff" : textColorFor(bg);
+    const fg = MSG_TEXT;
     return (
       <View style={[styles.bubbleRow, mine ? styles.rowEnd : styles.rowStart]}>
-        <View style={[styles.bubble, { backgroundColor: bg }, mine ? { borderTopRightRadius: 4 } : { borderTopLeftRadius: 4 }]}>
+        <View
+          style={[
+            styles.bubble,
+            { backgroundColor: bg },
+            mine ? { borderTopRightRadius: 4 } : { borderTopLeftRadius: 4 },
+          ]}
+        >
           {!mine && (
-            <AppText variant="caption" weight="800" color={isHost ? "#166534" : "#0F172A"} style={{ marginBottom: 2 }}>
+            <AppText
+              variant="caption"
+              weight="800"
+              color={isHost ? "#166534" : "#0F172A"}
+              style={{ marginBottom: 2 }}
+            >
               {derivedName}
               {isHost ? ` ${t("chat.hostBadge")}` : ""}
             </AppText>
@@ -617,15 +735,32 @@ export default function ActivityChat({
             <Pressable onPress={() => Linking.openURL(img)} hitSlop={6}>
               <Image
                 source={{ uri: img }}
-                style={{ width: 220, height: 220, borderRadius: 8, marginBottom: 6, backgroundColor: "#EEE" }}
+                style={{
+                  width: 220,
+                  height: 220,
+                  borderRadius: 8,
+                  marginBottom: 6,
+                  backgroundColor: "#EEE",
+                }}
                 resizeMode="cover"
               />
             </Pressable>
           ) : (
-            <AppText variant="body" weight="600" color={fg}>{m.body}</AppText>
+            <AppText variant="body" weight="600" color={MSG_TEXT}>
+              {m.body}
+            </AppText>
           )}
-          <AppText variant="caption" weight="700" color={mine ? "#E5E7EB" : "#6B7280"} style={{ marginTop: 4 }}>
-            {new Date(m.created_at).toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit", hour12: false })}
+          <AppText
+            variant="caption"
+            weight="700"
+            color={MSG_TIME}
+            style={{ marginTop: 4 }}
+          >
+            {new Date(m.created_at).toLocaleTimeString("en-SG", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })}
           </AppText>
         </View>
       </View>
@@ -635,97 +770,137 @@ export default function ActivityChat({
   const showJump = listData.length > 0 && !atBottom;
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.select({ ios: 0, android: 0 })}
     >
       <SafeAreaView style={styles.safe}>
-          <View style={styles.header}>
-            <Pressable onPress={() => { markReadNow().finally(onClose); }} hitSlop={8} style={{ padding: 6 }}>
-              <Ionicons name="chevron-back" size={24} color="#111827" />
-            </Pressable>
-            <AppText variant="label" weight="800" color="#111827" style={styles.title}>
-              {headerTitle}{ownerName ? ` ${t("chat.hostColon")} ${ownerName}` : ""}
-            </AppText>
-            <View style={{ width: 30 }} />
-          </View>
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => { markReadNow().finally(onClose); }}
+            hitSlop={10}               
+            style={styles.backBtn}     
+          >
+            <Ionicons name="arrow-back" size={24} color="#111827" />
+          </Pressable>
 
-          {loading ? (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <ActivityIndicator />
+          <AppText variant="label" weight="800" color="#111827" style={styles.title}>
+            {headerTitle}{ownerName ? ` · Host: ${ownerName}` : ""}
+          </AppText>
+
+          <View style={{ width: 30 }} />
+        </View>
+        {loading ? (
+          <View
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          >
+            <ActivityIndicator />
+          </View>
+        ) : (
+          <>
+            <FlatList
+              ref={listRef}
+              data={listData}
+              keyExtractor={(it) => it.key}
+              renderItem={renderItem}
+              contentContainerStyle={{ padding: 12, paddingBottom: 120 }}
+              onScroll={handleScroll}
+              scrollEventThrottle={80}
+              onScrollToIndexFailed={onScrollToIndexFailed}
+              getItemLayout={(_, index) => {
+                const SEP_H = 36;
+                const AVG_MSG_H = 84;
+                const item = listData[index];
+                const length = item?.type === "sep" ? SEP_H : AVG_MSG_H;
+                return { length, offset: length * index, index };
+              }}
+              keyboardDismissMode="interactive"
+              keyboardShouldPersistTaps="handled"
+            />
+
+            {showJump && (
+              <View pointerEvents="box-none" style={styles.fabContainer}>
+                <Pressable
+                  onPress={scrollToBottom}
+                  style={[styles.fab, newSinceScroll && styles.fabNew]}
+                  accessibilityLabel="Jump to latest messages"
+                >
+                  <Ionicons name="arrow-down" size={20} color="#fff" />
+                </Pressable>
+                {newSinceScroll && <View style={styles.fabBadge} />}
+              </View>
+            )}
+          </>
+        )}
+
+        {Object.keys(typingPeers).length > 0 && (
+          <View style={{ paddingHorizontal: 12, paddingBottom: 6 }}>
+            <View
+              style={{
+                alignSelf: "flex-start",
+                backgroundColor: "#E5E7EB",
+                borderRadius: 14,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+              }}
+            >
+              <AppText variant="body" weight="600" color="#111827">
+                {Object.values(typingPeers)
+                  .map((ti) => ti.name || t("chat.neighbour"))
+                  .slice(0, 2)
+                  .join(", ")}
+                {Object.keys(typingPeers).length > 2 ? " +…" : ""}{" "}
+                {t("chat.typing")}
+              </AppText>
             </View>
-          ) : (
-            <>
-              <FlatList
-                ref={listRef}
-                data={listData}
-                keyExtractor={(it) => it.key}
-                renderItem={renderItem}
-                contentContainerStyle={{ padding: 12, paddingBottom: 10 }}
-                onScroll={handleScroll}
-                scrollEventThrottle={80}
-                onScrollToIndexFailed={onScrollToIndexFailed}
-                getItemLayout={(_, index) => {
-                  const SEP_H = 36;
-                  const AVG_MSG_H = 84;
-                  const item = listData[index];
-                  const length = item?.type === "sep" ? SEP_H : AVG_MSG_H;
-                  return { length, offset: length * index, index };
-                }}
-                keyboardDismissMode="interactive"
-                keyboardShouldPersistTaps="handled"
+          </View>
+        )}
+
+        <View style={styles.composerWrap}>
+          <SafeAreaView edges={['bottom']} style={styles.composerWrap}>
+            <View style={styles.composerRow}>
+              <Pressable onPress={pickAndSendImage} style={styles.addBtn} hitSlop={8}>
+                <Ionicons name="add" size={22} color="#111827" />
+              </Pressable>
+
+              <TextInput
+                value={text}
+                onChangeText={(v) => { setText(v); broadcastTyping(); }}
+                onFocus={() => setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0)}
+                placeholder={t("chat.placeholder")}
+                style={styles.input}
+                multiline
               />
 
-              {showJump && (
-                <View pointerEvents="box-none" style={styles.fabContainer}>
-                  <Pressable
-                    onPress={scrollToBottom}
-                    style={[styles.fab, newSinceScroll && styles.fabNew]}
-                    accessibilityLabel="Jump to latest messages"
-                  >
-                    <Ionicons name="arrow-down" size={20} color="#fff" />
-                  </Pressable>
-                  {newSinceScroll && <View style={styles.fabBadge} />}
-                </View>
-              )}
-            </>
-          )}
-
-          {Object.keys(typingPeers).length > 0 && (
-            <View style={{ paddingHorizontal: 12, paddingBottom: 6 }}>
-              <View style={{ alignSelf: "flex-start", backgroundColor: "#E5E7EB", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}>
-                <AppText variant="body" weight="600" color="#111827">
-                  {Object.values(typingPeers).map((ti) => ti.name || t("chat.neighbour")).slice(0, 2).join(", ")}
-                  {Object.keys(typingPeers).length > 2 ? " +…" : ""} {t("chat.typing")}
-                </AppText>
-              </View>
+              <Pressable
+                onPress={send}
+                disabled={sending || !text.trim()}
+                style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}
+              >
+                <Ionicons name="send" size={18} color="#4B5563" />
+              </Pressable>
             </View>
-          )}
-
-          <View style={styles.composerRow}>
-            <Pressable onPress={pickAndSendImage} style={styles.addBtn} hitSlop={8}>
-              <Ionicons name="add" size={22} color="#111827" />
-            </Pressable>
-            <TextInput
-              value={text}
-              onChangeText={(v) => { setText(v); broadcastTyping(); }}
-              onFocus={() => setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0)}
-              placeholder={t("chat.placeholder")}
-              style={styles.input}
-              multiline
-            />
-            <Pressable onPress={send} disabled={sending || !text.trim()} style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}>
-              <Ionicons name="send" size={18} color="#fff" />
-            </Pressable>
-          </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FFFAF0" },
+  composerWrap: {
+    backgroundColor: "#CFADE8",
+  },
+  composerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 10,     
+  },
   header: {
     height: 52,
     paddingHorizontal: 8,
@@ -734,13 +909,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
+  },
+  backBtn: {
+    padding: 6,                   
+  },
+  headerBack: {
+    width: 44,
+    height: 36,
+    borderWidth: 2,
+    borderColor: "#111827",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleText: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    marginHorizontal: 6,
   },
   title: { flex: 1, textAlign: "center" },
   bubbleRow: { paddingVertical: 4, flexDirection: "row", paddingHorizontal: 8 },
   rowStart: { justifyContent: "flex-start" },
   rowEnd: { justifyContent: "flex-end" },
-  bubble: { maxWidth: "78%", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14 },
+  bubble: {
+    maxWidth: "78%",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
   sepWrap: { alignItems: "center", paddingVertical: 8 },
   unreadPill: {
     paddingHorizontal: 10,
@@ -750,33 +951,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  composerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    gap: 8,
-    backgroundColor: "#FFF",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#E5E7EB",
-  },
   addBtn: {
     backgroundColor: "#E5E7EB",
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#111827",
   },
   input: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 44,
     maxHeight: 120,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     color: "#111827",
+    borderWidth: 2,
+    borderColor: "#111827",
   },
-  sendBtn: { backgroundColor: "#000000", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
-
+  sendBtn: {
+    backgroundColor: "#E2CEF1",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#111827",
+  },
   fabContainer: {
     position: "absolute",
     right: 16,

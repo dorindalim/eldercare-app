@@ -35,32 +35,32 @@
       "body": "Please add an emergency contact phone in your profile."
     }
   },
-    "forgot": {
-      "title": "Forgot Password",
-      "subtitle": "Enter your phone and set a new password.",
-      "newPwdLabel": "New password",
-      "newPwdPH": "Create a new password",
-      "confirmLabel": "Confirm password",
-      "confirmPH": "Re-enter new password",
-      "hint": "At least {{min}} characters",
-      "submit": "Reset password",
-      "success": {
-        "title": "Password updated",
-        "body": "You can now sign in with your new password."
-      },
-      "errors": {
-        "invalidPhoneTitle": "Invalid phone",
-        "invalidPhoneBody": "Please enter a valid phone number.",
-        "shortPwdTitle": "Password too short",
-        "shortPwdBody": "Password must be at least {{min}} characters.",
-        "mismatchTitle": "Passwords don’t match",
-        "mismatchBody": "Please make sure both passwords match.",
-        "notFoundTitle": "Account not found",
-        "notFoundBody": "No account exists with that phone number.",
-        "generic": "Could not reset your password. Please try again."
-      },
-      "link": "Forgot password?"
+  "forgot": {
+    "title": "Forgot Password",
+    "subtitle": "Enter your phone and set a new password.",
+    "newPwdLabel": "New password",
+    "newPwdPH": "Create a new password",
+    "confirmLabel": "Confirm password",
+    "confirmPH": "Re-enter new password",
+    "hint": "At least {{min}} characters",
+    "submit": "Reset password",
+    "success": {
+      "title": "Password updated",
+      "body": "You can now sign in with your new password."
     },
+    "errors": {
+      "invalidPhoneTitle": "Invalid phone",
+      "invalidPhoneBody": "Please enter a valid phone number.",
+      "shortPwdTitle": "Password too short",
+      "shortPwdBody": "Password must be at least {{min}} characters.",
+      "mismatchTitle": "Passwords don’t match",
+      "mismatchBody": "Please make sure both passwords match.",
+      "notFoundTitle": "Account not found",
+      "notFoundBody": "No account exists with that phone number.",
+      "generic": "Could not reset your password. Please try again."
+    },
+    "link": "Forgot password?"
+  },
   "language": {
     "change": "Change language",
     "select": "Select language",
@@ -140,7 +140,8 @@
   "activities": {
     "prompt": "What would you like to view?",
     "parks": "Parks",
-    "ccActivities": "Community Centre Activities"
+    "ccActivities": "Community Centre Activities",
+    "subPrompt": "Explore activities and events near you."
   },
   "sos": {
     "title": "Sending SOS",
@@ -160,7 +161,6 @@
       "search": "Search"
     },
     "noEvents": "No events found.",
-    "details": "No description.",
     "register": "Register",
     "getDirections": "Get Directions",
     "all": "All",
@@ -213,11 +213,22 @@
       "clearAll": "Clear All Notifications",
       "inAppUpcoming": "Upcoming CC Reminders (in app)",
       "deviceScheduled": "Scheduled Local Notifications (device)",
+      "setReminder": "Set Reminder",
       "noneScheduled": "None scheduled.",
       "event": "Event",
       "reminder": "Reminder",
       "turnOffTitle": "Turn off notifications",
-      "turnOffBody": "To disable notifications, please use your device Settings for this app."
+      "turnOffBody": "To disable notifications, please use your device Settings for this app.",
+      "scheduled": "Already scheduled!"
+    },
+    "details": {
+      "title": "Activity Details",
+      "location": "Location",
+      "dateTime": "Date & Time",
+      "fee": "Cost",
+      "organizer": "Organized by",
+      "description": "Description",
+      "empty": "No description."
     }
   },
   "navigation": {
@@ -530,7 +541,8 @@
       "amenities": "Amenities",
       "moreInfo": "More information",
       "visitNParks": "Visit NParks page",
-      "getDirections": "Get Directions"
+      "getDirections": "Get Directions",
+      "learnMore": "Learn more at NParks.gov.sg"
     },
     "filters": {
       "categories": {

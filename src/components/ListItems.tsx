@@ -37,7 +37,6 @@ const ListItem = ({
 
   const handleTextLayout = (event: any) => {
     if (hasMeasuredRef.current) return; 
-    
     const { height } = event.nativeEvent.layout;
     const calculatedHeight = Math.min(Math.max(80, height), 200); 
     setTextHeight(calculatedHeight);
@@ -60,7 +59,7 @@ const ListItem = ({
             styles.imageContainer, 
             imageResizeMode === 'cover' 
               ? { height: textHeight } 
-              : styles.centeredImageContainer 
+              : styles.centeredImageContainer
           ]}
         >
           {image ? (
@@ -99,25 +98,27 @@ const ListItem = ({
       {/* Content on the right */}
       <View style={styles.content}>
         <View style={styles.textContent} onLayout={handleTextLayout}>
-          {/* Title - using h2 variant for main container names */}
           <AppText variant="h2" weight="700" style={styles.title}>
             {title}
           </AppText>
 
-          {/* All info rows - using body variant for rest of text */}
           <View style={styles.infoContent}>
             {subtitle && (
               <View style={styles.infoRow}>
-                <MaterialIcons name={subtitleIcon as any} size={16} color="#007AFF" />
+                <View style={styles.iconWrapper}>
+                  <MaterialIcons name={subtitleIcon as any} size={16} color="#007AFF" />
+                </View>
                 <AppText variant="body" weight="600" style={styles.infoText}>
                   {subtitle}
                 </AppText>
               </View>
             )}
 
-            {details && (
+             {details && (
               <View style={styles.infoRow}>
-                <MaterialIcons name={detailsIcon as any} size={16} color="#28A745" />
+                <View style={styles.iconWrapper}>
+                  <MaterialIcons name={detailsIcon as any} size={16} color="#28A745" />
+                </View>
                 <AppText variant="body" weight="600" style={styles.infoText}>
                   {details}
                 </AppText>
@@ -126,7 +127,9 @@ const ListItem = ({
 
             {metadata && (
               <View style={styles.infoRow}>
-                <MaterialIcons name={metadataIcon as any} size={16} color="#F59E0B" />
+                <View style={styles.iconWrapper}>
+                  <MaterialIcons name={metadataIcon as any} size={16} color="#F59E0B" />
+                </View>
                 <AppText variant="body" weight="600" style={styles.infoText}>
                   {metadata}
                 </AppText>
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
   },
   centeredPlaceholder: {
     width: '100%',
-    height: 80, 
+    height: 80,
     borderRadius: 8,
     backgroundColor: '#E9ECEF',
     justifyContent: 'center',
@@ -219,11 +222,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     flexWrap: 'wrap',
+    minHeight: 20,
+  },
+  iconWrapper: {
+    height: 20, 
+    justifyContent: 'flex-start', 
+    alignItems: 'center',
+    width: 20,
+    paddingTop: 2, 
   },
   infoText: {
     flex: 1,
-    marginLeft: 6,
+    marginLeft: 4,
     lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   arrowContainer: {
     justifyContent: 'center',
