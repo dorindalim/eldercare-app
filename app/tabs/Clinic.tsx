@@ -371,7 +371,7 @@ export default function ClinicScreen() {
           title={t("home.clinics")}
           onLogout={async () => {
             await logout();
-            router.replace("/Authentication/LogIn");
+            router.replace("/Authentication/Welcome");
           }}
         />
         <View style={s.errorContainer}>
@@ -400,7 +400,7 @@ export default function ClinicScreen() {
         title={t("home.clinics")}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
@@ -497,7 +497,7 @@ export default function ClinicScreen() {
 const s = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#FFFAF0",
   },
   searchBarContainer: {
     padding: 16,

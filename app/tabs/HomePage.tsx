@@ -26,14 +26,128 @@ import TopBar, { LangCode } from "../../src/components/TopBar";
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 
-const EMERGENCY_SERVICES = "995";
+/** ---------- THEME ---------- */
+const BG = "#FFFAF0";
+const STROKE = "#1F1930";
+const LILAC = "#CFADE8";
+const GREEN = "#BFE8C6";
+const ORANGE = "#FED787";
+const BLUE = "#CFE7FF";
 
+/** change this to recolor the Check-in offset outline */
+const CHECKIN_OFFSET_STROKE = "#1F1930";
+
+/** ---------- helpers ---------- */
 function normalizeSGToE164(local: string | null | undefined) {
   const d = String(local ?? "").replace(/\D/g, "");
   if (!d) return null;
   if (d.startsWith("65") && d.length >= 10) return `+${d.slice(0, 10)}`;
   if (d.length >= 8) return `+65${d.slice(-8)}`;
   return null;
+}
+
+/** Offset frame wrapper (used ONLY for the Check-in card) */
+function OffsetWrap({
+  children,
+  radius = 18,
+  dx = 8,
+  dy = 8,
+  stroke = CHECKIN_OFFSET_STROKE,
+  fill,
+}: {
+  children: React.ReactNode;
+  radius?: number;
+  dx?: number;
+  dy?: number;
+  stroke?: string;
+  fill?: string;
+}) {
+  return (
+    <View style={{ width: "100%", maxWidth: 520, alignSelf: "center", marginBottom: 16 }}>
+      <View style={{ position: "relative" }}>
+        <View
+          style={{
+            position: "absolute",
+            left: dx,
+            top: dy,
+            right: -dx,
+            bottom: -dy,
+            borderRadius: radius,
+            borderWidth: 2,
+            borderColor: stroke,
+            backgroundColor: fill ?? "transparent",
+            opacity: 0.95,
+          }}
+        />
+        <View style={{ borderRadius: radius, overflow: "hidden" }}>{children}</View>
+      </View>
+    </View>
+  );
+}
+
+/** White face, colored offset behind; no outer wrapper */
+function HomePill({
+  label,
+  color,
+  icon,
+  onPress,
+  width = 140,
+  height = 56,
+  radius = 12,
+  offset = 6,
+}: {
+  label: string;
+  color: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  width?: number;
+  height?: number;
+  radius?: number;
+  offset?: number;
+}) {
+  return (
+    <Pressable onPress={onPress} style={{ marginRight: 12 }}>
+      {({ pressed }) => (
+        <View style={{ width, height, position: "relative" }}>
+          {/* colored offset behind */}
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              left: offset,
+              top: offset,
+              right: -offset,
+              bottom: -offset,
+              borderRadius: radius,
+              backgroundColor: color,
+              borderWidth: 2,
+              borderColor: STROKE,
+            }}
+          />
+          {/* white face */}
+          <View
+            style={{
+              flex: 1,
+              borderRadius: radius,
+              backgroundColor: "#FFFFFF",
+              borderWidth: 2,
+              borderColor: pressed ? "#000" : STROKE,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: 14,
+              transform: pressed ? [{ translateX: -1 }, { translateY: -1 }] : [],
+            }}
+          >
+            <Ionicons name={icon} size={20} color={STROKE} style={{ marginRight: 8 }} />
+            <AppText weight="800" style={{ fontSize: 16 }}>
+              {label}
+            </AppText>
+          </View>
+        </View>
+      )}
+    </Pressable>
+  );
 }
 
 export default function ElderlyHome() {
@@ -46,6 +160,7 @@ export default function ElderlyHome() {
   );
 
   const [refreshing, setRefreshing] = useState(false);
+  const [elderName, setElderName] = useState<string | null>(null);
 
   const [sosVisible, setSosVisible] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -115,6 +230,14 @@ export default function ElderlyHome() {
     };
   };
 
+  useEffect(() => {
+    (async () => {
+      const f = await fetchEmergencyContact();
+      setElderName(f.elderName ?? null);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const getLiveLocationUrl = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -177,7 +300,7 @@ export default function ElderlyHome() {
     }
 
     const mapsUrl = await getLiveLocationUrl();
-    const elderName =
+    const elderNameFetched =
       (await supabase
         .from("elderly_profiles")
         .select("name")
@@ -186,7 +309,7 @@ export default function ElderlyHome() {
 
     const timeStr = new Date().toLocaleString(i18n.language || "en-SG", { hour12: false });
     const message =
-      `${elderName} has sent an SOS.\n` +
+      `${elderNameFetched} has sent an SOS.\n` +
       (mapsUrl ? `Live location: ${mapsUrl}\n` : "") +
       `Time: ${timeStr}`;
 
@@ -214,7 +337,7 @@ export default function ElderlyHome() {
         if (c <= 1) {
           clearInterval(timerRef.current!);
           setSosVisible(false);
-          performSOS(); 
+          performSOS();
           return 0;
         }
         return c - 1;
@@ -241,14 +364,18 @@ export default function ElderlyHome() {
     <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
         language={i18n.language as LangCode}
-        setLanguage={setLang as (c: LangCode) => void}
-        includeTopInset={true}
+        setLanguage={async (code) => {
+          await i18n.changeLanguage(code);
+          await AsyncStorage.setItem("lang", code);
+        }}
+        includeTopInset
         barHeight={44}
         topPadding={2}
+        bgColor={BG}
         title={t("home.homeTab")}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
@@ -264,54 +391,56 @@ export default function ElderlyHome() {
           />
         }
       >
-        <CheckinCard
-          titleKey="home.imActive"                 
-          titleWhenCheckedKey="home.youreCheckedIn" 
-          hintKey="home.tapToCheckIn"
-          hintWhenCheckedKey="home.checkedIn"
-          checked={todayChecked}
-          onPress={checkInToday}
-          weekChecks={weekChecks}
-          coins={coins}
-          onPressRewards={() => router.push("/tabs/Rewards")}
-        />
+        {/* 1) GREETING + 4 PILLS */}
+        <View style={{ width: "100%", maxWidth: 520, alignSelf: "center", marginBottom: 20 }}>
+          <AppText variant="h1" weight="800" style={{ marginBottom: 10 }}>
+            {t("home.lepakGreeting", { name: elderName ?? t("home.friend", "friend") })}
+          </AppText>
 
-        {/* Row 1 */}
-        <View style={s.row}>
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Navigation")}>
-            <Ionicons name="navigate-outline" size={28} color="#222" />
-            <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.navigation")}
-            </AppText>
-          </Pressable>
-
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Activities")}>
-            <Ionicons name="people-outline" size={28} color="#222" />
-            <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.allActivities")}
-            </AppText>
-          </Pressable>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pillRow}>
+            <HomePill
+              label={t("home.navigation")}
+              color={LILAC}
+              icon="navigate-outline"
+              onPress={() => router.push("/tabs/Navigation")}
+            />
+            <HomePill
+              label={t("home.allActivities")}
+              color={GREEN}
+              icon="calendar-outline"
+              onPress={() => router.push("/tabs/Activities")}
+            />
+            <HomePill
+              label={t("home.clinics")}
+              color={ORANGE}
+              icon="medkit-outline"
+              onPress={() => router.push("/tabs/Clinic")}
+            />
+            <HomePill
+              label={t("home.bulletinBoard")}
+              color={BLUE}
+              icon="newspaper-outline"
+              onPress={() => router.push("/tabs/Bulletin")}
+            />
+          </ScrollView>
         </View>
 
-        {/* Row 2 */}
-        <View style={s.row}>
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Clinic")}>
-            <Ionicons name="medkit-outline" size={28} color="#222" />
-            <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.clinics")}
-            </AppText>
-          </Pressable>
+        {/* 2) CHECK-IN CARD (with offset) */}
+        <OffsetWrap /* stroke="#3B2F4D" fill="#FFF0F1"  <- optional overrides */>
+          <CheckinCard
+            titleKey="home.imActive"
+            titleWhenCheckedKey="home.youreCheckedIn"
+            hintKey="home.tapToCheckIn"
+            hintWhenCheckedKey="home.checkedIn"
+            checked={todayChecked}
+            onPress={checkInToday}
+            weekChecks={weekChecks}
+            coins={coins}
+            onPressRewards={() => router.push("/tabs/Rewards")}
+          />
+        </OffsetWrap>
 
-          <Pressable style={s.rect} onPress={() => router.push("/tabs/Bulletin")}>
-            <Ionicons name="newspaper-outline" size={28} color="#222" />
-            <AppText variant="title" weight="700" style={s.rectText}>
-              {t("home.bulletinBoard")}
-            </AppText>
-          </Pressable>
-        </View>
-
-
-        {/* SOS */}
+        {/* 3) SOS */}
         <View style={s.sosWrap}>
           <Pressable style={s.sos} onPress={startSOS}>
             <AppText variant="h1" weight="900" color="#FFF">
@@ -370,62 +499,70 @@ export default function ElderlyHome() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F8FAFC" },
+  safe: { flex: 1, backgroundColor: BG },
   scroll: { flexGrow: 1, paddingHorizontal: 18, paddingBottom: 24, paddingTop: 6 },
-  row: {
-    width: "100%",
-    maxWidth: 520,
-    alignSelf: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  rect: {
-    flex: 1,
-    marginHorizontal: 4,
-    height: 100,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  rectText: { marginTop: 8, textAlign: "center" },
 
+  /* pills row */
+  pillRow: {
+    paddingVertical: 6,
+    paddingRight: 6,
+  },
+
+  /* SOS */
   sosWrap: { alignItems: "center", marginTop: 20, marginBottom: 12 },
   sos: {
-    width: 140, height: 140, borderRadius: 70, backgroundColor: "#E53935",
-    alignItems: "center", justifyContent: "center",
-    shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 }, elevation: 4,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "#E53935",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
 
+  /* SOS overlay */
   overlay: {
-    position: "absolute", left: 0, right: 0, top: 0, bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", paddingHorizontal: 20,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
   },
   modal: {
-    width: "100%", maxWidth: 360, borderRadius: 18, backgroundColor: "#fff",
-    paddingVertical: 18, paddingHorizontal: 16, alignItems: "center",
-    shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6,
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 18,
+    backgroundColor: "#fff",
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   subtitle: { marginTop: 6, textAlign: "center", color: "#6B7280" },
   countdownWrap: { flexDirection: "row", alignItems: "flex-end", marginTop: 10 },
   countdownNumber: { fontSize: 64, lineHeight: 64, color: "#111827" },
   countdownSuffix: { marginLeft: 4, color: "#6B7280" },
-
   progressTrack: {
-    width: "100%", height: 10, backgroundColor: "#E5E7EB", borderRadius: 999, overflow: "hidden", marginTop: 12,
+    width: "100%",
+    height: 10,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 999,
+    overflow: "hidden",
+    marginTop: 12,
   },
   progressFill: { height: "100%", backgroundColor: "#EF4444" },
-
   btnRowSingle: { marginTop: 14, width: "100%" },
   cancelOnlyBtn: {
     backgroundColor: "#EF4444",

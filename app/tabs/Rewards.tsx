@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -10,7 +11,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "../../i18n";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
@@ -42,11 +43,17 @@ const genCode = () =>
     .slice(2, 6)
     .toUpperCase()}`;
 
+const EXTRA_BOTTOM = -60;
+
 export default function RewardsScreen() {
   const { t } = useTranslation();
   const { session, logout } = useAuth();
   const userId = session?.userId ?? "local";
   const { coins = 0, refresh: refreshCheckins } = useCheckins(session?.userId);
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomLift = Math.max(0, tabBarHeight + insets.bottom + EXTRA_BOTTOM);
 
   const OWNED_KEY = `rewards_owned_${userId}_v1`;
   const [owned, setOwned] = useState<OwnedVoucher[]>([]);
@@ -202,23 +209,23 @@ export default function RewardsScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right", "bottom"]}>
       <TopBar
         title={t("rewards.title")}
         language={i18n.language as LangCode}
         setLanguage={(lng: LangCode) => i18n.changeLanguage(lng)}
-        bgColor="#D2AB80"
+        bgColor="#FFEBC3"
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
       <ScrollView
-        contentContainerStyle={s.scroll}
+        contentContainerStyle={[s.scroll, { paddingBottom: bottomLift }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Balance */}
@@ -279,7 +286,7 @@ export default function RewardsScreen() {
                     ]}
                     disabled={coins < item.cost}
                   >
-                    <AppText color="#FFF" weight="800">
+                    <AppText color="#000" weight="800">
                       {t("rewards.redeem")}
                     </AppText>
                   </Pressable>
@@ -295,39 +302,39 @@ export default function RewardsScreen() {
             {t("rewards.ownedTitle")}
           </AppText>
 
-          {owned.length === 0 ? (
-            <AppText color="#6B7280">{t("rewards.noneOwned")}</AppText>
-          ) : (
-            owned.map((v) => {
-              const def = catalog.find((c) => c.id === v.rewardId);
-              return (
-                <View key={v.id} style={s.voucherRow}>
-                  <View style={{ flex: 1 }}>
-                    <AppText weight="800">
-                      {def ? t(def.titleKey) : t("rewards.voucher")}
-                    </AppText>
-                    <AppText color="#6B7280">
-                      {t("rewards.code")}: {v.code}
-                    </AppText>
-                    <AppText color="#6B7280">
-                      {t("rewards.redeemedAt")}{" "}
-                      {new Date(v.redeemedAt).toLocaleString()}
-                    </AppText>
-                  </View>
-                  {def && (
-                    <Pressable
-                      onPress={() => setTermsOpen(def)}
-                      style={s.linkBtn}
-                    >
-                      <AppText weight="800" color="#111827">
-                        {t("rewards.howToUse")}
-                      </AppText>
-                    </Pressable>
-                  )}
+        {owned.length === 0 ? (
+          <AppText color="#6B7280">{t("rewards.noneOwned")}</AppText>
+        ) : (
+          owned.map((v) => {
+            const def = catalog.find((c) => c.id === v.rewardId);
+            return (
+              <View key={v.id} style={s.voucherRow}>
+                <View style={{ flex: 1 }}>
+                  <AppText weight="800">
+                    {def ? t(def.titleKey) : t("rewards.voucher")}
+                  </AppText>
+                  <AppText color="#6B7280">
+                    {t("rewards.code")}: {v.code}
+                  </AppText>
+                  <AppText color="#6B7280">
+                    {t("rewards.redeemedAt")}{" "}
+                    {new Date(v.redeemedAt).toLocaleString()}
+                  </AppText>
                 </View>
-              );
-            })
-          )}
+                {def && (
+                  <Pressable
+                    onPress={() => setTermsOpen(def)}
+                    style={s.linkBtn}
+                  >
+                    <AppText weight="800" color="#111827">
+                      {t("rewards.howToUse")}
+                    </AppText>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })
+        )}
         </View>
       </ScrollView>
 
@@ -359,7 +366,7 @@ export default function RewardsScreen() {
 }
 
 const s = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 24 },
+  scroll: { padding: 16, backgroundColor: "#FFFAF0" },
   card: {
     backgroundColor: "#FFF",
     borderRadius: 16,
@@ -400,8 +407,6 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F9FAFB",
   },
-
-  /* Updated actions */
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -424,7 +429,7 @@ const s = StyleSheet.create({
     backgroundColor: "#FFF",
   },
   redeemBtn: {
-    backgroundColor: "#111827",
+    backgroundColor: "#CFADE8",
   },
   redeemBtnDisabled: { opacity: 0.4 },
 

@@ -31,9 +31,7 @@ export default function CheckinCard({
   onPressRewards,
 }: Props) {
   const { t } = useTranslation();
-
   const titleText = checked ? t(titleWhenCheckedKey ?? titleKey) : t(titleKey);
-
   const dow = (n: number) => t(`checkins.dowShort.${n}` as const);
 
   return (
@@ -112,8 +110,8 @@ const s = StyleSheet.create({
     borderWidth: 2,
     paddingVertical: 18,
     alignItems: "center",
-    marginBottom: 14,
     paddingHorizontal: 14,
+    // marginBottom removed so OffsetWrap controls spacing
   },
   checkCardDone: { backgroundColor: "#EEF9F1", borderColor: "#66BB6A" },
   checkCardNotDone: { backgroundColor: "#FFF5F5", borderColor: "#EF9A9A" },

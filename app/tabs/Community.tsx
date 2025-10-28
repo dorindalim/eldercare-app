@@ -10,31 +10,45 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   BackHandler,
-  Dimensions,
   FlatList,
   LayoutAnimation,
   Linking,
-  Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   UIManager,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 
 import AppText from "../../src/components/AppText";
 import FilterSheet, { type ChipOpt, type FilterSection } from "../../src/components/FilterSheet";
+import ItemDetailsModal from '../../src/components/ItemDetailsModal';
+import ListItem from "../../src/components/ListItems";
 import Pagination from "../../src/components/Pagination";
 import SearchBar from "../../src/components/SearchBar";
 import SummaryChip from "../../src/components/SummaryChip";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { presentNow } from "../../src/lib/notifications";
 import { supabase } from "../../src/lib/supabase";
+
+// Import all images at the top with your other imports
+const activityImages: { [key: string]: any } = {
+  "Health & Fitness": require('../../assets/photos/icons/health-fitness.png'),
+  "Arts & Culture": require('../../assets/photos/icons/arts-culture.png'),
+  "Active Aging": require('../../assets/photos/icons/active-aging.png'),
+  "Parenting & Education": require('../../assets/photos/icons/parenting-education.png'),
+  "Exhibition & Fair": require('../../assets/photos/icons/exhibition-fair.png'),
+  "Neighbourhood Events": require('../../assets/photos/icons/neighbourhood-events.png'),
+  "Celebration & Festivity": require('../../assets/photos/icons/celebration-festivity.png'),
+  "Kopi Talks & Dialogues": require('../../assets/photos/icons/kopi-talks.png'),
+  "Charity & Volunteerism": require('../../assets/photos/icons/charity-volunteerism.png'), // FIXED
+  "Overseas Outings & Tours": require('../../assets/photos/icons/overseas-tours.png'),
+};
+
+const fallbackImage = require('../../assets/photos/icons/onepa-logo.png');
 
 type EventRow = {
   id?: string;
@@ -180,15 +194,6 @@ export default function CommunityScreen() {
   const [scheduled, setScheduled] = useState<ScheduledLocal[]>([]);
   const [notifBusy, setNotifBusy] = useState(false);
 
-  const [headerH, setHeaderH] = useState(0);
-  const [contentH, setContentH] = useState(0);
-  const [footerH, setFooterH] = useState(0);
-  const winH = Dimensions.get("window").height;
-  const MIN_SHEET = Math.round(winH * MIN_SHEET_RATIO);
-  const MAX_SHEET = Math.round(winH * MAX_SHEET_RATIO);
-  const natural = Math.round(headerH + contentH + footerH);
-  const sheetHeight = Math.max(MIN_SHEET, Math.min(natural, MAX_SHEET));
-
   const params = useLocalSearchParams<{ openEventId?: string; openEventEventId?: string }>();
   const hasConsumedDeepLinkRef = useRef(false);
   const geoCache = useRef<Map<string, LatLng>>(new Map());
@@ -235,6 +240,7 @@ export default function CommunityScreen() {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => false);
     return () => sub.remove();
   }, []);
+  
 
   useEffect(() => {
     fetchEvents();
@@ -628,66 +634,34 @@ export default function CommunityScreen() {
     const timePart = [formatTime(item.start_time), formatTime(item.end_time)].filter(Boolean).join(" - ") || "—";
     const feePart = item.fee?.trim() || t("community.priceOptions.free");
     const distPart = kmStr(item._distance);
+    
+    // Get image based on category - using local require images
+    const eventImage = item.category ? activityImages[item.category] : fallbackImage;
+
+    // Format the content to match ListItem's expected structure
+    const subtitle = item.location_name 
+      ? `${item.location_name}${distPart ? `${distPart}` : ''}`
+      : distPart || '';
+
+    const details = `${item.start_date} • ${timePart}`;
+
+    const metadata = `${feePart.includes('Free') || !feePart ? 'FREE' : `$${feePart}`} • ${scheduledAlready ? t("community.notifs.scheduled") : t("community.notifs.remindMe")}`;
 
     return (
-      <View style={styles.card}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={() => openDetails(item)} style={{ flex: 1 }}>
-            <AppText variant="title" weight="800" style={{ marginBottom: 2 }}>
-              {item.title}
-            </AppText>
-
-            <View style={styles.metaRow}>
-              <AppText variant="label" color="#2563EB" weight="700">
-                {item.location_name || "—"}
-              </AppText>
-              {!!distPart && (
-                <AppText variant="label" color="#6B7280" weight="700">
-                  · {distPart}
-                </AppText>
-              )}
-            </View>
-
-            <View style={styles.metaRowBetween}>
-              <AppText variant="label" color="#111827" weight="700" style={{ flexShrink: 1 }}>
-                {item.start_date} · {timePart}
-              </AppText>
-              <AppText variant="label" weight="800" style={styles.feeTag}>
-                {feePart}
-              </AppText>
-            </View>
-          </Pressable>
-
-          <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 8 }}>
-            <TouchableOpacity
-              hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
-              onPress={() => {
-                if (!scheduledAlready) {
-                  scheduleReminderForEvent(item);
-                } else {
-                  presentNow({ title: item.title || "", body: t("community.notifs.alreadyScheduled") });
-                }
-              }}
-              style={{ padding: 4, marginRight: 4 }}
-              accessibilityLabel={t("navigation.actions.setReminder")}
-            >
-              <Ionicons
-                name={scheduledAlready ? "notifications" : "notifications-outline"}
-                size={20}
-                color={scheduledAlready ? "#007AFF" : "#9CA3AF"}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
-              onPress={() => openDetails(item)}
-              style={{ padding: 4 }}
-            >
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      <ListItem
+        title={item.title}
+        image={eventImage} 
+        placeholderIcon="event" // Use "event" icon for community events
+        subtitle={subtitle}
+        details={details}
+        metadata={metadata}
+        showArrow={true} // This will show the arrow-forward icon
+        onPress={() => openDetails(item)}
+        isSelected={selectedEvent?.event_id === item.event_id}
+        detailsIcon="event" 
+        metadataIcon="notifications"
+        imageResizeMode="contain" 
+      />
     );
   };
 
@@ -937,120 +911,19 @@ export default function CommunityScreen() {
         labels={{ reset: t("community.filters.reset"), apply: t("community.filters.apply") }}
       />
 
-      <Modal
-        visible={detailsOpen && !!selectedEvent}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setDetailsOpen(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setDetailsOpen(false)}>
-          <View style={styles.modalBackdrop} />
-        </TouchableWithoutFeedback>
-
-        {selectedEvent && (
-          <View style={[styles.detailsCard, { height: sheetHeight }]}>
-            <View
-              style={styles.detailsHeader}
-              onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}
-            >
-              <AppText variant="title" weight="900" style={{ marginBottom: 6 }}>
-                {selectedEvent.title}
-              </AppText>
-
-              {!!selectedEvent.location_name && (
-                <AppText variant="label" color="#374151" style={{ marginBottom: 6 }}>
-                  {selectedEvent.location_name}
-                </AppText>
-              )}
-
-              <View style={{ flexDirection: "row", gap: 8, marginBottom: 2, flexWrap: "wrap" }}>
-                {!!selectedEvent.start_date && (
-                  <View style={styles.pill}>
-                    <AppText variant="caption" weight="800">{selectedEvent.start_date}</AppText>
-                  </View>
-                )}
-                {!!selectedEvent.start_time && (
-                  <View style={styles.pill}>
-                    <AppText variant="caption" weight="800">
-                      {selectedEvent.start_time.slice(0, 5)}
-                    </AppText>
-                  </View>
-                )}
-                {!!selectedEvent.fee && (
-                  <View style={[styles.pill, { backgroundColor: "#EEF2FF" }]}>
-                    <AppText variant="caption" weight="900" color="#1D4ED8">
-                      {selectedEvent.fee}
-                    </AppText>
-                  </View>
-                )}
-              </View>
-
-              {([formatTime(selectedEvent.start_time), formatTime(selectedEvent.end_time)].filter(Boolean).join(" - ") ||
-                "") && (
-                <AppText variant="caption" color="#6B7280">
-                  {[formatTime(selectedEvent.start_time), formatTime(selectedEvent.end_time)]
-                    .filter(Boolean)
-                    .join(" - ") || "—"}
-                </AppText>
-              )}
-            </View>
-
-            <ScrollView
-              style={styles.detailsScroll}
-              contentContainerStyle={styles.detailsScrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator
-            >
-              <View onLayout={(e) => setContentH(e.nativeEvent.layout.height)}>
-                <AppText variant="body" color="#111827">
-                  {selectedEvent.description || t("community.details")}
-                </AppText>
-              </View>
-            </ScrollView>
-
-            <View
-              style={styles.detailsFooter}
-              onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}
-            >
-              <View style={styles.actionsRow}>
-                {!!selectedEvent.registration_link && (
-                  <TouchableOpacity
-                    style={[styles.btnBase, styles.halfBtn, { backgroundColor: DARK, marginRight: 8 }]}
-                    onPress={() => onRegister(selectedEvent.registration_link)}
-                  >
-                    <AppText variant="button" weight="800" color="#FFF">
-                      {t("community.register")}
-                    </AppText>
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  style={[
-                    styles.btnBase,
-                    styles.halfBtn,
-                    { backgroundColor: "#007aff" },
-                    !selectedEvent.registration_link && { marginLeft: 0 },
-                  ]}
-                  onPress={() => onDirections(selectedEvent)}
-                >
-                  <AppText variant="button" weight="800" color="#FFF">
-                    {t("community.getDirections")}
-                  </AppText>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => setDetailsOpen(false)}
-                style={{ alignSelf: "center", marginTop: 10, padding: 8 }}
-              >
-                <AppText variant="button" color="#6B7280">
-                  {t("common.cancel")}
-                </AppText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </Modal>
-    </SafeAreaView>
+      <ItemDetailsModal
+        event={selectedEvent}
+        visible={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        userLocation={myLoc}
+        onGetDirections={onDirections}
+        onRegister={onRegister}
+        onSetReminder={scheduleReminderForEvent}
+        isScheduled={(evt) => isEventScheduled(evt, ccReminders)}
+        distanceMeters={distanceMeters}
+        kmStr={kmStr}
+      />
+       </SafeAreaView>
   );
 }
 
@@ -1071,49 +944,101 @@ const styles = StyleSheet.create({
   },
   notifPanel: { marginTop: 8, backgroundColor: "#FFF", borderRadius: 12, borderWidth: 1, borderColor: CARD_BORDER, padding: 12 },
 
-  card: { backgroundColor: "#FFF", borderRadius: 16, borderWidth: 1, borderColor: CARD_BORDER, padding: 12, marginBottom: 10 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
-  metaRowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2, gap: 8 },
-  feeTag: { color: "#E57373", flexShrink: 0, marginLeft: 8 },
-
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0, 0, 0, 0.25)" },
-  detailsCard: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 16,
+  card: {
     backgroundColor: "#FFF",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: CARD_BORDER,
-    overflow: "hidden",
+    marginBottom: 12,
+    overflow: 'hidden',
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -6 },
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
+  cardContent: {
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'flex-start',
   },
 
-  detailsHeader: {
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: CARD_BORDER,
-    backgroundColor: "#FFF",
+  textContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  
+  activityTitle: {
+    flex: 1,
+    fontSize: 16,
+    color: "#111827",
+    marginRight: 8,
+    lineHeight: 20,
+  },
+  
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  
+  infoText: {
+    marginLeft: 6,
+    flex: 1,
+    fontSize: 14,
+  },
+  
+  distanceText: {
+    marginLeft: 4,
+    fontSize: 14,
+  },
+  
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
   },
 
-  detailsScroll: { flex: 1 },
-  detailsScrollContent: { paddingHorizontal: 14, paddingVertical: 12 },
-
-  detailsFooter: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: CARD_BORDER,
-    backgroundColor: "#FFF",
+  costContainer: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    minWidth: 60,
+    alignItems: 'center',
   },
 
-  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#F3F4F6" },
+  costText: {
+    color: '#FFF',
+    fontSize: 12,
+  },
+  
+  notificationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  
+  notificationText: {
+    marginLeft: 4,
+    fontSize: 12,
+  },
+
+  eventImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  
+  arrowContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 24,
+    height: 24,
+  },
+
 
   reminderRow: {
     flexDirection: "row",
@@ -1125,9 +1050,6 @@ const styles = StyleSheet.create({
   },
 
   actionBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
-  actionsRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
-  btnBase: { minHeight: 48, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
-  halfBtn: { flex: 1 },
   summaryChipContainer: {
   backgroundColor: "#FFF",
   paddingHorizontal: 12,
@@ -1147,5 +1069,6 @@ const styles = StyleSheet.create({
   summaryChipTitle: { color: "#6B7280", fontSize: 14 },
   clearAllButton: { paddingHorizontal: 8, paddingVertical: 4 },
   clearAllText: { color: "#EF4444", fontSize: 14 },
+
 
 });

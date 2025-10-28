@@ -1,20 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 
-const BG = "#F8FAFC";
+const BG = "#FFFAF0";
+const EXTRA_BOTTOM = -40; // tweak this to move content closer/farther from the tab bar
 
 export default function ActivitiesScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { logout } = useAuth();
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomLift = Math.max(0, tabBarHeight + insets.bottom + EXTRA_BOTTOM);
 
   const setLanguage = async (code: LangCode) => {
     await i18n.changeLanguage(code);
@@ -22,7 +28,7 @@ export default function ActivitiesScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe} edges={["left", "right"]}>
+    <SafeAreaView style={s.safe} edges={["left", "right", "bottom"]}>
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLanguage}
@@ -30,16 +36,16 @@ export default function ActivitiesScreen() {
         includeTopInset
         barHeight={44}
         topPadding={2}
-        bgColor="#EDCCD2"
+        bgColor="#FFD3CD"
         textColor="#111827"
         borderColor="#E5E7EB"
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
-      <View style={s.wrapper}>
+      <View style={[s.wrapper, { paddingBottom: bottomLift }]}>
         <View style={s.card}>
           <AppText variant="title" weight="900" style={s.question}>
             {t("activities.prompt")}

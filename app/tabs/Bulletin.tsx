@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -25,6 +25,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AppText from "../../src/components/AppText";
+import CalendarTimePicker from "../../src/components/CalendarTimePicker";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { supabase } from "../../src/lib/supabase";
 
@@ -269,7 +270,7 @@ async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: st
       sound: true,
       ...(Platform.OS === "android" ? { channelId: "event-reminders" } : null),
     },
-    trigger: ({ type: "date", date: fireAt } as any), 
+    trigger: ({ type: "date", date: fireAt } as any),
   });
 
   await Notifications.scheduleNotificationAsync({
@@ -291,6 +292,9 @@ async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: st
 export default function Bulletin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomPad = Math.max(24, tabBarHeight + insets.bottom + 8);
+
   const { t, i18n } = useTranslation();
   const locale = (i18n.language as string) || undefined;
 
@@ -956,38 +960,40 @@ export default function Bulletin() {
         setLanguage={setLang}
         includeTopInset
         title={t("home.bulletinBoard")}
-        bgColor="#809671"
+        bgColor="#93E6AA"
         barHeight={44}
         topPadding={2}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
-
       <View style={s.headerRow}>
-        <Pressable
-          style={s.createBtn}
-          onPress={() => {
-            setCreating(true);
-            setEditingRow(null);
-            resetForm();
-          }}
-        >
-          <Ionicons name="add-circle-outline" size={22} color="#fff" />
-          <Text style={s.createText}>{t("bulletin.create")}</Text>
-        </Pressable>
+        {/* Create with offset */}
+        <View style={s.createBtnWrap}>
+          <View style={s.createBtnOffset} />
+          <Pressable
+            onPress={() => {
+              setCreating(true);
+              setEditingRow(null);
+              resetForm();
+            }}
+            style={({ pressed }) => [
+              s.createBtn,
+              pressed && { transform: [{ translateY: 6 }] }, // press down to meet the shadow
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("bulletin.create")}
+            hitSlop={8}
+          >
+            <Ionicons name="add-circle-outline" size={22} color="#000" />
+            <Text style={s.createText}>{t("bulletin.create")}</Text>
+          </Pressable>
+        </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingLeft: 6 }}
-        >
-          <Chip
-            label={t("community.all")}
-            active={!filterCat}
-            onPress={() => setFilterCat(null)}
-          />
+        {/* category chips scroll stays the same */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 6 }}>
+          <Chip label={t("community.all")} active={!filterCat} onPress={() => setFilterCat(null)} />
           {CATS.map((c) => (
             <Chip
               key={c.key}
@@ -1012,7 +1018,7 @@ export default function Bulletin() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: bottomPad }}
           data={nearby}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
@@ -1205,21 +1211,21 @@ export default function Bulletin() {
                       style={[
                         s.catPill,
                         cat === c.key && {
-                          backgroundColor: "#0EA5E9",
-                          borderColor: "#0EA5E9",
+                          backgroundColor: "#CFADE8",
+                          borderColor: "#CFADE8",
                         },
                       ]}
                     >
                       <Ionicons
                         name={c.icon}
                         size={16}
-                        color={cat === c.key ? "#fff" : "#111"}
+                        color={cat === c.key ? "#111" : "#6B7280"}
                         style={{ marginRight: 6 }}
                       />
                       <Text
                         style={[
                           s.catPillText,
-                          cat === c.key && { color: "#fff" },
+                          cat === c.key && { color: "#000" },
                         ]}
                       >
                         {catLabel(c.key)}
@@ -1228,57 +1234,16 @@ export default function Bulletin() {
                   ))}
                 </ScrollView>
               </Labeled>
-
               <Labeled label={t("bulletin.form.start")}>
-                <View style={s.pickerCard}>
-                  {Platform.OS === "ios" ? (
-                    <>
-                      <DateTimePicker
-                        value={startDate}
-                        mode="date"
-                        display="inline"
-                        onChange={(_, d) =>
-                          d &&
-                          setStartDate((prev) =>
-                            new Date(
-                              d.getFullYear(),
-                              d.getMonth(),
-                              d.getDate(),
-                              prev.getHours(),
-                              prev.getMinutes()
-                            )
-                          )
-                        }
-                        themeVariant="light"
-                        textColor="#111827"
-                      />
-                      <View style={{ height: 8 }} />
-                      <DateTimePicker
-                        value={startDate}
-                        mode="time"
-                        display="spinner"
-                        onChange={(_, d) =>
-                          d &&
-                          setStartDate((prev) =>
-                            new Date(
-                              prev.getFullYear(),
-                              prev.getMonth(),
-                              prev.getDate(),
-                              d.getHours(),
-                              d.getMinutes()
-                            )
-                          )
-                        }
-                        themeVariant="light"
-                        textColor="#111827"
-                      />
-                    </>
-                  ) : (
-                    <AndroidDateTime value={startDate} onChange={setStartDate} />
-                  )}
-                </View>
+                <CalendarTimePicker
+                  inline
+                  value={startDate}
+                  onConfirm={(d) => setStartDate(d)}
+                  minuteStep={5}
+                  locale={(i18n.language as string) || "en-SG"}
+                  title={t("bulletin.form.start")}
+                />
               </Labeled>
-
               <Labeled label={t("bulletin.form.location")}>
                 <TextInput
                   value={placeQuery}
@@ -1342,16 +1307,17 @@ export default function Bulletin() {
 
               <View style={{ height: 12 }} />
 
+              {/* POST button color changed to #FED787 with dark content */}
               <Pressable
                 onPress={editingRow ? submitEdit : submitCreate}
-                style={s.publishBtn}
+                style={[s.publishBtn]}
               >
                 <Ionicons
                   name={editingRow ? "save-outline" : "megaphone-outline"}
                   size={20}
-                  color="#fff"
+                  color="#111827"
                 />
-                <Text style={s.publishText}>
+                <Text style={[s.publishText, { color: "#111827" }]}>
                   {editingRow ? t("common.save") : t("bulletin.post")}
                 </Text>
               </Pressable>
@@ -1364,70 +1330,6 @@ export default function Bulletin() {
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
-  );
-}
-
-function AndroidDateTime({
-  value,
-  onChange,
-}: {
-  value: Date;
-  onChange: (d: Date) => void;
-}) {
-  const [showDate, setShowDate] = useState(false);
-  const [showTime, setShowTime] = useState(false);
-
-  return (
-    <>
-      <Pressable style={s.input} onPress={() => setShowDate(true)}>
-        <Text>{value.toLocaleDateString()}</Text>
-      </Pressable>
-      <View style={{ height: 8 }} />
-      <Pressable style={s.input} onPress={() => setShowTime(true)}>
-        <Text>{value.toLocaleTimeString("en-SG", { hour12: false })}</Text>
-      </Pressable>
-
-      {showDate && (
-        <DateTimePicker
-          value={value}
-          mode="date"
-          display="default"
-          onChange={(_, d) => {
-            setShowDate(false);
-            if (d)
-              onChange(
-                new Date(
-                  d.getFullYear(),
-                  d.getMonth(),
-                  d.getDate(),
-                  value.getHours(),
-                  value.getMinutes()
-                )
-              );
-          }}
-        />
-      )}
-      {showTime && (
-        <DateTimePicker
-          value={value}
-          mode="time"
-          display="default"
-          onChange={(_, d) => {
-            setShowTime(false);
-            if (d)
-              onChange(
-                new Date(
-                  value.getFullYear(),
-                  value.getMonth(),
-                  value.getDate(),
-                  d.getHours(),
-                  d.getMinutes()
-                )
-              );
-          }}
-        />
-      )}
-    </>
   );
 }
 
@@ -1457,18 +1359,20 @@ function Chip({
       onPress={onPress}
       style={[
         s.chip,
-        active && { backgroundColor: "#111827", borderColor: "#111827" },
+        active && { backgroundColor: "#CFADE8", borderColor: "#CFADE8" },
       ]}
     >
       {icon && (
         <Ionicons
           name={icon}
           size={14}
-          color={active ? "#fff" : "#111"}
+          color={"#111"} // keep dark icon for contrast
           style={{ marginRight: 6 }}
         />
       )}
-      <Text style={[s.chipText, active && { color: "#fff" }]}>{label}</Text>
+      <Text style={[s.chipText /* keep dark text even when active */]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -1758,7 +1662,7 @@ function InterestedModal({
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F8FAFC" },
+  safe: { flex: 1, backgroundColor: "#FFFAF0" },
 
   headerRow: {
     flexDirection: "row",
@@ -1770,13 +1674,13 @@ const s = StyleSheet.create({
   createBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0EA5E9",
+    backgroundColor: "#FED787",
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 10 : 8,
     borderRadius: 10,
     marginRight: 4,
   },
-  createText: { color: "#fff", fontWeight: "800", marginLeft: 6 },
+  createText: { color: "#000", fontWeight: "800", marginLeft: 6 },
 
   chip: {
     flexDirection: "row",
@@ -1805,7 +1709,7 @@ const s = StyleSheet.create({
     elevation: 2,
   },
 
-  modalSafe: { flex: 1, backgroundColor: "#F8FAFC" },
+  modalSafe: { flex: 1, backgroundColor: "#FFFAF0" },
   modalHead: { paddingHorizontal: 16, paddingTop: 0, paddingBottom: 10 },
 
   pickerCard: {
@@ -1817,13 +1721,16 @@ const s = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#D1D5DD",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 10 : 8,
+    width: "100%",
+    borderWidth: 2,
+    borderColor: "#1F2937",
+    paddingHorizontal: 14,
+    height: 57,
+    borderRadius: 8,
+    backgroundColor: "#FFF",
     color: "#111827",
+    marginBottom: 10,
+    fontSize: 16,
   },
   catPill: {
     flexDirection: "row",
@@ -1854,22 +1761,35 @@ const s = StyleSheet.create({
     borderBottomColor: "#F3F4F6",
   },
 
+  // POST button new color
   publishBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0EA5E9",
+    backgroundColor: "#FED787",
     paddingVertical: 14,
     borderRadius: 12,
     justifyContent: "center",
   },
   publishText: {
-    color: "#fff",
     fontWeight: "900",
     marginLeft: 8,
     fontSize: 16,
   },
   cancelBtn: { alignSelf: "center", marginTop: 10, padding: 10 },
   cancelText: { color: "#6B7280", fontWeight: "800" },
+    createBtnWrap: {
+    position: "relative",
+    borderRadius: 10,
+  },
+  createBtnOffset: {
+    position: "absolute",
+    top: 6,            // how far the “shadow” sits (offset amount)
+    left: 0,
+    right: 0,
+    height: Platform.OS === "ios" ? 40 : 38, // match the Pressable height
+    borderRadius: 10,
+    backgroundColor: "#F6C96D", // slightly darker than FED787 for the offset layer
+  },
 });
 
 const stylesCard = StyleSheet.create({
@@ -1954,4 +1874,25 @@ const stylesCard = StyleSheet.create({
     borderColor: "#fff",
   },
   badgeText: { color: "#fff", fontSize: 10, fontWeight: "900" },
+    headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+
+  // the button itself (sits above the offset)
+  createBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FED787",  // your requested color
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === "ios" ? 10 : 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#11182720",
+    transform: [{ translateY: 0 }], // default height
+  },
+  createText: { color: "#000", fontWeight: "800", marginLeft: 6 },
 });

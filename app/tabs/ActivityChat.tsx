@@ -725,7 +725,7 @@ export default function ActivityChat({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F8FAFC" },
+  safe: { flex: 1, backgroundColor: "#FFFAF0" },
   header: {
     height: 52,
     paddingHorizontal: 8,

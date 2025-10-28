@@ -1,29 +1,28 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
-  Linking,
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
 import FilterSheet, { type FilterSection } from "../../src/components/FilterSheet";
+import ItemDetailsModal from "../../src/components/ItemDetailsModal";
+import ListItem from "../../src/components/ListItems";
 import Pagination from "../../src/components/Pagination";
-import ParkDetailsModal from "../../src/components/ParkDetailsModal";
 import SearchBar from "../../src/components/SearchBar";
 import SummaryChip from "../../src/components/SummaryChip";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
+import { listItemConfig } from '../../src/config/listItemConfig';
 import { supabase } from "../../src/lib/supabase";
 
 type Activity = {
@@ -50,6 +49,7 @@ type ParkLocation = {
   latitude: number | null;
   longitude: number | null;
   scraped_at: string;
+  description?: string | null;
 };
 
 type LatLng = {
@@ -256,6 +256,7 @@ export default function WalkingScreen() {
           latitude: item.latitude,
           longitude: item.longitude,
           scraped_at: item.scraped_at || "",
+          description: item.description || null,
         }));
 
         let list = transformed;
@@ -339,39 +340,16 @@ export default function WalkingScreen() {
         Alert.alert(t("common.error"), t("walking.errors.missingParkName"));
         return;
       }
+
       router.push({
         pathname: "/tabs/Navigation",
-        params: {
-          presetQuery: park.title.trim(),
-          freshStart: "true",
-          fillOnly: "true",
-          ...(park.latitude &&
-            park.longitude && {
-              presetLat: park.latitude.toString(),
-              presetLng: park.longitude.toString(),
-            }),
+        params: { 
+          presetQuery: park.title.trim(), 
+          autoStart: "1" 
         },
       });
     } catch {
       Alert.alert(t("common.error"), t("walking.errors.openNavFailed"));
-    }
-  };
-
-  const handleUrlPress = async (url: string) => {
-    if (!url) return;
-    try {
-      await WebBrowser.openBrowserAsync(url);
-    } catch {
-      try {
-        const canOpen = await Linking.canOpenURL(url);
-        if (canOpen) {
-          await Linking.openURL(url);
-        } else {
-          Alert.alert(t("common.error"), t("walking.errors.cannotOpenUrl"));
-        }
-      } catch {
-        Alert.alert(t("common.error"), t("walking.errors.openUrlFailed"));
-      }
     }
   };
 
@@ -427,106 +405,74 @@ export default function WalkingScreen() {
     ];
   };
 
-  const renderParkItem = ({ item }: { item: ParkLocation }) => (
-    <TouchableOpacity
-      style={[s.parkItem, selectedPark?.title === item.title && s.selectedParkItem]}
-      onPress={() => handleParkSelect(item)}
-    >
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={s.parkImage} resizeMode="cover" />
-      ) : (
-        <View style={[s.parkImage, s.noImage]}>
-          <AppText variant="caption" weight="400" style={s.noImageText}>
-            {t("walking.parks.noImage")}
-          </AppText>
-        </View>
-      )}
+  const renderParkItem = ({ item }: { item: ParkLocation }) => {
+    const activitiesCount = item.activities?.length || 0;
+    const amenitiesCount = item.amenities?.length || 0;
+    
+    const config = listItemConfig.parks;
 
-      <View style={s.titleContainer}>
-        <AppText variant="title" weight="700" style={s.parkTitle}>
-          {item.title}
-        </AppText>
-        {userLocation && item.latitude && item.longitude && (
-          <AppText variant="caption" weight="600" style={s.distanceText}>
-            {t("walking.location.away", {
-              distance: kmStr(distanceMeters(userLocation, { latitude: item.latitude, longitude: item.longitude })),
-            })}
-          </AppText>
-        )}
-      </View>
+    const metadata = config.getMetadata(t, activitiesCount, amenitiesCount);
+    const finalMetadata = metadata === t('walking.parks.viewDetails') ? '' : metadata;
 
-      <View style={s.hoursContainer}>
-        <AppText variant="caption" weight="600" style={s.hoursLabel}>
-          {item.hours}
-        </AppText>
-      </View>
+    const distanceText = userLocation && item.latitude && item.longitude
+      ? t('walking.location.away', {
+          distance: kmStr(distanceMeters(userLocation, { 
+            latitude: item.latitude, 
+            longitude: item.longitude 
+          })),
+        })
+      : '';
 
-      {!!item.region && (
-        <View style={s.regionContainer}>
-          <AppText variant="caption" weight="600" style={s.regionText}>
-            {t("walking.parks.region")}: {item.region}
-          </AppText>
-        </View>
-      )}
+    const subtitle = item.region 
+      ? `${distanceText} • ${item.region}`
+      : distanceText;
 
-      {(item.activities?.length > 0 || item.amenities?.length > 0) && (
-        <View style={s.combinedCountContainer}>
-          <AppText variant="caption" weight="600" style={s.combinedCountText}>
-            {t("walking.parks.available", {
-              activities: item.activities?.length || 0,
-              amenities: item.amenities?.length || 0,
-            })}
-          </AppText>
-        </View>
-      )}
-
-      {!!item.url && (
-        <TouchableOpacity onPress={() => handleUrlPress(item.url)} style={s.urlContainer}>
-          <AppText variant="caption" weight="600" style={s.urlText} numberOfLines={1}>
-            {t("walking.parks.learnMore")}
-          </AppText>
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity style={s.directionButton} onPress={() => handleGetDirections(item)}>
-        <AppText variant="button" weight="800" color="#FFF">
-          {t("walking.parks.getDirections")}
-        </AppText>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-
-  const parksPerPage = 10;
-  const totalPages = Math.ceil(filteredParks.length / parksPerPage);
-  const currentParks = filteredParks.slice((currentPage - 1) * parksPerPage, currentPage * parksPerPage);
-
-  if (errorKey) {
     return (
-      <SafeAreaView style={s.safe}>
-        <TopBar
-          language={i18n.language as LangCode}
-          setLanguage={setLang as (c: LangCode) => void}
-          bgColor="#D9D991"
-          title={t("walking.title")}
-          includeTopInset={true}
-          barHeight={44}
-          topPadding={2}
-          onLogout={async () => {
-            await logout();
-            router.replace("/Authentication/LogIn");
-          }}
-        />
-        <View style={s.errorContainer}>
-          <AppText variant="body" weight="600" style={s.errorText}>
-            {t(errorKey)}
-          </AppText>
-          <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
-            <AppText variant="button" weight="700" style={s.retryButtonText}>
-              {t("walking.retry")}
+      <ListItem
+        title={item.title}
+        image={item.image}
+        placeholderIcon="park"
+        subtitle={subtitle}
+        details={item.hours}
+        metadata={finalMetadata}
+        showArrow={true}
+        onPress={() => handleParkSelect(item)}
+        isSelected={selectedPark?.title === item.title}
+        imageResizeMode="cover" 
+      />
+      );
+    };
+    const parksPerPage = 8;
+    const totalPages = Math.ceil(filteredParks.length / parksPerPage);
+    const currentParks = filteredParks.slice((currentPage - 1) * parksPerPage, currentPage * parksPerPage);
+
+    if (errorKey) {
+      return (
+        <SafeAreaView style={s.safe}>
+          <TopBar
+            language={i18n.language as LangCode}
+            setLanguage={setLang as (c: LangCode) => void}
+            bgColor="#D9D991"
+            title={t("walking.title")}
+            includeTopInset={true}
+            barHeight={44}
+            topPadding={2}
+            onLogout={async () => {
+              await logout();
+              router.replace("/Authentication/LogIn");
+            }}
+          />
+          <View style={s.errorContainer}>
+            <AppText variant="body" weight="600" style={s.errorText}>
+              {t(errorKey)}
             </AppText>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+            <TouchableOpacity style={s.retryButton} onPress={fetchParks}>
+              <AppText variant="button" weight="700" style={s.retryButtonText}>
+                {t("walking.retry")}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
     );
   }
 
@@ -644,7 +590,7 @@ export default function WalkingScreen() {
         }
       />
 
-      <ParkDetailsModal
+      <ItemDetailsModal
         park={selectedPark}
         visible={showParkDetails}
         onClose={handleCloseParkDetails}
@@ -672,58 +618,11 @@ const s = StyleSheet.create({
     padding: 16,
     flexGrow: 1,
   },
-
-  parkItem: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  selectedParkItem: {
-    borderColor: "#007AFF",
-    backgroundColor: "#F0F8FF",
-  },
-  parkImage: {
-    width: "100%",
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  noImage: {
-    backgroundColor: "#E9ECEF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noImageText: { color: "#6C757D" },
-  titleContainer: { marginBottom: 8 },
-  parkTitle: { marginBottom: 4 },
-  distanceText: { color: "#6C757D", fontSize: 14 },
-  hoursContainer: { marginBottom: 8 },
-  hoursLabel: { color: "#28A745", marginBottom: 2 },
-  regionContainer: { marginBottom: 12 },
-  regionText: { color: "#495057" },
-  urlContainer: {
-    marginBottom: 12,
-    padding: 8,
-    backgroundColor: "#F8F9FA",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-  },
-  urlText: { color: "#007AFF" },
-  directionButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignSelf: "flex-start",
+  
+  parkTitle: { 
+    marginBottom: 8, 
+    fontSize: 18,
+    color: "#2C3E50",
   },
 
   errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
@@ -732,16 +631,6 @@ const s = StyleSheet.create({
   retryButtonText: { color: "#FFF" },
   emptyContainer: { padding: 40, alignItems: "center" },
   emptyText: { textAlign: "center", marginBottom: 16, color: "#6C757D" },
-  combinedCountContainer: {
-    marginBottom: 8,
-    padding: 6,
-    backgroundColor: "#E7F3FF",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#007AFF",
-    alignSelf: "flex-start",
-  },
-  combinedCountText: { color: "#007AFF", fontSize: 12 },
 
   summaryChipContainer: {
     backgroundColor: "#FFF",

@@ -111,20 +111,21 @@
     }
   },
   "home": {
-    "navigation": "Navigation",
+    "navigation": "Maps",
     "walkingRoutes": "Walking Routes",
     "homeTab": "Home",
     "ccActivities": "CC Activities",
     "clinics": "Clinics",
-    "allActivities": "All Activities",
-    "bulletinBoard": "Bulletin Board",
+    "allActivities": "Events",
+    "bulletinBoard": "Gathering",
     "profile": "Profile",
     "rewards": "Rewards",
     "sos": "SOS",
     "imActive": "Tap to check in!",
     "youreCheckedIn": "You're checked in!",
     "tapToCheckIn": "Ready to check in?",
-    "checkedIn": "Have a nice day!"
+    "checkedIn": "Have a nice day!",
+    "lepakGreeting": "Hi {{name}}, wanna lepak?"
   },
   "clinics": {
     "searchPlaceholder": "Search by clinic name...",
@@ -220,7 +221,7 @@
     }
   },
   "navigation": {
-    "title": "Navigation",
+    "title": "Maps",
     "search": {
       "permissionTitle": "Location Permission Required",
       "permissionBody": "Please grant location permission to use navigation features.",
@@ -269,9 +270,6 @@
       "fireBody": "Event starts in 1 hour",
       "scheduledBody": "Reminder set for {{when}}"
     }
-  },
-  "walkingRoutes": {
-    "title": "Walking Routes"
   },
   "rewards": {
     "title": "Rewards",
@@ -477,7 +475,7 @@
     }
   },
   "walking": {
-    "title": "Walking Routes",
+    "title": "Parks",
     "loading": "Loading parks...",
     "error": "Failed to load parks",
     "errors": {

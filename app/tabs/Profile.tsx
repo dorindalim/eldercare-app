@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
@@ -21,7 +22,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
@@ -58,9 +59,14 @@ export default function ElderlyProfile() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { session, logout } = useAuth();
-
   const { coins, streak, refresh: refreshCheckins } = useCheckins(session?.userId);
   const { textScale, setTextScale } = useAppSettings();
+
+  // Insets + tab bar height to lift content above the bottom bar
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  // remove the last card's 12px margin from the final padding so there's no visible gap
+  const bottomPad = Math.max(0, tabBarHeight + insets.bottom - 12);
 
   const [name, setName] = useState<string>("-");
   const [yob, setYob] = useState<string>("-");
@@ -213,7 +219,7 @@ export default function ElderlyProfile() {
     if (!notifAllowed) {
       const ok = await ensureNotifPermission();
       if (!ok) {
-        Alert.alert(        
+        Alert.alert(
           t("navigation.reminders.permTitle"),
           t("navigation.reminders.permBody"),
           [{ text: t("common.ok") }]
@@ -230,6 +236,7 @@ export default function ElderlyProfile() {
       );
     }
   };
+
   const [photoPerm, setPhotoPerm] = useState<"granted" | "denied" | "undetermined">("undetermined");
   useEffect(() => {
     (async () => {
@@ -423,7 +430,7 @@ export default function ElderlyProfile() {
       try {
         await logout();
       } catch {}
-      router.replace("/Authentication/LogIn");
+      router.replace("/Authentication/Welcome");
     } finally {
       setDeleteProcessing(false);
     }
@@ -434,21 +441,27 @@ export default function ElderlyProfile() {
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang}
-        bgColor="#D2AB80"
+        bgColor="#FFEBC3"
         includeTopInset
         barHeight={44}
         topPadding={2}
         title={t("profile.title")}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
       <ScrollView
-        contentContainerStyle={s.scroll}
+        contentContainerStyle={[
+          s.scroll,
+          { flexGrow: 1, paddingBottom: bottomPad },
+        ]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        overScrollMode="always"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
       >
         {/* Basic Information */}
         <View style={s.card}>
@@ -542,28 +555,28 @@ export default function ElderlyProfile() {
             {t("profile.conditions")}
           </AppText>
 
-        {conditions.length === 0 ? (
-          <AppText variant="label" weight="700">–</AppText>
-        ) : (
-          <View style={s.block}>
-            {conditions.map((c) => {
-              const condName = !c.condition || isNil(c.condition) ? "–" : c.condition;
-              const medsClean = (c.meds || [])
-                .filter((m) => m.name && !isNil(m.name))
-                .map((m) => {
-                  const freq = m.frequency && !isNil(m.frequency) ? ` — ${m.frequency}` : "";
-                  return `${m.name}${freq}`;
-                });
-              const medsPart = medsClean.length > 0 ? ` (${medsClean.join("; ")})` : "";
-              return (
-                <AppText key={c.id} variant="label" weight="700">
-                  • {condName}
-                  {medsPart}
-                </AppText>
-              );
-            })}
-          </View>
-        )}
+          {conditions.length === 0 ? (
+            <AppText variant="label" weight="700">–</AppText>
+          ) : (
+            <View style={s.block}>
+              {conditions.map((c) => {
+                const condName = !c.condition || isNil(c.condition) ? "–" : c.condition;
+                const medsClean = (c.meds || [])
+                  .filter((m) => m.name && !isNil(m.name))
+                  .map((m) => {
+                    const freq = m.frequency && !isNil(m.frequency) ? ` — ${m.frequency}` : "";
+                    return `${m.name}${freq}`;
+                  });
+                const medsPart = medsClean.length > 0 ? ` (${medsClean.join("; ")})` : "";
+                return (
+                  <AppText key={c.id} variant="label" weight="700">
+                    • {condName}
+                    {medsPart}
+                  </AppText>
+                );
+              })}
+            </View>
+          )}
         </View>
 
         {/* Activity & Rewards */}
@@ -597,7 +610,7 @@ export default function ElderlyProfile() {
           </Pressable>
         </View>
 
-        {/* Accessibility: text size + Notifications toggle + Location toggle */}
+        {/* Accessibility */}
         <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.accessibility")}
@@ -731,8 +744,6 @@ export default function ElderlyProfile() {
               <View style={[s.knob, photoPerm === "granted" ? s.knobOn : s.knobOff]} />
             </Pressable>
           </View>
-
-
         </View>
 
         {/* Delete Account */}
@@ -754,8 +765,6 @@ export default function ElderlyProfile() {
             </AppText>
           </Pressable>
         </View>
-
-        <View style={{ height: 24 }} />
       </ScrollView>
 
       {/* Delete modal */}
@@ -846,14 +855,14 @@ export default function ElderlyProfile() {
 }
 
 const s = StyleSheet.create({
-  scroll: { padding: 16 },
+  scroll: { padding: 16, backgroundColor: "#FFFAF0" },
   card: {
     backgroundColor: "#FFF",
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    marginBottom: 12,
+    marginBottom: 12, // the bottomPad compensates this so no extra gap remains
   },
   rowBetween: {
     flexDirection: "row",

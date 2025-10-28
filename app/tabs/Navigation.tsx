@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import polyline from "@mapbox/polyline";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -27,7 +28,7 @@ import MapView, {
   PROVIDER_GOOGLE,
   type MapMarker,
 } from "react-native-maps";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
@@ -76,6 +77,10 @@ export default function NavigationScreen() {
     await i18n.changeLanguage(code);
     await AsyncStorage.setItem("lang", code);
   };
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomLift = Math.max(0, tabBarHeight + insets.bottom - 14); 
 
   const [location, setLocation] = useState<LatLng | null>(null);
   const [query, setQuery] = useState("");
@@ -133,7 +138,6 @@ export default function NavigationScreen() {
   const isExpoGo = Constants.appOwnership === "expo";
   const providerProp = isExpoGo ? undefined : PROVIDER_GOOGLE;
 
-  // —— preset & auto-start params ——
   const params = useLocalSearchParams();
   const presetQuery = params.presetQuery as string | undefined;
   const [searchInput, setSearchInput] = useState(presetQuery || "");
@@ -790,14 +794,14 @@ export default function NavigationScreen() {
       <TopBar
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        bgColor="#C6DBE6"
+        bgColor="#C7E7EA"
         includeTopInset={true}
         barHeight={44}
         topPadding={2}
         title={t("navigation.title")}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
@@ -964,7 +968,7 @@ export default function NavigationScreen() {
       </MapView>
 
       {navigating && (
-        <View style={s.navOverlay}>
+        <View style={[s.navOverlay, { bottom: tabBarHeight }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <AppText variant="label" weight="900">
               {eta ? t("navigation.search.eta", { duration: eta.duration, distance: eta.distance }) : t("navigation.search.loading")}
@@ -1082,12 +1086,12 @@ export default function NavigationScreen() {
       )}
 
       {destination && !navigating && (
-        <View style={s.bottomBar}>
+        <View style={[s.bottomBar, { bottom: bottomLift }]}>
           <AppText variant="label" weight="800" style={{ marginBottom: 8 }}>
             {t("navigation.search.destinationSet")}
           </AppText>
           <TouchableOpacity style={s.startBtn} onPress={startNavigation}>
-            <AppText variant="button" weight="800" color="#FFF">
+            <AppText variant="button" weight="800" color="#000">
               {t("navigation.search.startNav")}
             </AppText>
           </TouchableOpacity>
@@ -1123,7 +1127,7 @@ export default function NavigationScreen() {
       )}
 
       {showPoiOptions && selectedPOI && (
-        <View style={s.optionsSheet}>
+        <View style={[s.optionsSheet, { bottom: bottomLift }]}>
           <View style={{ alignItems: "center" }}>
             <View style={s.grabber} />
           </View>
@@ -1168,7 +1172,7 @@ export default function NavigationScreen() {
       )}
 
       {sheetOpen && (
-        <View style={s.activitiesSheet}>
+        <View style={[s.activitiesSheet, { bottom: bottomLift }]}>
           <View style={{ alignItems: "center" }}>
             <View style={s.grabber} />
           </View>
@@ -1385,10 +1389,9 @@ const s = StyleSheet.create({
   map: { flex: 1 },
   bottomBar: {
     position: "absolute",
-    bottom: 20,
     left: 12,
     right: 12,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
     padding: 14,
     borderRadius: 12,
     elevation: 5,
@@ -1397,13 +1400,12 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
-  startBtn: { backgroundColor: "#007AFF", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
+  startBtn: { backgroundColor: "#FED787", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
   navOverlay: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: "#FFFAF0",
     padding: 14,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -1468,7 +1470,6 @@ const s = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0,
     backgroundColor: "#FFF",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -1485,7 +1486,6 @@ const s = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0,
     backgroundColor: "#FFF",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
