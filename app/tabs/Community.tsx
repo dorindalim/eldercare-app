@@ -16,17 +16,17 @@ import {
   Linking,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   TouchableOpacity,
   UIManager,
   View,
-  RefreshControl,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
-import FilterSheet, { type ChipOpt } from "../../src/components/FilterSheet";
+import FilterSheet from "../../src/components/FilterSheet";
 import ItemDetailsModal from "../../src/components/ItemDetailsModal";
 import ListItem from "../../src/components/ListItems";
 import Pagination from "../../src/components/Pagination";
@@ -621,7 +621,7 @@ export default function CommunityScreen() {
         metadataIcon="local-atm"
         imageResizeMode="contain"
         buttonBgColor={bg}
-        buttonBgColorActive={darken(bg, 12)}   // <— this colors the offset strip
+        buttonBgColorActive={darken(bg, 12)}   
         buttonBorderColor={border}
         buttonBorderColorActive={border}
       />
@@ -822,10 +822,16 @@ export default function CommunityScreen() {
             id: "categories",
             type: "chips-multi",
             title: t("community.filters.categories"),
-            options: (CATEGORIES as readonly string[]).map<ChipOpt>((c) => ({ key: c, label: catLabel(c as any, t) })),
+            options: (CATEGORIES as readonly string[]).map((c) => ({
+              key: c,
+              label: catLabel(c as any, t),
+              color: CATEGORY_BG[c as keyof typeof CATEGORY_BG], 
+            })),
             selected: tmpCategories,
             onToggle: (key) =>
-              setTmpCategories((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key])),
+              setTmpCategories((prev) =>
+                prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
+              ),
           },
           {
             id: "time",
@@ -883,6 +889,7 @@ export default function CommunityScreen() {
         labels={{ reset: t("community.filters.reset"), apply: t("community.filters.apply") }}
       />
 
+
       <ItemDetailsModal
         event={selectedEvent}
         visible={detailsOpen}
@@ -930,7 +937,7 @@ const styles = StyleSheet.create({
   actionBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
 
   summaryChipContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: StyleSheet.hairlineWidth,

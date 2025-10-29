@@ -378,7 +378,6 @@ export default function WalkingScreen() {
       },
     });
   } else {
-    // Fallback to name search only if coordinates are missing
     const q = park.title?.trim();
     if (!q) {
       Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
@@ -396,16 +395,22 @@ export default function WalkingScreen() {
 };
 
   const getFilterSections = (): FilterSection[] => {
-    const activityOptions = Object.values(t("walking.filters.activities", { returnObjects: true }));
-    const amenityOptions = Object.values(t("walking.filters.amenities", { returnObjects: true }));
-    const regionOptions = Object.values(t("walking.filters.regions", { returnObjects: true }));
+    const activityOptions = Object.values(
+      t("walking.filters.activities", { returnObjects: true })
+    );
+    const amenityOptions = Object.values(
+      t("walking.filters.amenities", { returnObjects: true })
+    );
+    const regionOptions = Object.values(
+      t("walking.filters.regions", { returnObjects: true })
+    );
 
     return [
       {
         id: "activities",
         type: "chips-multi",
         title: t("walking.filters.categories.activity"),
-        options: activityOptions.map((o) => ({ key: o, label: o })),
+        options: activityOptions.map((o) => ({ key: o, label: o })), 
         selected: tempFilters.activities,
         onToggle: (key) =>
           setTempFilters((prev) => ({
@@ -419,7 +424,7 @@ export default function WalkingScreen() {
         id: "amenities",
         type: "chips-multi",
         title: t("walking.filters.categories.amenity"),
-        options: amenityOptions.map((o) => ({ key: o, label: o })),
+        options: amenityOptions.map((o) => ({ key: o, label: o })), 
         selected: tempFilters.amenities,
         onToggle: (key) =>
           setTempFilters((prev) => ({
@@ -433,7 +438,11 @@ export default function WalkingScreen() {
         id: "regions",
         type: "chips-multi",
         title: t("walking.filters.categories.region"),
-        options: regionOptions.map((o) => ({ key: o, label: o })),
+        options: regionOptions.map((o) => ({
+          key: o,
+          label: o,
+          color: colorForRegion(o),
+        })),
         selected: tempFilters.regions,
         onToggle: (key) =>
           setTempFilters((prev) => ({
@@ -714,7 +723,7 @@ const s = StyleSheet.create({
   emptyText: { textAlign: "center", marginBottom: 16, color: "#6C757D" },
 
   summaryChipContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
