@@ -14,7 +14,7 @@ import OffsetButton from "./OffsetButton";
 import { Dimensions } from "react-native";
 const screenHeight = Dimensions.get('window').height;
 
-export type ChipOpt = { key: string; label: string };
+export type ChipOpt = { key: string; label: string; color?: string };
 
 type SectionBase = {
   id: string;
@@ -118,7 +118,6 @@ export default function FilterSheet({
                 </View>
               );
             }
-
             if (sec.type === "chips-single") {
               return (
                 <View key={sec.id} style={[{ marginTop: 12 }, sec.style]}>
@@ -128,21 +127,29 @@ export default function FilterSheet({
                   <View style={s.rowWrap}>
                     {sec.options.map((o) => {
                       const active = sec.selected === o.key;
+
+                      const plateColor = o.color ?? "#E5E1D8";   
+                      const faceColor  = active ? "#000" : "#FFF"; 
+                      const textColor  = active ? "#FFF" : "#000"; 
+
                       return (
                         <OffsetButton
                           key={o.key}
                           onPress={() => sec.onSelect(o.key)}
-                          radius={20} 
-                          bgColor={active ? "#000" : "#FFF"}
-                          borderColor="#000" 
-                          borderColorActive="#000" 
+                          radius={20}
+                          bgColor={faceColor}
+                          borderColor="#000"
+                          borderColorActive="#000"
+                          offsetBgColor={plateColor}
+                          offsetBgColorActive={plateColor}
+                          offsetStrokeColor="#000"
+                          offsetLeft={4}
+                          offsetTop={3}
+                          offsetRight={-6}
+                          offsetBottom={-6}
                           contentStyle={s.chipContent}
                         >
-                          <AppText 
-                            variant="button" 
-                            weight="800" 
-                            color={active ? "#FFF" : "#000"}
-                          >
+                          <AppText variant="button" weight="800" color={textColor}>
                             {o.label}
                           </AppText>
                         </OffsetButton>
@@ -152,7 +159,6 @@ export default function FilterSheet({
                 </View>
               );
             }
-
             return (
               <View key={sec.id} style={[{ marginTop: 12 }, sec.style]}>
                 <AppText variant="label" color="#6B7280" style={{ marginBottom: 6 }}>
@@ -161,21 +167,29 @@ export default function FilterSheet({
                 <View style={s.rowWrap}>
                   {sec.options.map((o) => {
                     const active = sec.selected.includes(o.key);
+
+                    const plateColor = o.color ?? "#E5E1D8";
+                    const faceColor  = active ? "#000" : "#FFF";
+                    const textColor  = active ? "#FFF" : "#000";
+
                     return (
                       <OffsetButton
                         key={o.key}
                         onPress={() => sec.onToggle(o.key)}
-                        radius={20} 
-                        bgColor= {active ? "#000" : "#FFF"}
-                        borderColor="#000" 
-                        borderColorActive="#000" 
+                        radius={20}
+                        bgColor={faceColor}
+                        borderColor="#000"
+                        borderColorActive="#000"
+                        offsetBgColor={plateColor}
+                        offsetBgColorActive={plateColor}
+                        offsetStrokeColor="#000"
+                        offsetLeft={4}
+                        offsetTop={3}
+                        offsetRight={-6}
+                        offsetBottom={-6}
                         contentStyle={s.chipContent}
                       >
-                        <AppText 
-                          variant="button" 
-                          weight="800" 
-                          color={active ? "#fff" : "#000"}
-                        >
+                        <AppText variant="button" weight="800" color={textColor}>
                           {o.label}
                         </AppText>
                       </OffsetButton>
@@ -192,7 +206,7 @@ export default function FilterSheet({
           <OffsetButton
             onPress={onReset}
             radius={10}
-            bgColor="#6B7280"
+            bgColor="#FFF"
             borderColor="#000"
             borderColorActive="#000"
             contentStyle={s.actionBtnContent}
@@ -207,7 +221,7 @@ export default function FilterSheet({
           <OffsetButton
             onPress={onApply}
             radius={10}
-            bgColor="#111827"
+            bgColor="#FED787"
             borderColor="#000"
             borderColorActive="#000"
             contentStyle={s.actionBtnContent}
@@ -250,11 +264,10 @@ const s = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  // Chip styles for filter options
   chipContent: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderWidth: 2, // This will work with OffsetButton's border
+    borderWidth: 2, 
   },
   rowWrap: { 
     flexDirection: "row", 
@@ -267,7 +280,6 @@ const s = StyleSheet.create({
     gap: 8, 
     flex: 1 
   },
-  // Action button styles
   actionButtonWrapper: {
     flex: 1,
   },
@@ -277,6 +289,5 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2, 
-    backgroundColor: '#fff', 
   },
 });

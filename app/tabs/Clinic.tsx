@@ -299,11 +299,11 @@ export default function ClinicScreen() {
         type: "chips-multi",
         title: t("walking.filters.categories.region"),
         options: [
-          { key: "Central", label: t("walking.filters.regions.central") },
-          { key: "North", label: t("walking.filters.regions.north") },
-          { key: "North-East", label: t("walking.filters.regions.northEast") },
-          { key: "East", label: t("walking.filters.regions.east") },
-          { key: "West", label: t("walking.filters.regions.west") },
+          { key: "Central",    label: t("walking.filters.regions.central"),   color: colorForRegion("Central") },
+          { key: "North",      label: t("walking.filters.regions.north"),     color: colorForRegion("North") },
+          { key: "North-East", label: t("walking.filters.regions.northEast"), color: colorForRegion("North-East") },
+          { key: "East",       label: t("walking.filters.regions.east"),      color: colorForRegion("East") },
+          { key: "West",       label: t("walking.filters.regions.west"),      color: colorForRegion("West") },
         ],
         selected: tempFilters.regions,
         onToggle: (key) => {
