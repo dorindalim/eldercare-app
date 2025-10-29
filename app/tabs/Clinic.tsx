@@ -301,7 +301,7 @@ export default function ClinicScreen() {
         options: [
           { key: "Central", label: t("walking.filters.regions.central") },
           { key: "North", label: t("walking.filters.regions.north") },
-          { key: "North-East", label: "North-East" },
+          { key: "North-East", label: t("walking.filters.regions.northEast") },
           { key: "East", label: t("walking.filters.regions.east") },
           { key: "West", label: t("walking.filters.regions.west") },
         ],

@@ -865,7 +865,7 @@ export default function NavigationScreen() {
       {
         id: "categories",
         type: "chips-single",
-        title: t("navigation.search.filter.title", { defaultValue: "Show" }),
+        title: t("walking.filter.title", { defaultValue: "Show" }),
         options: (["search", "cc", "clinics", "parks"] as const).map((k) => ({
           key: k,
           label: activePOILabel(k),
@@ -916,7 +916,6 @@ export default function NavigationScreen() {
               suppressSuggestionsRef.current = false;
               setQuery(text);
               setSearchInput(text);
-              // Approximate old focus gating without changing behavior materially:
               setInputFocused(text.length > 0);
               if (text.length > 2 && location) {
                 fetchAutocompleteSuggestions(text);
