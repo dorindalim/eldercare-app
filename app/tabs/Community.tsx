@@ -16,11 +16,11 @@ import {
   Linking,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   TouchableOpacity,
   UIManager,
   View,
-  RefreshControl,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -621,7 +621,7 @@ export default function CommunityScreen() {
         metadataIcon="local-atm"
         imageResizeMode="contain"
         buttonBgColor={bg}
-        buttonBgColorActive={darken(bg, 12)}   // <— this colors the offset strip
+        buttonBgColorActive={darken(bg, 12)}   
         buttonBorderColor={border}
         buttonBorderColorActive={border}
       />
@@ -937,7 +937,7 @@ const styles = StyleSheet.create({
   actionBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" },
 
   summaryChipContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: StyleSheet.hairlineWidth,

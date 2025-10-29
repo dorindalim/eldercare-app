@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { t } from "i18next";
 import CHASClinics from "../../assets/data/CHASClinics.json";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
@@ -40,6 +41,17 @@ const REGION_BG: Record<string, string> = {
   "East":      "#FEA775",
   "West":      "#93E6AA",
 };
+
+const REGION_KEY = {
+  "Central": "central",
+  "North": "north",
+  "North-East": "northEast",
+  "East": "east",
+  "West": "west",
+} as const;
+
+const regionLabel = (key: keyof typeof REGION_KEY, tFn: typeof t) =>
+  tFn(`walking.filters.regions.${REGION_KEY[key]}`);
 
 const REGION_FALLBACKS = ["#E5E1D8", "#8E8E8E", "#F7A8AF", "#FEA775", "#93E6AA"];
 const colorForRegion = (region?: string | null) => {
@@ -397,7 +409,10 @@ export default function ClinicScreen() {
                 </AppText>
               </TouchableOpacity>
             </View>
-            <SummaryChip items={selectedFilterItems} style={{ marginTop: 8 }} />
+            <SummaryChip
+              items={selectedFilterItems.map((k) => regionLabel(k as keyof typeof REGION_KEY, t))}
+              style={{ marginTop: 8 }}
+            />
           </View>
         )}
       <FilterSheet
@@ -410,6 +425,8 @@ export default function ClinicScreen() {
           applyFilters(tempFilters);
           setShowFilterPanel(false);
         }}
+        title={t("walking.filter.title")}
+        labels={{ reset: t("walking.filter.reset"), apply: t("walking.filter.apply") }}
       />
 
       <FlatList
@@ -537,7 +554,7 @@ const s = StyleSheet.create({
     color: "#FFF",
   },
   summaryChipContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
