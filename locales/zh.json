@@ -587,7 +587,8 @@
         "north": "北部",
         "south": "南部",
         "west": "西部",
-        "offshoreIslands": "离岸岛屿"
+        "offshoreIslands": "离岸岛屿",
+        "northEast": "东北部"
       }
     }
   },

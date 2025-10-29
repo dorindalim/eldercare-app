@@ -587,7 +587,8 @@
         "north": "வடக்கு",
         "south": "தெற்கு",
         "west": "மேற்கு",
-        "offshoreIslands": "கரையோர தீவுகள்"
+        "offshoreIslands": "கரையோர தீவுகள்",
+        "northEast": "வடகிழக்கு"
       }
     }
   },

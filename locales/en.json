@@ -587,7 +587,8 @@
         "north": "North",
         "south": "South",
         "west": "West",
-        "offshoreIslands": "Offshore islands"
+        "offshoreIslands": "Offshore islands",
+        "northEast": "North East"
       }
     }
   },

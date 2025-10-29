@@ -587,7 +587,8 @@
         "north": "Utara",
         "south": "Selatan",
         "west": "Barat",
-        "offshoreIslands": "Pulau luar pesisir"
+        "offshoreIslands": "Pulau luar pesisir",
+        "northEast": "Tenggara"
       }
     }
   },
