@@ -426,7 +426,6 @@ export default function WalkingScreen() {
       t("walking.filters.activities", { returnObjects: true })
     );
     
-    // Top 8 most common amenities from your analysis
     const amenityOptions = [
       "Playground",
       "Allotment garden", 
