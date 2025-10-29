@@ -325,6 +325,8 @@ export default function ClinicScreen() {
         detailsIcon="access-time" 
         metadataIcon="timer"
         imageResizeMode="contain"
+        buttonBgColor="#FFF" 
+        buttonBorderColor="#7A8AF"
       />
     );
   };

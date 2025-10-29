@@ -26,6 +26,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import OffsetButton from "../../src/components/OffsetButton";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
@@ -383,7 +384,7 @@ export default function ElderlyProfile() {
     }
 
     if (!token) {
-      Alert.alert("No portal link yet", "Your profile may be incomplete, or a link hasn’t been created.");
+      Alert.alert("No portal link yet", "Your profile may be incomplete, or a link hasn't been created.");
       return;
     }
 
@@ -462,7 +463,15 @@ export default function ElderlyProfile() {
         showsVerticalScrollIndicator={false}
       >
         {/* Basic Information */}
-        <View style={s.card}>
+        <OffsetButton
+          radius={16}
+          bgColor="#FFF"
+          borderColor="#000"
+          borderColorActive="#C9F3D5"
+          contentStyle={s.cardContent}
+          style={s.cardWrapper}
+          disabled={true}
+        >
           <AppText variant="h2" weight="800">
             {t("profile.basicInfo")}
           </AppText>
@@ -485,16 +494,33 @@ export default function ElderlyProfile() {
             </AppText>
           </View>
 
-          <Pressable onPress={() => router.push("/EditBasic")} style={s.linkRow}>
-            <Ionicons name="create-outline" size={18} />
-            <AppText variant="button" weight="800" color="#111827">
-              {t("profile.editBasic")}
-            </AppText>
-          </Pressable>
-        </View>
+          <OffsetButton
+            onPress={() => router.push("/EditBasic")}
+            radius={10}
+            bgColor="#FFF"
+            borderColor="#000"
+            borderColorActive="#C9F3D5"
+            contentStyle={s.linkButtonContent}
+          >
+            <View style={s.linkRow}>
+              <Ionicons name="create-outline" size={18} color="#000" />
+              <AppText variant="button" weight="800" color="#000">
+                {t("profile.editBasic")}
+              </AppText>
+            </View>
+          </OffsetButton>
+        </OffsetButton>
 
         {/* Emergency Health Card */}
-        <View style={s.card}>
+        <OffsetButton
+          radius={16}
+          bgColor="#FFF"
+          borderColor="#000"
+          borderColorActive="#C9F3D5"
+          contentStyle={s.cardContent}
+          style={s.cardWrapper}
+          disabled={true}
+        >
           <AppText variant="h2" weight="800">
             {t("profile.healthCard")}
           </AppText>
@@ -540,15 +566,30 @@ export default function ElderlyProfile() {
             </AppText>
           </View>
 
-          <Pressable style={s.btn} onPress={onShareEcPortal}>
-            <AppText variant="button" weight="800" color="#FFF">
+          <OffsetButton
+            onPress={onShareEcPortal}
+            radius={10}
+            bgColor="#111827"
+            borderColor="#000"
+            borderColorActive="#C9F3D5"
+            contentStyle={s.buttonContent}
+          >
+            <AppText variant="button" weight="800" color="#000">
               {t("profile.sharePortal")}
             </AppText>
-          </Pressable>
-        </View>
+          </OffsetButton>
+        </OffsetButton>
 
         {/* Conditions */}
-        <View style={s.card}>
+        <OffsetButton
+          radius={16}
+          bgColor="#FFF"
+          borderColor="#000"
+          borderColorActive="#C9F3D5"
+          contentStyle={s.cardContent}
+          style={s.cardWrapper}
+          disabled={true}
+        >
           <AppText variant="h2" weight="800">
             {t("profile.conditions")}
           </AppText>
@@ -575,10 +616,18 @@ export default function ElderlyProfile() {
               })}
             </View>
           )}
-        </View>
+        </OffsetButton>
 
         {/* Activity & Rewards */}
-        <View style={s.card}>
+        <OffsetButton
+          radius={16}
+          bgColor="#FFF"
+          borderColor="#000"
+          borderColorActive="#C9F3D5"
+          contentStyle={s.cardContent}
+          style={s.cardWrapper}
+          disabled={true}
+        >
           <AppText variant="h2" weight="800">
             {t("profile.activity")}
           </AppText>
@@ -601,15 +650,30 @@ export default function ElderlyProfile() {
             </AppText>
           </View>
 
-          <Pressable style={s.btn} onPress={() => router.push("/tabs/Rewards")}>
-            <AppText variant="button" weight="800" color="#FFF">
+          <OffsetButton
+            onPress={() => router.push("/tabs/Rewards")}
+            radius={10}
+            bgColor="#111827"
+            borderColor="#000"
+            borderColorActive="#C9F3D5"
+            contentStyle={s.buttonContent}
+          >
+            <AppText variant="button" weight="800" color="#000">
               {t("rewards.title")}
             </AppText>
-          </Pressable>
-        </View>
+          </OffsetButton>
+        </OffsetButton>
 
         {/* Accessibility */}
-        <View style={s.card}>
+        <OffsetButton
+          radius={16}
+          bgColor="#FFF"
+          borderColor="#000"
+          borderColorActive="#C9F3D5"
+          contentStyle={s.cardContent}
+          style={s.cardWrapper}
+          disabled={true}
+        >
           <AppText variant="h2" weight="800">
             {t("profile.accessibility")}
           </AppText>
@@ -620,16 +684,19 @@ export default function ElderlyProfile() {
 
           <View style={s.chipsRow}>
             {(["md", "lg", "xl"] as const).map((sz) => (
-              <Pressable
+              <OffsetButton
                 key={sz}
                 onPress={() => setTextScale(sz)}
-                accessibilityRole="button"
-                style={[s.chip, textScale === sz && s.chipActive]}
+                radius={20}
+                bgColor={textScale === sz ? "#000" : "#FFF"}
+                borderColor="#000"
+                borderColorActive="#C9F3D5"
+                contentStyle={s.chipContent}
               >
-                <AppText variant="button" weight="800" color={textScale === sz ? "#FFF" : "#111827"}>
+                <AppText variant="button" weight="800" color={textScale === sz ? "#000" : "#000"}>
                   {sz.toUpperCase()}
                 </AppText>
-              </Pressable>
+              </OffsetButton>
             ))}
           </View>
 
@@ -742,10 +809,18 @@ export default function ElderlyProfile() {
               <View style={[s.knob, photoPerm === "granted" ? s.knobOn : s.knobOff]} />
             </Pressable>
           </View>
-        </View>
+        </OffsetButton>
 
         {/* Delete Account */}
-        <View style={s.card}>
+        <OffsetButton
+          radius={16}
+          bgColor="#FFF"
+          borderColor="#000"
+          borderColorActive="#C9F3D5"
+          contentStyle={s.cardContent}
+          style={s.cardWrapper}
+          disabled={true}
+        >
           <AppText variant="h2" weight="800">
             {t("profile.delete.title")}
           </AppText>
@@ -754,15 +829,19 @@ export default function ElderlyProfile() {
             {t("profile.delete.cardExplain")}
           </AppText>
 
-          <Pressable
-            style={[s.btn, { backgroundColor: "#DC2626", marginTop: 12 }]}
+          <OffsetButton
             onPress={() => setShowDeleteModal(true)}
+            radius={10}
+            bgColor="#DC2626"
+            borderColor="#000"
+            borderColorActive="#C9F3D5"
+            contentStyle={s.buttonContent}
           >
-            <AppText variant="button" weight="800" color="#FFF">
+            <AppText variant="button" weight="800" color="#000">
               {t("profile.delete.button")}
             </AppText>
-          </Pressable>
-        </View>
+          </OffsetButton>
+        </OffsetButton>
       </ScrollView>
 
       {/* Delete modal */}
@@ -804,24 +883,35 @@ export default function ElderlyProfile() {
               />
 
               <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 14 }}>
-                <Pressable
-                  style={[
-                    s.btn,
-                    { backgroundColor: "#DC2626" },
-                    (!confirmChecked || !typedConfirm.trim()) && { opacity: 0.5 },
-                  ]}
+                <OffsetButton
                   onPress={() => confirmTypedDeletion(typedConfirm)}
                   disabled={!confirmChecked || !typedConfirm.trim() || deleteProcessing}
+                  radius={10}
+                  bgColor="#DC2626"
+                  borderColor="#000"
+                  borderColorActive="#C9F3D5"
+                  contentStyle={{
+                    ...s.buttonContent,
+                    opacity: (!confirmChecked || !typedConfirm.trim()) ? 0.5 : 1
+                  }}
                 >
                   <AppText variant="button" weight="800" color="#FFF">
                     {t("profile.delete.confirmDeletion")}
                   </AppText>
-                </Pressable>
-                <Pressable style={[s.btn, s.btnSecondary]} onPress={() => setShowDeleteModal(false)}>
-                  <AppText variant="button" weight="800" color="#111827">
+                </OffsetButton>
+                
+                <OffsetButton
+                  onPress={() => setShowDeleteModal(false)}
+                  radius={10}
+                  bgColor="#FFF"
+                  borderColor="#000"
+                  borderColorActive="#C9F3D5"
+                  contentStyle={s.buttonContent}
+                >
+                  <AppText variant="button" weight="800" color="#000">
                     {t("common.cancel")}
                   </AppText>
-                </Pressable>
+                </OffsetButton>
               </View>
 
               <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
@@ -854,13 +944,13 @@ export default function ElderlyProfile() {
 
 const s = StyleSheet.create({
   scroll: { padding: 16, backgroundColor: "#FFFAF0" },
-  card: {
-    backgroundColor: "#FFF",
-    borderRadius: 16,
+  cardWrapper: {
+    marginBottom: 12,
+  },
+  cardContent: {
     padding: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    marginBottom: 12, // the bottomPad compensates this so no extra gap remains
+    backgroundColor: 'white',
+    borderWidth: 2,
   },
   rowBetween: {
     flexDirection: "row",
@@ -870,29 +960,34 @@ const s = StyleSheet.create({
   block: { marginTop: 6 },
 
   chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
-  chip: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#FFF",
+  chipContent: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
+    borderWidth: 2,
+    backgroundColor: 'transparent',
   },
-  chipActive: { backgroundColor: "#111827", borderColor: "#111827" },
 
-  btn: {
-    backgroundColor: "#111827",
+  buttonContent: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 8,
+    borderWidth: 2,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  btnSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#E5E7EB" },
 
-  linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+  linkButtonContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 2,
+    backgroundColor: 'transparent',
+  },
+
+  linkRow: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 6,
+  },
 
   modalOverlay: {
     flex: 1,

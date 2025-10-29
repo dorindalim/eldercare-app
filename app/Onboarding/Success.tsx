@@ -2,14 +2,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ImageBackground,
-    Platform,
-    Pressable,
-    Share,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View,
+  ImageBackground,
+  Platform,
+  Pressable,
+  Share,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -28,6 +29,7 @@ export default function SuccessScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
+  const { height: screenHeight } = useWindowDimensions();
 
   const [lang, setLang] = useState<LangCode>("en");
   useEffect(() => {
@@ -41,6 +43,16 @@ export default function SuccessScreen() {
   const setLanguage = async (code: LangCode) => {
     setLang(code);
     await AsyncStorage.setItem("lang", code);
+  };
+
+  const getInfoBlockPosition = () => {
+    if (screenHeight < 700) {
+      return screenHeight * 0.65;
+    } else if (screenHeight < 800) {
+      return screenHeight * 0.7;
+    } else {
+      return screenHeight * 0.60;
+    }
   };
 
   const onSharePortal = async () => {
@@ -97,7 +109,9 @@ export default function SuccessScreen() {
           <View
             style={[
               s.bottomBlock,
-              { bottom: Math.max(insets.bottom, 12) + INFO_RAISE }
+              {
+                top: getInfoBlockPosition(),
+              }
             ]}
             pointerEvents="box-none"
           >

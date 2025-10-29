@@ -222,6 +222,37 @@ export default function ElderlyConditions() {
     await markOnboarding(true);
     await markAllComplete();
 
+    const keysToKeep = [
+      'user-session',
+      'auth-token', 
+      'user-id',
+      'lang', 
+    ];
+
+    try {
+      console.log("Clearing all onboarding data...");
+      
+      const allKeys = await AsyncStorage.getAllKeys();
+      
+      // Filter for any keys related to onboarding/drafts/progress
+      const onboardingKeys = allKeys.filter(key => 
+        key.includes('draft') || 
+        key.includes('progress') ||
+        key.includes('onboarding')
+      );
+      
+      console.log("Deleting onboarding keys:", onboardingKeys);
+      
+      if (onboardingKeys.length > 0) {
+        await AsyncStorage.multiRemove(onboardingKeys);
+      }
+      
+      console.log("All onboarding data cleared successfully");
+      
+    } catch (error) {
+      console.log("Error clearing onboarding data:", error);
+    }
+
     await AsyncStorage.setItem(
       KDRAFT.conditions,
       JSON.stringify({ conditions, assistive, assistiveOther, drugAllergies, publicNote, noConditions })

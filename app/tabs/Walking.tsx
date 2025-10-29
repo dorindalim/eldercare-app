@@ -448,6 +448,8 @@ export default function WalkingScreen() {
         showArrow
         onPress={() => handleParkSelect(item)}
         imageResizeMode="cover"
+        buttonBgColor="#D9D991"  
+        buttonBorderColor="#1F2937" 
       />
     );
   };

@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { Image, ImageResizeMode, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, ImageResizeMode, StyleSheet, View } from 'react-native';
 import AppText from './AppText';
+import OffsetButton from './OffsetButton';
 
 export type ListItemProps = {
   title: string;
@@ -16,6 +17,14 @@ export type ListItemProps = {
   detailsIcon?: string;
   metadataIcon?: string;
   imageResizeMode?: ImageResizeMode;
+  // OffsetButton props
+  buttonLabel?: string;
+  buttonDisabled?: boolean;
+  buttonLoading?: boolean;
+  buttonRadius?: number;
+  buttonBgColor?: string;
+  buttonBorderColor?: string;
+  variant?: 'walking' | 'community' | 'clinic';
 };
 
 const ListItem = ({
@@ -30,7 +39,13 @@ const ListItem = ({
   subtitleIcon = 'location-on',
   detailsIcon = 'access-time',  
   metadataIcon = 'person',
-  imageResizeMode = 'cover', 
+  imageResizeMode = 'cover',
+  // OffsetButton props with defaults
+  buttonDisabled = false,
+  buttonLoading = false,
+  buttonRadius = 6,
+  buttonBgColor = '#FED787',
+  buttonBorderColor = '#1F2937',
 }: ListItemProps) => {
   const [textHeight, setTextHeight] = useState<number>(80);
   const hasMeasuredRef = useRef(false);
@@ -48,122 +63,138 @@ const ListItem = ({
   }, [title, subtitle, details, metadata]);
 
   return (
-    <TouchableOpacity
-      style={[styles.container]}
-      onPress={onPress}
-    >
-      {/* Image/Icon on the left */}
-      <View style={styles.imageWrapper}>
-        <View 
-          style={[
-            styles.imageContainer, 
-            imageResizeMode === 'cover' 
-              ? { height: textHeight } 
-              : styles.centeredImageContainer
-          ]}
-        >
-          {image ? (
-            typeof image === 'number' ? (
-              <Image 
-                source={image} 
-                style={[
-                  styles.image,
-                  imageResizeMode === 'cover' && { height: textHeight }
-                ]} 
-                resizeMode={imageResizeMode} 
-              />
-            ) : (
-              <Image 
-                source={{ uri: image }} 
-                style={[
-                  styles.image,
-                  imageResizeMode === 'cover' && { height: textHeight }
-                ]} 
-                resizeMode={imageResizeMode} 
-              />
-            )
-          ) : (
-            <View style={[
-              styles.placeholder,
-              imageResizeMode === 'cover' 
-                ? { height: textHeight } 
-                : styles.centeredPlaceholder
-            ]}>
-              <MaterialIcons name={placeholderIcon as any} size={32} color="#6C757D" />
+    <View style={styles.container}>
+      {/* OffsetButton as the main touchable wrapper */}
+      <OffsetButton
+        onPress={onPress}
+        disabled={buttonDisabled}
+        loading={buttonLoading}
+        radius={buttonRadius}
+        bgColor={buttonBgColor}
+        borderColor={buttonBorderColor}
+        borderColorActive = "#C9F3D5"
+        style={styles.offsetButton}
+        contentStyle={styles.offsetButtonContent}
+      >
+        <View style={styles.buttonInnerContent}>
+          {/* Image/Icon on the left */}
+          <View style={styles.imageWrapper}>
+            <View 
+              style={[
+                styles.imageContainer, 
+                imageResizeMode === 'cover' 
+                  ? { height: textHeight } 
+                  : styles.centeredImageContainer
+              ]}
+            >
+              {image ? (
+                typeof image === 'number' ? (
+                  <Image 
+                    source={image} 
+                    style={[
+                      styles.image,
+                      imageResizeMode === 'cover' && { height: textHeight }
+                    ]} 
+                    resizeMode={imageResizeMode} 
+                  />
+                ) : (
+                  <Image 
+                    source={{ uri: image }} 
+                    style={[
+                      styles.image,
+                      imageResizeMode === 'cover' && { height: textHeight }
+                    ]} 
+                    resizeMode={imageResizeMode} 
+                  />
+                )
+              ) : (
+                <View style={[
+                  styles.placeholder,
+                  imageResizeMode === 'cover' 
+                    ? { height: textHeight } 
+                    : styles.centeredPlaceholder
+                ]}>
+                  <MaterialIcons name={placeholderIcon as any} size={32} color="#6C757D" />
+                </View>
+              )}
             </View>
-          )}
-        </View>
-      </View>
+          </View>
 
-      {/* Content on the right */}
-      <View style={styles.content}>
-        <View style={styles.textContent} onLayout={handleTextLayout}>
-          <AppText variant="h2" weight="700" style={styles.title}>
-            {title}
-          </AppText>
+          {/* Content on the right */}
+          <View style={styles.content}>
+            <View style={styles.textContent} onLayout={handleTextLayout}>
+              <AppText variant="h2" weight="700" style={styles.title}>
+                {title}
+              </AppText>
 
-          <View style={styles.infoContent}>
-            {subtitle && (
-              <View style={styles.infoRow}>
-                <View style={styles.iconWrapper}>
-                  <MaterialIcons name={subtitleIcon as any} size={16} color="#007AFF" />
-                </View>
-                <AppText variant="body" weight="600" style={styles.infoText}>
-                  {subtitle}
-                </AppText>
+              <View style={styles.infoContent}>
+                {subtitle && (
+                  <View style={styles.infoRow}>
+                    <View style={styles.iconWrapper}>
+                      <MaterialIcons name={subtitleIcon as any} size={16} color="#007AFF" />
+                    </View>
+                    <AppText variant="body" weight="600" style={styles.infoText}>
+                      {subtitle}
+                    </AppText>
+                  </View>
+                )}
+
+                {details && (
+                  <View style={styles.infoRow}>
+                    <View style={styles.iconWrapper}>
+                      <MaterialIcons name={detailsIcon as any} size={16} color="#28A745" />
+                    </View>
+                    <AppText variant="body" weight="600" style={styles.infoText}>
+                      {details}
+                    </AppText>
+                  </View>
+                )}
+
+                {metadata && (
+                  <View style={styles.infoRow}>
+                    <View style={styles.iconWrapper}>
+                      <MaterialIcons name={metadataIcon as any} size={16} color="#F59E0B" />
+                    </View>
+                    <AppText variant="body" weight="600" style={styles.infoText}>
+                      {metadata}
+                    </AppText>
+                  </View>
+                )}
               </View>
-            )}
+            </View>
 
-             {details && (
-              <View style={styles.infoRow}>
-                <View style={styles.iconWrapper}>
-                  <MaterialIcons name={detailsIcon as any} size={16} color="#28A745" />
-                </View>
-                <AppText variant="body" weight="600" style={styles.infoText}>
-                  {details}
-                </AppText>
-              </View>
-            )}
-
-            {metadata && (
-              <View style={styles.infoRow}>
-                <View style={styles.iconWrapper}>
-                  <MaterialIcons name={metadataIcon as any} size={16} color="#F59E0B" />
-                </View>
-                <AppText variant="body" weight="600" style={styles.infoText}>
-                  {metadata}
-                </AppText>
+            {/* Arrow */}
+            {showArrow && (
+              <View style={styles.arrowContainer}>
+                <MaterialIcons name="arrow-forward" size={18} color="#6C757D" />
               </View>
             )}
           </View>
         </View>
-
-        {/* Arrow */}
-        {showArrow && (
-          <View style={styles.arrowContainer}>
-            <MaterialIcons name="arrow-forward" size={18} color="#6C757D" />
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
+      </OffsetButton>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
+    marginHorizontal: 8,
+  },
+  offsetButton: {
+    marginTop: 0,
+    marginBottom: 0,
+    overflow: 'visible',
+  },
+  offsetButtonContent: {
+    padding: 16,
     borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    minHeight: 120,
+    borderColor: 'black', 
+    backgroundColor: 'white',
+  },
+  buttonInnerContent: {
+    flexDirection: 'row',
+    width: '100%',
   },
   imageWrapper: {
     justifyContent: 'center',

@@ -47,7 +47,7 @@ export default function OffsetButton({
   style,
   contentStyle,
   textStyle,
-  height = 54,
+  height,
   radius = 8,
   bgColor = "#FED787",
   borderColor = "#1F2937",

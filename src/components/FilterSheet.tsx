@@ -1,15 +1,15 @@
 import React from "react";
 import {
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   TouchableWithoutFeedback,
   View,
-  ViewStyle,
+  ViewStyle
 } from "react-native";
 import AppText from "./AppText";
+import OffsetButton from "./OffsetButton"; // Import your OffsetButton
 
 import { Dimensions } from "react-native";
 const screenHeight = Dimensions.get('window').height;
@@ -82,7 +82,7 @@ export default function FilterSheet({
 
       <View style={s.card}>
         <AppText variant="title" weight="900" style={{ marginBottom: 10 }}>
-          {title} {/* Use prop directly */}
+          {title}
         </AppText>
 
         <ScrollView 
@@ -129,15 +129,23 @@ export default function FilterSheet({
                     {sec.options.map((o) => {
                       const active = sec.selected === o.key;
                       return (
-                        <Pressable
+                        <OffsetButton
                           key={o.key}
                           onPress={() => sec.onSelect(o.key)}
-                          style={[s.chip, active && s.chipActive]}
+                          radius={20} // Pill shape
+                          bgColor={active ? "#000" : "#FFF"}
+                          borderColor="#000" 
+                          borderColorActive="#000" 
+                          contentStyle={s.chipContent}
                         >
-                          <AppText variant="button" weight="800" color={active ? "#FFF" : "#111827"}>
+                          <AppText 
+                            variant="button" 
+                            weight="800" 
+                            color="#000" 
+                          >
                             {o.label}
                           </AppText>
-                        </Pressable>
+                        </OffsetButton>
                       );
                     })}
                   </View>
@@ -155,15 +163,23 @@ export default function FilterSheet({
                   {sec.options.map((o) => {
                     const active = sec.selected.includes(o.key);
                     return (
-                      <Pressable
+                      <OffsetButton
                         key={o.key}
                         onPress={() => sec.onToggle(o.key)}
-                        style={[s.chip, active && s.chipActive]}
+                        radius={20} // Pill shape
+                        bgColor= {active ? "#000" : "#FFF"}
+                        borderColor="#000" 
+                        borderColorActive="#000" 
+                        contentStyle={s.chipContent}
                       >
-                        <AppText variant="button" weight="800" color={active ? "#FFF" : "#111827"}>
+                        <AppText 
+                          variant="button" 
+                          weight="800" 
+                          color="#000" 
+                        >
                           {o.label}
                         </AppText>
-                      </Pressable>
+                      </OffsetButton>
                     );
                   })}
                 </View>
@@ -173,16 +189,35 @@ export default function FilterSheet({
         </ScrollView>
 
         <View style={[s.rowSpace, { marginTop: 16 }]}>
-          <Pressable style={[s.actionBtn, { backgroundColor: "#6B7280" }]} onPress={onReset}>
-            <AppText variant="button" weight="800" color="#FFF">
-              {labels.reset ?? "Reset"} {/* Use prop directly with fallback */}
+          {/* Reset Button */}
+          <OffsetButton
+            onPress={onReset}
+            radius={10}
+            bgColor="#6B7280"
+            borderColor="#000"
+            borderColorActive="#000"
+            contentStyle={s.actionBtnContent}
+            style={s.actionButtonWrapper}
+          >
+            <AppText variant="button" weight="800" color="#000">
+              {labels.reset ?? "Reset"}
             </AppText>
-          </Pressable>
-          <Pressable style={[s.actionBtn, { backgroundColor: "#111827" }]} onPress={onApply}>
-            <AppText variant="button" weight="800" color="#FFF">
-              {labels.apply ?? "Apply"} {/* Use prop directly with fallback */}
+          </OffsetButton>
+
+          {/* Apply Button */}
+          <OffsetButton
+            onPress={onApply}
+            radius={10}
+            bgColor="#111827"
+            borderColor="#000"
+            borderColorActive="#000"
+            contentStyle={s.actionBtnContent}
+            style={s.actionButtonWrapper}
+          >
+            <AppText variant="button" weight="800" color="#000">
+              {labels.apply ?? "Apply"}
             </AppText>
-          </Pressable>
+          </OffsetButton>
         </View>
       </View>
     </Modal>
@@ -199,7 +234,7 @@ const s = StyleSheet.create({
     left: 12,
     right: 12,
     bottom: 16,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFAF0",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#E5E7EB",
@@ -208,7 +243,7 @@ const s = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: -6 },
-    maxHeight: screenHeight *0.8, 
+    maxHeight: screenHeight * 0.8, 
   },
   scrollView: {
     flex: 1,
@@ -216,23 +251,34 @@ const s = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 999,
+  // Chip styles for filter options
+  chipContent: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "#FFF",
+    borderWidth: 2, // This will work with OffsetButton's border
+    backgroundColor: 'white', // Let OffsetButton handle background
   },
-  chipActive: { backgroundColor: "#111827", borderColor: "#111827" },
-  rowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  rowSpace: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
-  actionBtn: {
-    borderRadius: 10,
+  rowWrap: { 
+    flexDirection: "row", 
+    flexWrap: "wrap", 
+    gap: 8 
+  },
+  rowSpace: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 8, 
+    flex: 1 
+  },
+  // Action button styles
+  actionButtonWrapper: {
+    flex: 1,
+  },
+  actionBtnContent: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
-    flex: 1,
+    borderWidth: 2, 
+    backgroundColor: '#fff', 
   },
 });

@@ -4,14 +4,14 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ImageBackground,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View,
+  ImageBackground,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import OffsetButton from "../../src/components/OffsetButton";
@@ -206,7 +206,7 @@ const s = StyleSheet.create({
     marginTop: 8,
   },
   brand: {
-    fontSize: 44,
+    fontSize: 42,
     fontWeight: "900",
     color: "#1F2937",
     letterSpacing: 0.5,

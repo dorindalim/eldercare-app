@@ -592,6 +592,8 @@ export default function CommunityScreen() {
         detailsIcon="event"
         metadataIcon="local-atm"
         imageResizeMode="contain"
+        buttonBgColor="#FFD3CD" 
+        buttonBorderColor="#1F2937"
       />
     );
   };
