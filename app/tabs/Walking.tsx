@@ -165,23 +165,50 @@ export default function WalkingScreen() {
       return;
     }
 
+    const normalizeText = (text: string) => text?.toLowerCase().trim().replace(/\s+/g, '_') || '';
+
     const scoredParks = parkList.map((park) => {
       let score = 0;
 
-      for (const selected of filters.activities) {
-        if (Array.isArray(park.activities)) {
-          for (const a of park.activities) if (a?.title === selected) score += 1;
+      // Normalize filter selections for comparison
+      const normalizedActivities = filters.activities.map(normalizeText);
+      const normalizedAmenities = filters.amenities.map(normalizeText);
+      const normalizedRegions = filters.regions.map(region => region.toLowerCase().trim());
+
+      // Check activities with normalized comparison
+      if (Array.isArray(park.activities)) {
+        for (const activity of park.activities) {
+          if (activity?.title) {
+            const normalizedActivity = normalizeText(activity.title);
+            if (normalizedActivities.some(selected => 
+              normalizedActivity.includes(selected) || selected.includes(normalizedActivity)
+            )) {
+              score += 1;
+            }
+          }
         }
       }
 
-      for (const selected of filters.amenities) {
-        if (Array.isArray(park.amenities)) {
-          for (const am of park.amenities) if (am?.title === selected) score += 1;
+      // Check amenities with normalized comparison
+      if (Array.isArray(park.amenities)) {
+        for (const amenity of park.amenities) {
+          if (amenity?.title) {
+            const normalizedAmenity = normalizeText(amenity.title);
+            if (normalizedAmenities.some(selected => 
+              normalizedAmenity.includes(selected) || selected.includes(normalizedAmenity)
+            )) {
+              score += 1;
+            }
+          }
         }
       }
 
-      for (const selected of filters.regions) {
-        if (park.region === selected) score += 1;
+      // Check regions
+      if (park.region) {
+        const normalizedParkRegion = park.region.toLowerCase().trim();
+        if (normalizedRegions.some(selected => normalizedParkRegion === selected)) {
+          score += 1;
+        }
       }
 
       return { park, score };
@@ -365,42 +392,52 @@ export default function WalkingScreen() {
   };
 
   const handleGetDirections = (park: ParkLocation) => {
-  setShowParkDetails(false);
-  setSelectedPark(null);
-  
-  if (park.latitude !== null && park.longitude !== null) {
-    router.push({
-      pathname: "/tabs/Navigation",
-      params: { 
-        presetLat: park.latitude.toString(),
-        presetLng: park.longitude.toString(),
-        autoStart: "1" 
-      },
-    });
-  } else {
-    const q = park.title?.trim();
-    if (!q) {
-      Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
-      return;
-    }
+    setShowParkDetails(false);
+    setSelectedPark(null);
     
-    router.push({
-      pathname: "/tabs/Navigation",
-      params: { 
-        presetQuery: q, 
-        autoStart: "1" 
-      },
-    });
-  }
-};
+    if (park.latitude !== null && park.longitude !== null) {
+      router.push({
+        pathname: "/tabs/Navigation",
+        params: { 
+          presetLat: park.latitude.toString(),
+          presetLng: park.longitude.toString(),
+          autoStart: "1" 
+        },
+      });
+    } else {
+      const q = park.title?.trim();
+      if (!q) {
+        Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
+        return;
+      }
+      
+      router.push({
+        pathname: "/tabs/Navigation",
+        params: { 
+          presetQuery: q, 
+          autoStart: "1" 
+        },
+      });
+    }
+  };
 
   const getFilterSections = (): FilterSection[] => {
     const activityOptions = Object.values(
       t("walking.filters.activities", { returnObjects: true })
     );
-    const amenityOptions = Object.values(
-      t("walking.filters.amenities", { returnObjects: true })
-    );
+    
+    // Top 8 most common amenities from your analysis
+    const amenityOptions = [
+      "Playground",
+      "Allotment garden", 
+      "Dog run",
+      "Nature playgarden",
+      "Therapeutic garden",
+      "Community garden",
+      "Basketball court",
+      "Amphitheatre",
+    ];
+
     const regionOptions = Object.values(
       t("walking.filters.regions", { returnObjects: true })
     );

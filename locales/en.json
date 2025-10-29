@@ -500,7 +500,7 @@
       "openNavFailed": "Failed to open navigation"
     },
     "summary": {
-      "activeFilters": "Active filters",
+      "activeFilters": "Activity and Amenity filters",
       "clearAll": "Clear All"
     },
     "retry": "Retry",
