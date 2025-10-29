@@ -141,7 +141,7 @@ export default function FilterSheet({
                           <AppText 
                             variant="button" 
                             weight="800" 
-                            color="#000" 
+                            color={active ? "#FFF" : "#000"}
                           >
                             {o.label}
                           </AppText>
@@ -174,7 +174,7 @@ export default function FilterSheet({
                         <AppText 
                           variant="button" 
                           weight="800" 
-                          color="#000" 
+                          color={active ? "#fff" : "#000"}
                         >
                           {o.label}
                         </AppText>
@@ -255,7 +255,6 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderWidth: 2, // This will work with OffsetButton's border
-    backgroundColor: 'white', // Let OffsetButton handle background
   },
   rowWrap: { 
     flexDirection: "row", 
