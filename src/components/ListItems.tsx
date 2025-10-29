@@ -17,14 +17,15 @@ export type ListItemProps = {
   detailsIcon?: string;
   metadataIcon?: string;
   imageResizeMode?: ImageResizeMode;
-  buttonLabel?: string;
-  buttonDisabled?: boolean;
-  buttonLoading?: boolean;
+
   buttonRadius?: number;
   buttonBgColor?: string;            
-  buttonBgColorActive?: string;     
-  buttonBorderColor?: string;
-  buttonBorderColorActive?: string;
+  buttonBgColorActive?: string;      
+  buttonBorderColor?: string;       
+  buttonBorderColorActive?: string;  
+  buttonDisabled?: boolean;
+  buttonLoading?: boolean;
+
   variant?: 'walking' | 'community' | 'clinic';
 };
 
@@ -49,9 +50,11 @@ const ListItem = ({
   detailsIcon = 'access-time',
   metadataIcon = 'person',
   imageResizeMode = 'cover',
+
   buttonDisabled = false,
   buttonLoading = false,
   buttonRadius = 6,
+
   buttonBgColor = '#FED787',
   buttonBgColorActive,
   buttonBorderColor = '#1F2937',
@@ -71,8 +74,13 @@ const ListItem = ({
     hasMeasuredRef.current = false;
   }, [title, subtitle, details, metadata]);
 
-  const resolvedActiveBorder = buttonBorderColorActive ?? darken(buttonBgColor, 36);
-  const resolvedActiveBg = buttonBgColorActive ?? buttonBgColor;
+  const faceBg = '#FFFFFF';
+  const faceBorder = buttonBorderColor;
+  const faceBorderActive = buttonBorderColorActive ?? darken(buttonBorderColor, 20);
+
+  const offsetBg = buttonBgColor;
+  const offsetBgActive = buttonBgColorActive ?? darken(buttonBgColor, 12);
+  const offsetStroke = buttonBorderColor;
 
   return (
     <View style={styles.container}>
@@ -81,15 +89,23 @@ const ListItem = ({
         disabled={buttonDisabled}
         loading={buttonLoading}
         radius={buttonRadius}
-        bgColor={buttonBgColor}
-        bgColorActive={resolvedActiveBg}        
-        borderColor={buttonBorderColor}
-        borderColorActive={resolvedActiveBorder}
-        style={[styles.offsetButton, { backgroundColor: resolvedActiveBg }]}
-        contentStyle={[
-          styles.offsetButtonContent,
-          { backgroundColor: buttonBgColor, borderColor: buttonBorderColor },
-        ]}
+
+        bgColor="#FFFFFF"
+        borderColor="#000000"
+        borderColorActive="#000000"
+
+        offsetBgColor={buttonBgColor}
+        offsetBgColorActive={buttonBgColorActive}
+        offsetStrokeColor="#000000"
+        offsetStrokeWidth={2}
+
+        offsetLeft={5}
+        offsetTop={5}
+        offsetBottom={-8}
+        offsetRight={-8}
+
+        style={styles.offsetButton}
+        contentStyle={styles.offsetButtonContent}
       >
         <View style={styles.buttonInnerContent}>
           {/* Left image/icon */}
@@ -184,16 +200,10 @@ const ListItem = ({
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16, marginHorizontal: 8 },
-  offsetButton: {
-    marginTop: 0,
-    marginBottom: 0,
-    overflow: 'visible',
-  },
-  offsetButtonContent: {
-    padding: 16,
-    borderWidth: 2,
-  },
+  offsetButton: { marginTop: 0, marginBottom: 0, overflow: 'visible' },
+  offsetButtonContent: { padding: 16, borderWidth: 2 }, // face styling only
   buttonInnerContent: { flexDirection: 'row', width: '100%' },
+
   imageWrapper: { justifyContent: 'center', marginRight: 12 },
   imageContainer: { width: 80, borderRadius: 8, overflow: 'hidden' },
   centeredImageContainer: {
@@ -206,6 +216,7 @@ const styles = StyleSheet.create({
   centeredPlaceholder: {
     width: '100%', height: 80, borderRadius: 8, backgroundColor: '#E9ECEF', justifyContent: 'center', alignItems: 'center',
   },
+
   content: { flex: 1, flexDirection: 'row', justifyContent: 'space-between' },
   textContent: { flex: 1, marginRight: 8 },
   title: { fontSize: 20, color: '#2C3E50', flexWrap: 'wrap', marginBottom: 8 },

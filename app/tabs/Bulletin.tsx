@@ -22,7 +22,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import AppText from "../../src/components/AppText";
 import CalendarTimePicker from "../../src/components/CalendarTimePicker";
@@ -51,6 +54,17 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const CATEGORY_BG: Record<string, string> = {
+  kopi: "#E5E1D8",
+  mahjong: "#8E8E8E",
+  crafts: "#F7A8AF",
+  stretch: "#8ECFD5",
+  walks: "#FEA775",
+  learning: "#93E6AA",
+  volunteer: "#FED787",
+};
+const colorForCat = (cat?: string) => CATEGORY_BG[cat || "kopi"] || "#FED787";
+
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type LatLng = { latitude: number; longitude: number };
 
@@ -61,8 +75,7 @@ function distanceMeters(a: LatLng, b: LatLng) {
   const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
   const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
   const x =
-    Math.sin(Δφ / 2) ** 2 +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 const kmStr = (m?: number | null) =>
@@ -246,7 +259,11 @@ function fmtWhen(dt: Date, locale?: string) {
   }
 }
 
-async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: string) {
+async function scheduleReminderForActivity(
+  row: ActivityRow,
+  t: any,
+  locale?: string
+) {
   const ok = await ensureLocalNotifPermission(t);
   if (!ok) return;
 
@@ -270,13 +287,15 @@ async function scheduleReminderForActivity(row: ActivityRow, t: any, locale?: st
       sound: true,
       ...(Platform.OS === "android" ? { channelId: "event-reminders" } : null),
     },
-    trigger: ({ type: "date", date: fireAt } as any),
+    trigger: { type: "date", date: fireAt } as any,
   });
 
   await Notifications.scheduleNotificationAsync({
     content: {
       title: row.title || t("navigation.reminders.untitled"),
-      body: t("navigation.reminders.scheduledBody", { when: fmtWhen(fireAt, locale) }),
+      body: t("navigation.reminders.scheduledBody", {
+        when: fmtWhen(fireAt, locale),
+      }),
       data: {
         kind: "reminder_scheduled",
         activityId: row.id,
@@ -313,7 +332,7 @@ export default function Bulletin() {
   useEffect(() => {
     (async () => {
       const saved = (await AsyncStorage.getItem("lang")) as LangCode | null;
-      const target = saved || ((i18n.language as LangCode) || "en");
+      const target = saved || (i18n.language as LangCode) || "en";
       if (i18n.language !== target) {
         await i18n.changeLanguage(target);
       }
@@ -353,7 +372,8 @@ export default function Bulletin() {
     (async () => {
       if (!deviceId) return;
       const token = await registerForPushToken();
-      if (token) await upsertPushToken({ token, userId: currentUserId, deviceId });
+      if (token)
+        await upsertPushToken({ token, userId: currentUserId, deviceId });
     })();
   }, [deviceId, currentUserId]);
 
@@ -543,7 +563,9 @@ export default function Bulletin() {
       const res = await fetch(url);
       const json = (await res.json()) as GDetailsResp;
       const name =
-        json.result?.name || p.structured_formatting?.main_text || p.description;
+        json.result?.name ||
+        p.structured_formatting?.main_text ||
+        p.description;
       const address = json.result?.formatted_address || p.description;
       const lat = json.result?.geometry?.location?.lat ?? null;
       const lng = json.result?.geometry?.location?.lng ?? null;
@@ -712,7 +734,10 @@ export default function Bulletin() {
       setEditingRow(null);
       resetForm();
       loadActivities();
-      Alert.alert(t("bulletin.alerts.savedTitle"), t("bulletin.alerts.savedBody"));
+      Alert.alert(
+        t("bulletin.alerts.savedTitle"),
+        t("bulletin.alerts.savedBody")
+      );
     } catch {
       Alert.alert(t("common.error"), t("bulletin.errors.updateFailed"));
     }
@@ -733,10 +758,7 @@ export default function Bulletin() {
       if (error) throw error;
       setInterestedList(data as InterestRow[]);
     } catch {
-      Alert.alert(
-        t("common.error"),
-        t("bulletin.errors.interestedLoadFailed")
-      );
+      Alert.alert(t("common.error"), t("bulletin.errors.interestedLoadFailed"));
       setInterestedList([]);
     } finally {
       setInterestedLoading(false);
@@ -802,10 +824,7 @@ export default function Bulletin() {
         );
         return;
       }
-      Alert.alert(
-        t("common.error"),
-        t("bulletin.errors.markInterestedFailed")
-      );
+      Alert.alert(t("common.error"), t("bulletin.errors.markInterestedFailed"));
     }
   }
 
@@ -837,19 +856,25 @@ export default function Bulletin() {
   }
 
   const filtered = useMemo(() => {
-    const base = filterCat ? rows.filter((e) => e.category === filterCat) : rows;
+    const base = filterCat
+      ? rows.filter((e) => e.category === filterCat)
+      : rows;
     return base;
   }, [rows, filterCat]);
 
   const mine = useMemo(() => {
     return filtered.filter((e) =>
-      currentUserId ? e.user_id === currentUserId : e.owner_device_id === deviceId
+      currentUserId
+        ? e.user_id === currentUserId
+        : e.owner_device_id === deviceId
     );
   }, [filtered, currentUserId, deviceId]);
 
   const nearby = useMemo(() => {
     return filtered.filter((e) =>
-      currentUserId ? e.user_id !== currentUserId : e.owner_device_id !== deviceId
+      currentUserId
+        ? e.user_id !== currentUserId
+        : e.owner_device_id !== deviceId
     );
   }, [filtered, currentUserId, deviceId]);
 
@@ -978,7 +1003,7 @@ export default function Bulletin() {
             }}
             style={({ pressed }) => [
               s.createBtn,
-              pressed && { transform: [{ translateY: 6 }] }, 
+              pressed && { transform: [{ translateY: 6 }] },
             ]}
             accessibilityRole="button"
             accessibilityLabel={t("bulletin.create")}
@@ -989,8 +1014,16 @@ export default function Bulletin() {
           </Pressable>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 6 }}>
-          <Chip label={t("community.all")} active={!filterCat} onPress={() => setFilterCat(null)} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingLeft: 6 }}
+        >
+          <Chip
+            label={t("community.all")}
+            active={!filterCat}
+            onPress={() => setFilterCat(null)}
+          />
           {CATS.map((c) => (
             <Chip
               key={c.key}
@@ -1015,7 +1048,10 @@ export default function Bulletin() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: bottomPad }}
+          contentContainerStyle={{
+            paddingHorizontal: 12,
+            paddingBottom: bottomPad,
+          }}
           data={nearby}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
@@ -1098,10 +1134,8 @@ export default function Bulletin() {
                   pathname: "/tabs/Navigation",
                   params: {
                     presetQuery: item.place_name ?? "",
-                    presetLat:
-                      item.lat != null ? String(item.lat) : undefined,
-                    presetLng:
-                      item.lng != null ? String(item.lng) : undefined,
+                    presetLat: item.lat != null ? String(item.lat) : undefined,
+                    presetLng: item.lng != null ? String(item.lng) : undefined,
                   },
                 });
               }}
@@ -1238,9 +1272,9 @@ export default function Bulletin() {
                   onConfirm={setStartDate}
                   minuteStep={5}
                   locale={(i18n.language as string) || "en-SG"}
-                  showTitle={false}   
-                  framed={false}      
-                  style={{ alignSelf: "stretch" }} 
+                  showTitle={false}
+                  framed={false}
+                  style={{ alignSelf: "stretch" }}
                 />
               </Labeled>
               <Labeled label={t("bulletin.form.location")}>
@@ -1364,13 +1398,11 @@ function Chip({
         <Ionicons
           name={icon}
           size={14}
-          color={"#111"} 
+          color={"#111"}
           style={{ marginRight: 6 }}
         />
       )}
-      <Text style={[s.chipText]}>
-        {label}
-      </Text>
+      <Text style={[s.chipText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -1431,108 +1463,122 @@ function ActivityCard({
   const catInfo = CATS.find((c) => c.key === row.category);
   const count = row.interest_count ?? 0;
 
+  const offsetColor = colorForCat(row.category);
+
   return (
-    <View style={s.card}>
-      <View style={stylesCard.header}>
-        <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-          {catInfo && (
-            <View style={stylesCard.catIconBubble}>
-              <Ionicons name={catInfo.icon} size={16} color="#0F172A" />
+    <View style={stylesCard.offsetWrap}>
+      <View
+        style={[
+          stylesCard.offsetLayer,
+          { backgroundColor: offsetColor, borderColor: "#000" },
+        ]}
+        pointerEvents="none"
+      />
+
+      <View style={stylesCard.faceCard}>
+        <View style={stylesCard.header}>
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            {catInfo && (
+              <View style={stylesCard.catIconBubble}>
+                <Ionicons name={catInfo.icon} size={16} color="#0F172A" />
+              </View>
+            )}
+            <AppText
+              variant="title"
+              weight="900"
+              numberOfLines={1}
+              style={{ flex: 1 }}
+            >
+              {row.title}
+            </AppText>
+          </View>
+
+          {isMine && !!onEdit && (
+            <Pressable
+              onPress={onEdit}
+              hitSlop={8}
+              style={stylesCard.iconBtnGhost}
+              accessibilityLabel={t("common.edit")}
+            >
+              <Ionicons name="create-outline" size={18} color="#0EA5E9" />
+            </Pressable>
+          )}
+        </View>
+
+        <View style={stylesCard.metaRow}>
+          <View style={stylesCard.metaChip}>
+            <Ionicons name="time-outline" size={14} color="#0F172A" />
+            <Text style={stylesCard.metaText}>{timeStr}</Text>
+          </View>
+          <View style={stylesCard.metaChip}>
+            <Ionicons name="location-outline" size={14} color="#0F172A" />
+            <Text style={stylesCard.metaText} numberOfLines={1}>
+              {row.place_name || "—"} {dist ? `· ${dist}` : ""}
+            </Text>
+          </View>
+
+          <Pressable
+            disabled={!onViewInterested && !isMine}
+            onPress={onViewInterested}
+            style={[stylesCard.metaChip, { paddingHorizontal: 8 }]}
+            accessibilityLabel={t("bulletin.interested")}
+          >
+            <Ionicons name="people-outline" size={14} color="#0F172A" />
+            <Text style={stylesCard.metaText}>{count}</Text>
+          </Pressable>
+        </View>
+
+        {!!row.description && (
+          <Text style={{ color: "#374151", marginTop: 10 }} numberOfLines={3}>
+            {row.description}
+          </Text>
+        )}
+
+        <View style={stylesCard.actionsRow}>
+          <IconCircle
+            onPress={onChat}
+            icon="chatbubble-ellipses-outline"
+            label={t("bulletin.actions.chat")}
+            badge={unreadCount}
+          />
+          <IconCircle
+            onPress={onDirections}
+            icon="navigate-outline"
+            label={t("bulletin.actions.go")}
+          />
+          {!isMine && !!onInterested && (
+            <Pressable
+              onPress={() => {
+                if (alreadyInterested) {
+                  Alert.alert(
+                    t("bulletin.alerts.alreadyInterestedTitle"),
+                    t("bulletin.alerts.alreadyInterestedBody")
+                  );
+                } else {
+                  onInterested();
+                }
+              }}
+              style={[
+                stylesCard.circleBtn,
+                alreadyInterested ? { backgroundColor: "#16A34A" } : null,
+              ]}
+              accessibilityLabel={t("bulletin.actions.interested")}
+            >
+              <Ionicons
+                name={alreadyInterested ? "heart" : "heart-outline"}
+                size={18}
+                color={alreadyInterested ? "#fff" : "#0F172A"}
+              />
+            </Pressable>
+          )}
+          {isMine && (
+            <View style={stylesCard.minePill}>
+              <Text style={stylesCard.mineText}>
+                {t("bulletin.badges.mine")}
+              </Text>
             </View>
           )}
-          <AppText
-            variant="title"
-            weight="900"
-            numberOfLines={1}
-            style={{ flex: 1 }}
-          >
-            {row.title}
-          </AppText>
         </View>
-
-        {isMine && !!onEdit && (
-          <Pressable
-            onPress={onEdit}
-            hitSlop={8}
-            style={stylesCard.iconBtnGhost}
-            accessibilityLabel={t("common.edit")}
-          >
-            <Ionicons name="create-outline" size={18} color="#0EA5E9" />
-          </Pressable>
-        )}
-      </View>
-
-      <View style={stylesCard.metaRow}>
-        <View style={stylesCard.metaChip}>
-          <Ionicons name="time-outline" size={14} color="#0F172A" />
-          <Text style={stylesCard.metaText}>{timeStr}</Text>
-        </View>
-        <View style={stylesCard.metaChip}>
-          <Ionicons name="location-outline" size={14} color="#0F172A" />
-          <Text style={stylesCard.metaText} numberOfLines={1}>
-            {row.place_name || "—"} {dist ? `· ${dist}` : ""}
-          </Text>
-        </View>
-
-        <Pressable
-          disabled={!onViewInterested && !isMine}
-          onPress={onViewInterested}
-          style={[stylesCard.metaChip, { paddingHorizontal: 8 }]}
-          accessibilityLabel={t("bulletin.interested")}
-        >
-          <Ionicons name="people-outline" size={14} color="#0F172A" />
-          <Text style={stylesCard.metaText}>{count}</Text>
-        </Pressable>
-      </View>
-
-      {!!row.description && (
-        <Text style={{ color: "#374151", marginTop: 10 }} numberOfLines={3}>
-          {row.description}
-        </Text>
-      )}
-
-      <View style={stylesCard.actionsRow}>
-        <IconCircle
-          onPress={onChat}
-          icon="chatbubble-ellipses-outline"
-          label={t("bulletin.actions.chat")}
-          badge={unreadCount}
-        />
-        <IconCircle
-          onPress={onDirections}
-          icon="navigate-outline"
-          label={t("bulletin.actions.go")}
-        />
-        {!isMine && !!onInterested && (
-          <Pressable
-            onPress={() => {
-              if (alreadyInterested) {
-                Alert.alert(
-                  t("bulletin.alerts.alreadyInterestedTitle"),
-                  t("bulletin.alerts.alreadyInterestedBody")
-                );
-              } else {
-                onInterested();
-              }
-            }}
-            style={[
-              stylesCard.circleBtn,
-              alreadyInterested ? { backgroundColor: "#16A34A" } : null,
-            ]}
-            accessibilityLabel={t("bulletin.actions.interested")}
-          >
-            <Ionicons
-              name={alreadyInterested ? "heart" : "heart-outline"}
-              size={18}
-              color={alreadyInterested ? "#fff" : "#0F172A"}
-            />
-          </Pressable>
-        )}
-        {isMine && (
-          <View style={stylesCard.minePill}>
-            <Text style={stylesCard.mineText}>{t("bulletin.badges.mine")}</Text>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -1693,20 +1739,6 @@ const s = StyleSheet.create({
   },
   chipText: { fontSize: 12, fontWeight: "700", color: "#111827" },
 
-  card: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-
   modalSafe: { flex: 1, backgroundColor: "#FFFAF0" },
   modalHead: { paddingHorizontal: 16, paddingTop: 0, paddingBottom: 10 },
 
@@ -1774,18 +1806,18 @@ const s = StyleSheet.create({
   },
   cancelBtn: { alignSelf: "center", marginTop: 10, padding: 10 },
   cancelText: { color: "#6B7280", fontWeight: "800" },
-    createBtnWrap: {
+  createBtnWrap: {
     position: "relative",
     borderRadius: 10,
   },
   createBtnOffset: {
     position: "absolute",
-    top: 6,            
+    top: 6,
     left: 0,
     right: 0,
-    height: Platform.OS === "ios" ? 40 : 38, 
+    height: Platform.OS === "ios" ? 40 : 38,
     borderRadius: 10,
-    backgroundColor: "#F6C96D", 
+    backgroundColor: "#F6C96D",
   },
 });
 
@@ -1871,7 +1903,7 @@ const stylesCard = StyleSheet.create({
     borderColor: "#fff",
   },
   badgeText: { color: "#fff", fontSize: 10, fontWeight: "900" },
-    headerRow: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1882,13 +1914,48 @@ const stylesCard = StyleSheet.create({
   createBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FED787", 
+    backgroundColor: "#FED787",
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 10 : 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#11182720",
-    transform: [{ translateY: 0 }], 
+    transform: [{ translateY: 0 }],
   },
   createText: { color: "#000", fontWeight: "800", marginLeft: 6 },
+
+  offsetWrap: {
+    position: "relative",
+    marginTop: 14,
+    marginRight: 8,
+    marginBottom: 10,
+  },
+
+  offsetLayer: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+    borderWidth: 2,
+    zIndex: 0,
+  },
+
+  faceCard: {
+    transform: [{ translateX: -8 }, { translateY: -8 }],
+    position: "relative",
+    zIndex: 1,
+
+    borderWidth: 2,
+    borderColor: "#000",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
 });
