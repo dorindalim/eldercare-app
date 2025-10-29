@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AppText from "../../src/components/AppText";
+import OffsetButton from './OffsetButton';
 
 export type LangCode = "en" | "zh" | "ms" | "ta";
 
@@ -154,23 +156,31 @@ export default function TopBar({
             </Text>
 
             <View style={s.langRow}>
-              {LANGS.map((l) => {
-                const isActive = activeLang === l.code;
-                return (
-                  <Pressable
-                    key={l.code}
-                    onPress={() => {
-                      setLanguage(l.code);
-                      setMenuOpen(false);
-                    }}
-                    style={[
-                      s.langChip,
-                      isActive && { backgroundColor: "#111827", borderColor: "#111827" },
-                    ]}
-                    accessibilityLabel={t("settings.switchTo", "Switch language to") + " " + l.label}
+            {LANGS.map((l) => {
+              const isActive = activeLang === l.code;
+              return (
+                <OffsetButton
+                  key={l.code}
+                  onPress={() => {
+                    setLanguage(l.code);
+                    setMenuOpen(false);
+                  }}
+                  radius={20}  // Same rounded corners as text size chips
+                  bgColor={isActive ? "#000" : "#FFF"}
+                  borderColor="black"
+                  contentStyle={s.langChip}  
+                  accessibilityLabel={t("settings.switchTo", "Switch language to") + " " + l.label}
+                  offsetBottom={0}
+                  offsetRight ={2}
+                >
+                  <AppText 
+                    variant="button" 
+                    weight="800" 
+                    color={isActive ? "#FFF" : "#000"}
                   >
-                    <Text style={[s.langText, isActive && { color: "#FFFFFF" }]}>{l.label}</Text>
-                  </Pressable>
+                    {l.label}
+                  </AppText>
+                </OffsetButton>
                 );
               })}
             </View>
@@ -268,14 +278,12 @@ const s = StyleSheet.create({
 
   langRow: { flexDirection: "row", flexWrap: "wrap" },
   langChip: {
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderWidth: 2,
     paddingHorizontal: 10,
-    paddingVertical: Platform.OS === "ios" ? 6 : 5,
-    borderRadius: 14,
-    marginRight: 8,
-    marginBottom: 8,
-    backgroundColor: "#FFF",
+    paddingVertical: Platform.OS === "ios" ? 3 : 2,
+    borderRadius: 12,
+    marginRight: 10,
+    marginBottom: 4,
   },
   langText: { fontSize: 12, fontWeight: "700", color: "#111827" },
 
