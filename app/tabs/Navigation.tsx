@@ -1308,7 +1308,7 @@ export default function NavigationScreen() {
           setCategory(category);
         }}
         onApply={() => setShowFilterPanel(false)}
-        title={t("navigation.search.filtersTitle", { defaultValue: "Filters" })}
+        title={t("walking.filter.title")}
         labels={{
           reset: t("walking.filter.reset"),
           apply: t("walking.filter.apply"),
