@@ -523,7 +523,6 @@ const ItemDetailsModal = ({
                   {parkItem.hours}
                 </AppText>
               </View>
-
               {/* Activities */}
               {parkItem.activities && parkItem.activities.length > 0 && (
                 <View style={styles.section}>
@@ -541,24 +540,18 @@ const ItemDetailsModal = ({
                           {translateActivity(activity.title)}
                         </AppText>
                         {activity.etiquette_link && (
-                          <OffsetButton
-                            label="📚"
+                          <TouchableOpacity 
                             onPress={() => handleEtiquettePress(activity.etiquette_link)}
-                            height={60}
-                            radius={12}
-                            bgColor="transparent"
-                            borderColor="transparent"
-                            textColor="#007AFF"
-                            style={{ paddingHorizontal: 4, marginLeft: 4 }}
-                            textStyle={{ textAlign: 'center' }}
-                          />
+                            style={styles.etiquetteIcon}
+                          >
+                            <AppText>📚</AppText>
+                          </TouchableOpacity>
                         )}
                       </View>
                     ))}
                   </View>
                 </View>
               )}
-
               {/* Amenities */}
               {parkItem.amenities && parkItem.amenities.length > 0 && (
                 <View style={styles.section}>

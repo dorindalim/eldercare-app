@@ -72,7 +72,6 @@ const kmStr = (m?: number | null) =>
 const REGION_BG: Record<string, string> = {
   "Central": "#E5E1D8",
   "North": "#8E8E8E",
-  "North-East": "#F7A8AF",
   "Offshore islands": "#8ECFD5",
   "East": "#FEA775",
   "West": "#93E6AA",
@@ -151,10 +150,36 @@ export default function WalkingScreen() {
       return null;
     }
   };
+  const translateFilterItem = (category: string, key: string): string => {
+    const translations = t(`walking.filters.${category}`, { returnObjects: true });
+    
+    if (typeof translations === 'object' && translations !== null) {
+      // For amenities, we use the key directly since they're translation keys
+      if (category === 'amenities') {
+        return translations[key] || key;
+      }
+      // For activities and regions, find by value match
+      const translated = Object.values(translations).find(value => 
+        typeof value === 'string' && value === key
+      );
+      return translated || key;
+    }
+    return key;
+  };
 
   const updateSelectedFilterItems = () => {
     const items: string[] = [];
-    Object.values(tempFilters).forEach((category) => items.push(...category));
+    
+    tempFilters.activities.forEach(key => 
+      items.push(translateFilterItem('activities', key))
+    );
+    tempFilters.amenities.forEach(key => 
+      items.push(translateFilterItem('amenities', key))
+    );
+    tempFilters.regions.forEach(key => 
+      items.push(translateFilterItem('regions', key))
+    );
+
     setSelectedFilterItems(items);
   };
 
@@ -167,13 +192,35 @@ export default function WalkingScreen() {
 
     const normalizeText = (text: string) => text?.toLowerCase().trim().replace(/\s+/g, '_') || '';
 
+    // Get translation mappings for reverse lookup
+    const activityTranslations = t("walking.filters.activities", { returnObjects: true });
+    const regionTranslations = t("walking.filters.regions", { returnObjects: true });
+
+    // Create reverse mapping: translated text -> original English key
+    const getEnglishKeyFromTranslation = (translatedText: string, translations: any): string | null => {
+      if (typeof translations === 'object' && translations !== null) {
+        const entry = Object.entries(translations).find(([key, value]) => 
+          value === translatedText
+        );
+        return entry ? entry[0] : null; // Return the English key
+      }
+      return null;
+    };
     const scoredParks = parkList.map((park) => {
       let score = 0;
 
+      // For activities and regions, convert translated filters back to English keys
+      const englishActivityFilters = filters.activities.map(translated => 
+        getEnglishKeyFromTranslation(translated, activityTranslations) || translated
+      );
+      const englishRegionFilters = filters.regions.map(translated => 
+        getEnglishKeyFromTranslation(translated, regionTranslations) || translated
+      );
+
       // Normalize filter selections for comparison
-      const normalizedActivities = filters.activities.map(normalizeText);
+      const normalizedActivities = englishActivityFilters.map(normalizeText);
       const normalizedAmenities = filters.amenities.map(normalizeText);
-      const normalizedRegions = filters.regions.map(region => region.toLowerCase().trim());
+      const normalizedRegions = englishRegionFilters.map(region => region.toLowerCase().trim());
 
       // Check activities with normalized comparison
       if (Array.isArray(park.activities)) {
@@ -189,15 +236,32 @@ export default function WalkingScreen() {
         }
       }
 
-      // Check amenities with normalized comparison
-      if (Array.isArray(park.amenities)) {
-        for (const amenity of park.amenities) {
-          if (amenity?.title) {
-            const normalizedAmenity = normalizeText(amenity.title);
-            if (normalizedAmenities.some(selected => 
-              normalizedAmenity.includes(selected) || selected.includes(normalizedAmenity)
-            )) {
-              score += 1;
+      // Check amenities with normalized comparison using filter key mapping
+     if (Array.isArray(park.amenities)) {
+      for (const amenity of park.amenities) {
+        if (amenity?.title) {
+          const normalizedAmenity = normalizeText(amenity.title);
+          
+          // Map filter keys to possible amenity titles for matching
+          const filterKeyToTitles: Record<string, string[]> = {
+            "playground": ["playground", "playgrounds"],
+            "allotment_garden": ["allotment garden"],
+            "dog_run": ["dog run"],
+            "nature_playgarden": ["nature playgarden"],
+            "therapeutic_garden": ["therapeutic garden"],
+            "community_garden": ["community garden"],
+            "basketball_court": ["basketball court"],
+            "amphitheatre": ["amphitheatre", "amphitheatre for booking"]
+          };
+          
+          if (normalizedAmenities.some(selected => {
+            const possibleTitles = filterKeyToTitles[selected] || [selected];
+            return possibleTitles.some(title => 
+              normalizedAmenity.includes(normalizeText(title)) || 
+              normalizeText(title).includes(normalizedAmenity)
+            );
+          })) {
+            score += 1;
             }
           }
         }
@@ -205,14 +269,15 @@ export default function WalkingScreen() {
 
       // Check regions
       if (park.region) {
-        const normalizedParkRegion = park.region.toLowerCase().trim();
-        if (normalizedRegions.some(selected => normalizedParkRegion === selected)) {
-          score += 1;
-        }
-      }
+      const normalizedParkRegion = park.region.toLowerCase().trim();
+      const normalizedRegions = filters.regions.map(region => region.toLowerCase().trim());
 
-      return { park, score };
-    });
+      if (normalizedRegions.some(selected => normalizedParkRegion === selected)) {
+        score += 1;
+      }
+    }
+    return { park, score };
+  });
 
     const sorted = scoredParks
       .filter((x) => x.score > 0)
@@ -426,18 +491,17 @@ export default function WalkingScreen() {
       t("walking.filters.activities", { returnObjects: true })
     );
     
-    // Top 8 most common amenities from your analysis
-     const amenityOptions = [
-      t("walking.filters.amenities.playground"),
-      t("walking.filters.amenities.allotment_garden"), 
-      t("walking.filters.amenities.dog_run"),
-      t("walking.filters.amenities.nature_playgarden"),
-      t("walking.filters.amenities.therapeutic_garden"),
-      t("walking.filters.amenities.community_garden"),
-      t("walking.filters.amenities.basketball_court"),
-      t("walking.filters.amenities.amphitheatre")
+    // Use translation keys for filtering with translated labels
+    const amenityOptions = [
+      { key: "playground", label: t("walking.filters.amenities.playground") },
+      { key: "allotment_garden", label: t("walking.filters.amenities.allotment_garden") },
+      { key: "dog_run", label: t("walking.filters.amenities.dog_run") },
+      { key: "nature_playgarden", label: t("walking.filters.amenities.nature_playgarden") },
+      { key: "therapeutic_garden", label: t("walking.filters.amenities.therapeutic_garden") },
+      { key: "community_garden", label: t("walking.filters.amenities.community_garden") },
+      { key: "basketball_court", label: t("walking.filters.amenities.basketball_court") },
+      { key: "amphitheatre", label: t("walking.filters.amenities.amphitheatre") }
     ];
-
 
     const regionOptions = Object.values(
       t("walking.filters.regions", { returnObjects: true })
@@ -462,7 +526,7 @@ export default function WalkingScreen() {
         id: "amenities",
         type: "chips-multi",
         title: t("walking.filters.categories.amenity"),
-        options: amenityOptions.map((o) => ({ key: o, label: o })), 
+        options: amenityOptions, // Use the key-label pairs directly
         selected: tempFilters.amenities,
         onToggle: (key) =>
           setTempFilters((prev) => ({
@@ -612,11 +676,35 @@ export default function WalkingScreen() {
               variant="indigo"
               dense
               onItemPress={(item) => {
+              const findOriginalKey = (translatedLabel: string, category: string): string | null => {
+                  const translations = t(`walking.filters.${category}`, { returnObjects: true });
+                  
+                  if (typeof translations === 'object' && translations !== null) {
+                    if (category === 'amenities') {
+                      // For amenities, look for the key that matches this translated label
+                      const foundKey = Object.keys(translations).find(key => 
+                        translations[key] === translatedLabel
+                      );
+                      return foundKey || null;
+                    } else {
+                      // For activities and regions, the label is the key itself
+                      return Object.values(translations).includes(translatedLabel) ? translatedLabel : null;
+                    }
+                  }
+                  return null;
+                };
+
+                // Try to find the original key in each category
+                const activityKey = findOriginalKey(item, 'activities');
+                const amenityKey = findOriginalKey(item, 'amenities');
+                const regionKey = findOriginalKey(item, 'regions');
+
                 setTempFilters((prev) => ({
-                  activities: prev.activities.filter((i) => i !== item),
-                  amenities: prev.amenities.filter((i) => i !== item),
-                  regions: prev.regions.filter((i) => i !== item),
+                  activities: activityKey ? prev.activities.filter((i) => i !== activityKey) : prev.activities,
+                  amenities: amenityKey ? prev.amenities.filter((i) => i !== amenityKey) : prev.amenities,
+                  regions: regionKey ? prev.regions.filter((i) => i !== regionKey) : prev.regions,
                 }));
+
                 setSelectedFilterItems((prev) => prev.filter((i) => i !== item));
                 applyFilters(
                   searchQuery
@@ -635,9 +723,9 @@ export default function WalkingScreen() {
                     : parks,
                   {
                     ...tempFilters,
-                    activities: tempFilters.activities.filter((i) => i !== item),
-                    amenities: tempFilters.amenities.filter((i) => i !== item),
-                    regions: tempFilters.regions.filter((i) => i !== item),
+                    activities: activityKey ? tempFilters.activities.filter((i) => i !== activityKey) : tempFilters.activities,
+                    amenities: amenityKey ? tempFilters.amenities.filter((i) => i !== amenityKey) : tempFilters.amenities,
+                    regions: regionKey ? tempFilters.regions.filter((i) => i !== regionKey) : tempFilters.regions,
                   }
                 );
                 setCurrentPage(1);
