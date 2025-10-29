@@ -365,21 +365,35 @@ export default function WalkingScreen() {
   };
 
   const handleGetDirections = (park: ParkLocation) => {
-    try {
-      setShowParkDetails(false);
-      setSelectedPark(null);
-      if (!park.title) {
-        Alert.alert(t("common.error"), t("walking.errors.missingParkName"));
-        return;
-      }
-      router.push({
-        pathname: "/tabs/Navigation",
-        params: { presetQuery: park.title.trim(), autoStart: "1" },
-      });
-    } catch {
-      Alert.alert(t("common.error"), t("walking.errors.openNavFailed"));
+  setShowParkDetails(false);
+  setSelectedPark(null);
+  
+  if (park.latitude !== null && park.longitude !== null) {
+    router.push({
+      pathname: "/tabs/Navigation",
+      params: { 
+        presetLat: park.latitude.toString(),
+        presetLng: park.longitude.toString(),
+        autoStart: "1" 
+      },
+    });
+  } else {
+    // Fallback to name search only if coordinates are missing
+    const q = park.title?.trim();
+    if (!q) {
+      Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
+      return;
     }
-  };
+    
+    router.push({
+      pathname: "/tabs/Navigation",
+      params: { 
+        presetQuery: q, 
+        autoStart: "1" 
+      },
+    });
+  }
+};
 
   const getFilterSections = (): FilterSection[] => {
     const activityOptions = Object.values(t("walking.filters.activities", { returnObjects: true }));
