@@ -493,6 +493,7 @@ export default function ElderlyProfile() {
             borderColor="#000"
             borderColorActive="#000"
             contentStyle={s.buttonContent}
+            offsetBgColor="#FED787"
           >
             <View style={s.linkRow}>
               <Ionicons name="create-outline" size={18} color="#000" />
@@ -557,6 +558,7 @@ export default function ElderlyProfile() {
             borderColor="#000"
             borderColorActive="#000"
             contentStyle={s.buttonContent}
+            offsetBgColor="#93E6AA"
           >
             <AppText variant="button" weight="800" color="#000">
               {t("profile.sharePortal")}
@@ -625,6 +627,7 @@ export default function ElderlyProfile() {
             borderColor="#000"
             borderColorActive="#000"
             contentStyle={s.buttonContent}
+            offsetBgColor="#FEA775"
           >
             <AppText variant="button" weight="800" color="#000">
               {t("rewards.title")}

@@ -7,7 +7,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,8 +19,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useAuth } from "../src/auth/AuthProvider";
+import OffsetButton from "../src/components/OffsetButton";
 import TopBar, { LangCode } from "../src/components/TopBar";
 import { supabase } from "../src/lib/supabase";
+
+const BUTTON_H = 52;
 
 export default function EditBasic() {
   const router = useRouter();
@@ -119,13 +121,14 @@ export default function EditBasic() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFAF0" }}>
       <TopBar
         leftMode="back"
-        backTo="/tabs/Profile"     
+        backTo="/tabs/Profile"
         language={i18n.language as LangCode}
         setLanguage={setLanguage}
         title={t("profile.editBasic")}
+        bgColor="#FFFAF0"
       />
 
       <KeyboardAvoidingView
@@ -140,7 +143,7 @@ export default function EditBasic() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={s.container}>
-              <Text style={s.heading}>{t("profile.editBasic")}</Text>
+              {/* <Text style={s.heading}>{t("profile.editBasic")}</Text> */}
 
               <TextInput
                 placeholder={t("elderlyOnboarding.namePH")}
@@ -192,6 +195,7 @@ export default function EditBasic() {
               <Text style={s.sectionHeading}>
                 {t("elderlyOnboarding.emergencySectionTitle")}
               </Text>
+
               <TextInput
                 ref={ecNameRef}
                 placeholder={t("elderlyOnboarding.ecNamePH")}
@@ -243,19 +247,47 @@ export default function EditBasic() {
 
               <View style={{ height: 8 }} />
 
-              <Pressable
+              {/* Save (FED787 face, white offset) */}
+              <OffsetButton
+                label={t("common.save") || "Save"}
                 onPress={onSave}
                 disabled={!canSubmit}
-                style={[s.btn, !canSubmit && s.btnDisabled]}
-              >
-                <Text style={s.btnText}>{t("common.save") || "Save"}</Text>
-              </Pressable>
+                height={BUTTON_H}
+                radius={8}
+                bgColor="#FED787"
+                borderColor="#1F2937"
+                borderColorActive="#000"
+                textColor="#1F2937"
+                textColorActive="#0B1220"
+                offsetBgColor="#FFFAF0"
+                offsetStrokeColor="#000"
+                offsetLeft={4}
+                offsetTop={3}
+                offsetRight={-6}
+                offsetBottom={-6}
+                style={{ marginTop: 12 }}
+                contentStyle={{}}
+              />
 
-              <Pressable onPress={() => router.back()} style={s.btnGhost}>
-                <Text style={s.btnGhostText}>
-                  {t("common.cancel") || "Cancel"}
-                </Text>
-              </Pressable>
+              {/* Cancel (white face, CFADE8 offset) */}
+              <OffsetButton
+                label={t("common.cancel") || "Cancel"}
+                onPress={() => router.back()}
+                height={BUTTON_H}
+                radius={8}
+                bgColor="#FFFFFF"
+                borderColor="#1F2937"
+                borderColorActive="#000"
+                textColor="#111827"
+                textColorActive="#0B1220"
+                offsetBgColor="#CFADE8"
+                offsetStrokeColor="#000"
+                offsetLeft={4}
+                offsetTop={3}
+                offsetRight={-6}
+                offsetBottom={-6}
+                style={{ marginTop: 10 }}
+              />
             </View>
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -265,18 +297,20 @@ export default function EditBasic() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 12, backgroundColor: "#fff" },
-  heading: { fontSize: 20, fontWeight: "700", marginBottom: 8 },
-  sectionHeading: { fontSize: 16, fontWeight: "700", marginTop: 8 },
+  container: { flex: 1, padding: 24, gap: 12, backgroundColor: "#FFFAF0" },
+  heading: { fontSize: 20, fontWeight: "700", marginBottom: 8, color: "#111827" },
+  sectionHeading: { fontSize: 16, fontWeight: "700", marginTop: 8, color: "#111827" },
   input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+    width: "100%",
+    borderWidth: 2,
+    borderColor: "#1F2937",
+    paddingHorizontal: 14,
+    height: BUTTON_H,
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    backgroundColor: "#FFF",
     color: "#111827",
-    backgroundColor: "#F9FAFB",
-    marginBottom: 12,
+    marginBottom: 10,
+    fontSize: 16,
   },
   label: { marginTop: 6, marginBottom: 6, fontWeight: "700", color: "#111827" },
   chipsRow: {
@@ -286,8 +320,8 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderWidth: 2,
+    borderColor: "#1F2937",
     backgroundColor: "#FFF",
     color: "#111827",
     paddingHorizontal: 12,
@@ -300,15 +334,4 @@ const s = StyleSheet.create({
     borderColor: "#111827",
     color: "#FFFFFF",
   },
-  btn: {
-    backgroundColor: "#111827",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 12,
-  },
-  btnDisabled: { backgroundColor: "#9CA3AF" },
-  btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  btnGhost: { alignItems: "center", paddingVertical: 12 },
-  btnGhostText: { color: "#111827", fontWeight: "800" },
 });
