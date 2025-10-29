@@ -12,7 +12,7 @@ import OffsetButton from "../../src/components/OffsetButton";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 
 const BG = "#FFFAF0";
-const EXTRA_BOTTOM = -40;
+const EXTRA_BOTTOM = -200;
 const MAXW = 560;
 
 export default function ActivitiesScreen() {
@@ -69,6 +69,7 @@ export default function ActivitiesScreen() {
           offsetTop={5}
           offsetRight={-7}
           offsetBottom={-7}
+          offsetBgColor="#93E6AA"
           contentStyle={s.btnContent}
         >
           <View style={s.row}>
@@ -94,6 +95,7 @@ export default function ActivitiesScreen() {
           offsetTop={5}
           offsetRight={-7}
           offsetBottom={-7}
+          offsetBgColor="#FED787"
           contentStyle={s.btnContent}
         >
           <View style={s.row}>

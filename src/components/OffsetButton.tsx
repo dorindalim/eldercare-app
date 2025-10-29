@@ -18,22 +18,27 @@ type OffsetButtonProps = {
   accessibilityLabel?: string;
   testID?: string;
 
-  style?: ViewStyle;        
-  contentStyle?: ViewStyle; 
+  style?: ViewStyle;
+  contentStyle?: ViewStyle;
   textStyle?: TextStyle;
 
-  height?: number;            
-  radius?: number;          
-  bgColor?: string;           
-  borderColor?: string;       
-  borderColorActive?: string; 
-  textColor?: string;         
-  textColorActive?: string;   
+  height?: number;
+  radius?: number;
+  bgColor?: string;
+  borderColor?: string;
+  borderColorActive?: string;
+  textColor?: string;
+  textColorActive?: string;
 
-  offsetLeft?: number;       
-  offsetTop?: number;         
-  offsetRight?: number;       
-  offsetBottom?: number;      
+  offsetLeft?: number;
+  offsetTop?: number;
+  offsetRight?: number;
+  offsetBottom?: number;
+
+  offsetBgColor?: string;           
+  offsetBgColorActive?: string;     
+  offsetStrokeColor?: string;      
+  offsetStrokeWidth?: number;       
 };
 
 export default function OffsetButton({
@@ -54,10 +59,16 @@ export default function OffsetButton({
   borderColorActive = "#000",
   textColor = "#1F2937",
   textColorActive = "#0B1220",
+
   offsetLeft = 3,
   offsetTop = 3,
   offsetRight = -5,
   offsetBottom = -5,
+
+  offsetBgColor = "#FFFAF0",
+  offsetBgColorActive,              
+  offsetStrokeColor = "#000",
+  offsetStrokeWidth = 2,
 }: OffsetButtonProps) {
   return (
     <View style={[styles.wrap, style]}>
@@ -69,58 +80,63 @@ export default function OffsetButton({
         testID={testID}
         style={styles.touchable}
       >
-        {({ pressed }) => (
-          <>
-            <View
-              pointerEvents="none"
-              style={[
-                styles.offsetBorder,
-                {
-                  left: offsetLeft,
-                  top: offsetTop,
-                  right: offsetRight,
-                  bottom: offsetBottom,
-                  borderRadius: radius,
-                  backgroundColor: pressed ? "#000" : "#FFFAF0",    
-                  borderColor: "#000",            
-                  borderWidth: pressed ? 3 : 2,   
-                  opacity: disabled ? 0 : 1,
-                },
-              ]}
-            />
+        {({ pressed }) => {
+          const effectiveOffsetBg =
+            pressed && offsetBgColorActive ? offsetBgColorActive : offsetBgColor;
+          const effectiveOffsetBorderWidth = pressed ? Math.max(1, offsetStrokeWidth + 1) : offsetStrokeWidth;
 
-            <View
-              style={[
-                styles.face,
-                {
-                  height,
-                  borderRadius: radius,
-                  backgroundColor: bgColor,
-                  borderColor: pressed ? borderColorActive : borderColor,
-                  transform: pressed ? [{ translateX: -1 }, { translateY: -1 }] : [],
-                  opacity: 1
-                },
-                contentStyle,
-              ]}
-            >
-              {loading ? (
-                <ActivityIndicator />
-              ) : children ? (
-                children
-              ) : (
-                <Text
-                  style={[
-                    styles.text,
-                    { color: pressed ? textColorActive : textColor },
-                    textStyle,
-                  ]}
-                >
-                  {label}
-                </Text>
-              )}
-            </View>
-          </>
-        )}
+          return (
+            <>
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.offsetBorder,
+                  {
+                    left: offsetLeft,
+                    top: offsetTop,
+                    right: offsetRight,
+                    bottom: offsetBottom,
+                    borderRadius: radius,
+                    backgroundColor: effectiveOffsetBg,
+                    borderColor: offsetStrokeColor,
+                    borderWidth: effectiveOffsetBorderWidth,
+                  },
+                ]}
+              />
+
+              <View
+                style={[
+                  styles.face,
+                  {
+                    height,
+                    borderRadius: radius,
+                    backgroundColor: bgColor,
+                    borderColor: pressed ? borderColorActive : borderColor,
+                    transform: pressed ? [{ translateX: -1 }, { translateY: -1 }] : [],
+                    opacity: disabled ? 0.6 : 1,
+                  },
+                  contentStyle,
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator />
+                ) : children ? (
+                  children
+                ) : (
+                  <Text
+                    style={[
+                      styles.text,
+                      { color: pressed ? textColorActive : textColor },
+                      textStyle,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                )}
+              </View>
+            </>
+          );
+        }}
       </Pressable>
     </View>
   );

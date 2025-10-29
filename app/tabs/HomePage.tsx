@@ -71,7 +71,7 @@ function OffsetWrap({
             borderRadius: radius,
             borderWidth: 2,
             borderColor: stroke,
-            backgroundColor: fill ?? "transparent",
+            backgroundColor: "#FFF",
             opacity: 0.95,
           }}
         />

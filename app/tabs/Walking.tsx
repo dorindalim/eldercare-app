@@ -460,14 +460,14 @@ export default function WalkingScreen() {
         <TopBar
           language={i18n.language as LangCode}
           setLanguage={setLang as (c: LangCode) => void}
-          bgColor="#D9D991"
+          bgColor="#FFD3CD"
           title={t("walking.title")}
           includeTopInset
           barHeight={44}
           topPadding={2}
           onLogout={async () => {
             await logout();
-            router.replace("/Authentication/LogIn");
+            router.replace("/Authentication/Welcome");
           }}
         />
         <View style={s.errorContainer}>
@@ -491,14 +491,14 @@ export default function WalkingScreen() {
         backTo="/tabs/Activities"
         language={i18n.language as LangCode}
         setLanguage={setLang as (c: LangCode) => void}
-        bgColor="#D9D991"
+        bgColor="#FFD3CD"
         includeTopInset
         barHeight={44}
         topPadding={2}
         title={t("walking.title")}
         onLogout={async () => {
           await logout();
-          router.replace("/Authentication/LogIn");
+          router.replace("/Authentication/Welcome");
         }}
       />
 
@@ -577,13 +577,15 @@ export default function WalkingScreen() {
           apply: t("walking.filter.apply"),
         }}
       />
-
       <FlatList
         ref={flatListRef}
         data={currentParks}
         renderItem={renderParkItem}
         keyExtractor={(item) => item.title}
-        contentContainerStyle={[s.listContainer, { paddingBottom: bottomPad }]}
+        contentContainerStyle={[
+          s.listContainer,
+          { paddingBottom: filteredParks.length > 0 ? 0 : bottomPad },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -595,10 +597,22 @@ export default function WalkingScreen() {
         }
         ListFooterComponent={
           filteredParks.length > 0 ? (
-            <Pagination page={currentPage} total={totalPages} onChange={handlePageChange} />
+            <View
+              style={{
+                paddingHorizontal: 16,   
+                paddingBottom: bottomPad,
+                alignItems: "center",
+                marginTop: 8,           
+              }}
+            >
+              <Pagination
+                page={currentPage}
+                total={totalPages}
+                onChange={handlePageChange}
+              />
+            </View>
           ) : null
         }
-        ListFooterComponentStyle={{ padding: 16 }}
         ListEmptyComponent={
           <View style={s.emptyContainer}>
             {initialLoading || loading ? (
@@ -625,7 +639,6 @@ export default function WalkingScreen() {
           </View>
         }
       />
-
       <ItemDetailsModal
         park={selectedPark}
         visible={showParkDetails}

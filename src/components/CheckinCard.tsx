@@ -112,8 +112,8 @@ const s = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 14,
   },
-  checkCardDone: { backgroundColor: "#EEF9F1", borderColor: "#66BB6A" },
-  checkCardNotDone: { backgroundColor: "#FFF5F5", borderColor: "#EF9A9A" },
+  checkCardDone: { backgroundColor: "#EEF9F1", borderColor: "#000" },
+  checkCardNotDone: { backgroundColor: "#FFF5F5", borderColor: "#000" },
 
   checkTitle: { fontSize: 26, fontWeight: "800", marginBottom: 6 },
 
