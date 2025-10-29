@@ -335,6 +335,7 @@ export default function RewardsScreen() {
                       offsetBgColor="#93E6AA"
                       borderColor="#111827"
                       textColor="#111827"
+                      style={{minWidth:100}}
                     />
                   )}
                 </View>
@@ -393,8 +394,8 @@ const s = StyleSheet.create({
   balancePill: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderWidth: 2,
+    borderColor: "#000",
     backgroundColor: "#FFF",
     paddingHorizontal: 12,
     paddingVertical: 8,
