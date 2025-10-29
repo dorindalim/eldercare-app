@@ -69,6 +69,25 @@ const distanceMeters = (a: LatLng, b: LatLng) => {
 const kmStr = (m?: number | null) =>
   m == null ? "" : `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km`;
 
+const REGION_BG: Record<string, string> = {
+  "Central": "#E5E1D8",
+  "North": "#8E8E8E",
+  "North-East": "#F7A8AF",
+  "Offshore islands": "#8ECFD5",
+  "East": "#FEA775",
+  "West": "#93E6AA",
+  "South": "#FED787",
+};
+
+const FALLBACKS = ["#E5E1D8", "#8E8E8E", "#FFD3CD", "#C7E7EA", "#FFD38A", "#C9F3D5", "#FFD3CD"];
+const colorForRegion = (region?: string) => {
+  if (!region) return FALLBACKS[0];
+  const key = region.trim();
+  if (REGION_BG[key]) return REGION_BG[key];
+  const h = Array.from(key).reduce((a, c) => (a * 33 + c.charCodeAt(0)) >>> 0, 5381);
+  return FALLBACKS[h % FALLBACKS.length];
+};
+
 export default function WalkingScreen() {
   const router = useRouter();
   const { logout } = useAuth();
@@ -437,6 +456,7 @@ export default function WalkingScreen() {
         : item.region
       : distanceText;
 
+    const regionColor = colorForRegion(item.region);
     return (
       <ListItem
         title={item.title}
@@ -448,8 +468,10 @@ export default function WalkingScreen() {
         showArrow
         onPress={() => handleParkSelect(item)}
         imageResizeMode="cover"
-        buttonBgColor="#D9D991"  
-        buttonBorderColor="#1F2937" 
+        buttonBgColor={regionColor}
+        buttonBgColorActive={regionColor}
+        buttonBorderColor="#000"
+        buttonBorderColorActive="#000"
       />
     );
   };

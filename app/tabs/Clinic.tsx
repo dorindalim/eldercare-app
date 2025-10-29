@@ -33,6 +33,22 @@ import { supabase } from "../../src/lib/supabase";
 const datasetId = "d_9d0bbe366aee923a6e202f80bb356bb9";
 const url = `https://data.gov.sg/api/action/datastore_search?resource_id=${datasetId}`;
 
+const REGION_BG: Record<string, string> = {
+  "Central":   "#E5E1D8",
+  "North":     "#8E8E8E",
+  "North-East": "#F7A8AF",
+  "East":      "#FEA775",
+  "West":      "#93E6AA",
+};
+
+const REGION_FALLBACKS = ["#E5E1D8", "#8E8E8E", "#F7A8AF", "#FEA775", "#93E6AA"];
+const colorForRegion = (region?: string | null) => {
+  if (region && REGION_BG[region]) return REGION_BG[region];
+  if (!region) return REGION_FALLBACKS[0];
+  const h = Array.from(region).reduce((a, c) => (a * 33 + c.charCodeAt(0)) >>> 0, 5381);
+  return REGION_FALLBACKS[h % REGION_FALLBACKS.length];
+};
+
 const distanceMeters = (a, b) => {
   if (!a || !b) return 0;
   const R = 6371e3;
@@ -312,6 +328,8 @@ export default function ClinicScreen() {
     const metadata = item.totalTime != null ? 
     `${t('clinics.totalEstTime')}: ${Math.round(item.totalTime)}${t('clinics.mins')}` : '';
 
+    const regionColor = colorForRegion(item.region);
+
     return (
       <ListItem
         title={item.name}
@@ -329,8 +347,10 @@ export default function ClinicScreen() {
         detailsIcon="access-time" 
         metadataIcon="timer"
         imageResizeMode="contain"
-        buttonBgColor="#FFF" 
-        buttonBorderColor="#7A8AF"
+        buttonBgColor={regionColor}
+        buttonBgColorActive={regionColor}
+        buttonBorderColor="#000"         
+        buttonBorderColorActive="#000"
       />
     );
   };

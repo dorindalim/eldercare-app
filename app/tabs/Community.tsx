@@ -110,14 +110,14 @@ const CAT_KEY = {
 const CATEGORY_BG: Record<(typeof CATEGORIES)[number], string> = {
   "Health & Fitness":        "#E5E1D8",
   "Arts & Culture":          "#8E8E8E",
-  "Active Aging":            "#C9F3D5",
-  "Parenting & Education":   "#C7E7EA",
-  "Exhibition & Fair":       "#FFD3BA",
-  "Neighbourhood Events":    "#FFEBC3",
-  "Celebration & Festivity": "#E2CEF1",
-  "Kopi Talks & Dialogues":  "#FFD3CD",
-  "Charity & Volunteerism":  "#FED787",
-  "Overseas Outings & Tours":"#8ECFD5",
+  "Active Aging":            "#93E6AA",
+  "Parenting & Education":   "#8ECFD5",
+  "Exhibition & Fair":       "#FEA775",
+  "Neighbourhood Events":    "#FED787",
+  "Celebration & Festivity": "#CFADE8",
+  "Kopi Talks & Dialogues":  "#F7A8AF",
+  "Charity & Volunteerism":  "#FFEBC3",
+  "Overseas Outings & Tours":"#FFD38A",
 };
 
 const catLabel = (c: (typeof CATEGORIES)[number], t: (k: string, p?: any) => string) =>
