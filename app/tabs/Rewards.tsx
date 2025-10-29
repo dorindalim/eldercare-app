@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,9 +16,8 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import i18n from "../../i18n";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import OffsetButton from "../../src/components/OffsetButton";
 import TopBar, { LangCode } from "../../src/components/TopBar";
-
-import { router } from "expo-router";
 import { useCheckins } from "../../src/hooks/useCheckIns";
 import { supabase } from "../../src/lib/supabase";
 
@@ -265,30 +265,31 @@ export default function RewardsScreen() {
 
                 {/* >>> Half/Half buttons with spacing <<< */}
                 <View style={s.actionsRow}>
-                  <Pressable
-                    onPress={() => setTermsOpen(item)}
-                    style={[s.btnBase, s.halfBtn, s.linkBtn, { marginRight: 8 }]}
-                  >
-                    <AppText weight="800" color="#111827">
-                      {t("rewards.viewTerms")}
-                    </AppText>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => onRedeem(item)}
-                    style={[
-                      s.btnBase,
-                      s.halfBtn,
-                      s.redeemBtn,
-                      coins < item.cost && s.redeemBtnDisabled,
-                    ]}
-                    disabled={coins < item.cost}
-                  >
-                    <AppText color="#000" weight="800">
-                      {t("rewards.redeem")}
-                    </AppText>
-                  </Pressable>
-                </View>
+                <OffsetButton
+                  label={t("rewards.viewTerms")}
+                  onPress={() => setTermsOpen(item)}
+                  height={48}
+                  radius={10}
+                  bgColor="#FFF"
+                  borderColor="#111827"
+                  offsetBgColor="#FED787"
+                  textColor="#111827"
+                  style={[s.halfBtn, { marginRight: 8 }]}
+                />
+                
+                <OffsetButton
+                  label={t("rewards.redeem")}
+                  onPress={() => onRedeem(item)}
+                  disabled={coins < item.cost}
+                  height={48}
+                  radius={10}
+                  bgColor="#FFF"
+                  offsetBgColor="#CFADE8"
+                  borderColor="#1F2937"
+                  textColor="#1F2937"
+                  style={s.halfBtn}
+                />
+              </View>
               </View>
             </View>
           ))}
@@ -320,14 +321,17 @@ export default function RewardsScreen() {
                   </AppText>
                 </View>
                 {def && (
-                  <Pressable
-                    onPress={() => setTermsOpen(def)}
-                    style={s.linkBtn}
-                  >
-                    <AppText weight="800" color="#111827">
-                      {t("rewards.howToUse")}
-                    </AppText>
-                  </Pressable>
+                  <OffsetButton
+                  label={t("rewards.howToUse")}
+                  onPress={() => setTermsOpen(def)}
+                  height={40}
+                  radius={8}
+                  
+                  bgColor="#FFF"
+                  offsetBgColor="#93E6AA"
+                  borderColor="#111827"
+                  textColor="#111827"
+                />
                 )}
               </View>
             );
@@ -351,11 +355,16 @@ export default function RewardsScreen() {
             <ScrollView style={{ maxHeight: 320, marginTop: 8 }}>
               <AppText>{termsOpen ? t(termsOpen.termsKey) : ""}</AppText>
             </ScrollView>
-            <Pressable style={s.closeBtn} onPress={() => setTermsOpen(null)}>
-              <AppText color="#FFF" weight="800">
-                {t("rewards.close")}
-              </AppText>
-            </Pressable>
+            <OffsetButton
+              label={t("rewards.close")}
+              onPress={() => setTermsOpen(null)}
+              height={44}
+              radius={10}
+              bgColor="#111827"
+              borderColor="#000"
+              textColor="#FFF"
+              style={{ alignSelf: "flex-end", marginTop: 12 }}
+            />
           </View>
         </View>
       </Modal>
@@ -410,26 +419,10 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  btnBase: {
-    minHeight: 48,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   halfBtn: {
     flex: 1,
   },
-  linkBtn: {
-    borderWidth: 1,
-    borderColor: "#111827",
-    backgroundColor: "#FFF",
-  },
-  redeemBtn: {
-    backgroundColor: "#CFADE8",
-  },
-  redeemBtnDisabled: { opacity: 0.4 },
 
   voucherRow: {
     flexDirection: "row",
@@ -454,13 +447,5 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
     padding: 16,
-  },
-  closeBtn: {
-    alignSelf: "flex-end",
-    marginTop: 12,
-    backgroundColor: "#111827",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
   },
 });

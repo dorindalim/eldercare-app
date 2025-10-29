@@ -171,7 +171,7 @@ export default function TopBar({
                   contentStyle={s.langChip}  
                   accessibilityLabel={t("settings.switchTo", "Switch language to") + " " + l.label}
                   offsetBottom={0}
-                  offsetRight ={2}
+                  offsetRight ={6}
                 >
                   <AppText 
                     variant="button" 
