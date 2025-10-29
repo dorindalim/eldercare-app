@@ -393,12 +393,18 @@ export default function NavigationScreen() {
 
   useEffect(() => {
     if (!autoStart || !destination || !location || navigating) return;
-    if (autoRanRef.current) return;
+    if (presetLat != null && presetLng != null && !destination) {
+    const dest = { latitude: presetLat, longitude: presetLng };
+    setDestination(dest);
+    return; 
+  }
+  
+  if (destination && location) {
     autoRanRef.current = true;
-
-    const id = setTimeout(() => startNavigation(), 250);
+    const id = setTimeout(() => startNavigation(), 500);
     return () => clearTimeout(id);
-  }, [autoStart, destination, location, navigating]);
+  }
+}, [autoStart, destination, location, navigating, presetLat, presetLng]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {

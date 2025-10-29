@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   UIManager,
   View,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -780,6 +781,7 @@ export default function CommunityScreen() {
           <SummaryChip items={summaryItems} variant="indigo" dense style={{ marginTop: 0 }} />
         </View>
       )}
+      
 
       <FlatList
         ref={listRef}
@@ -794,8 +796,14 @@ export default function CommunityScreen() {
             </AppText>
           </View>
         }
-        refreshing={loading}
-        onRefresh={() => fetchEvents()}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => fetchEvents()}
+            colors={["#007AFF"]}
+            tintColor="#007AFF"
+          />
+        }
         onScrollBeginDrag={handleScrollBegin}
         ListFooterComponent={
           footerVisible ? (
