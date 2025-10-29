@@ -135,7 +135,10 @@
     "totalEstTime": "Total Est. Time",
     "mins": "mins",
     "contact": "Contact",
-    "callToEnquire": "Call to Enquire"
+    "callToEnquire": "Call to Enquire",
+    "details": {
+      "title": "Clinic Details"
+    }
   },
   "activities": {
     "prompt": "What would you like to view?",

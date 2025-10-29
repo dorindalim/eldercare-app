@@ -9,7 +9,7 @@ import {
   ViewStyle
 } from "react-native";
 import AppText from "./AppText";
-import OffsetButton from "./OffsetButton"; // Import your OffsetButton
+import OffsetButton from "./OffsetButton";
 
 import { Dimensions } from "react-native";
 const screenHeight = Dimensions.get('window').height;
@@ -132,7 +132,7 @@ export default function FilterSheet({
                         <OffsetButton
                           key={o.key}
                           onPress={() => sec.onSelect(o.key)}
-                          radius={20} // Pill shape
+                          radius={20} 
                           bgColor={active ? "#000" : "#FFF"}
                           borderColor="#000" 
                           borderColorActive="#000" 
@@ -153,7 +153,6 @@ export default function FilterSheet({
               );
             }
 
-            // chips-multi
             return (
               <View key={sec.id} style={[{ marginTop: 12 }, sec.style]}>
                 <AppText variant="label" color="#6B7280" style={{ marginBottom: 6 }}>
@@ -166,7 +165,7 @@ export default function FilterSheet({
                       <OffsetButton
                         key={o.key}
                         onPress={() => sec.onToggle(o.key)}
-                        radius={20} // Pill shape
+                        radius={20} 
                         bgColor= {active ? "#000" : "#FFF"}
                         borderColor="#000" 
                         borderColorActive="#000" 

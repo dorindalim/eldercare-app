@@ -107,6 +107,19 @@ const CAT_KEY = {
   "Overseas Outings & Tours": "overseasOutingsTours",
 } as const;
 
+const CATEGORY_BG: Record<(typeof CATEGORIES)[number], string> = {
+  "Health & Fitness":        "#E5E1D8",
+  "Arts & Culture":          "#8E8E8E",
+  "Active Aging":            "#C9F3D5",
+  "Parenting & Education":   "#C7E7EA",
+  "Exhibition & Fair":       "#FFD3BA",
+  "Neighbourhood Events":    "#FFEBC3",
+  "Celebration & Festivity": "#E2CEF1",
+  "Kopi Talks & Dialogues":  "#FFD3CD",
+  "Charity & Volunteerism":  "#FED787",
+  "Overseas Outings & Tours":"#8ECFD5",
+};
+
 const catLabel = (c: (typeof CATEGORIES)[number], t: (k: string, p?: any) => string) =>
   t(`community.categories.${CAT_KEY[c as keyof typeof CAT_KEY]}`);
 
@@ -563,7 +576,21 @@ export default function CommunityScreen() {
     router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q, autoStart: "1" } });
   };
 
+  const darken = (hex: string, amt = 28) => {
+  const n = hex.replace("#","");
+  const to = (i:number) => Math.max(0, parseInt(n.slice(i, i+2), 16) - amt);
+  const r = to(0), g = to(2), b = to(4);
+    return "#" + [r,g,b].map(v => v.toString(16).padStart(2,"0")).join("");
+  };
+
+  const categoryColors = (cat?: string | null) => {
+    const bg = (cat && CATEGORY_BG[cat as keyof typeof CATEGORY_BG]) || "#FFD3CD"; // fallback
+    const border = darken(bg, 36);
+    return { bg, border };
+  };
+
   const RenderCCItem = ({ item }: { item: EventRow & { _distance?: number | null } }) => {
+    const { bg, border } = categoryColors(item.category || undefined);
     const timePart = [formatTime(item.start_time), formatTime(item.end_time)].filter(Boolean).join(" - ") || "—";
     const feePart = item.fee?.trim() || t("community.priceOptions.free");
     const distPart = kmStr(item._distance);
@@ -592,8 +619,10 @@ export default function CommunityScreen() {
         detailsIcon="event"
         metadataIcon="local-atm"
         imageResizeMode="contain"
-        buttonBgColor="#FFD3CD" 
-        buttonBorderColor="#1F2937"
+        buttonBgColor={bg}
+        buttonBgColorActive={darken(bg, 12)}   // <— this colors the offset strip
+        buttonBorderColor={border}
+        buttonBorderColorActive={border}
       />
     );
   };
@@ -770,7 +799,7 @@ export default function CommunityScreen() {
         onScrollBeginDrag={handleScrollBegin}
         ListFooterComponent={
           footerVisible ? (
-            <View style={{ paddingHorizontal: 12, paddingBottom: bottomPad }}>
+            <View style={{ paddingHorizontal: 12, paddingBottom: bottomPad, alignItems: "center", marginTop: 8 }}>
               <Pagination page={page} total={totalPages} onChange={(p) => setPage(p)} />
             </View>
           ) : null

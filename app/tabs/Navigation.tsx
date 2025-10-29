@@ -14,7 +14,6 @@ import {
   FlatList,
   Keyboard,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -28,9 +27,14 @@ import MapView, {
   PROVIDER_GOOGLE,
   type MapMarker,
 } from "react-native-maps";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
+import FilterSheet, { FilterSection } from "../../src/components/FilterSheet";
+import SearchBar from "../../src/components/SearchBar";
 import TopBar, { type LangCode } from "../../src/components/TopBar";
 import { presentNow } from "../../src/lib/notifications";
 import { supabase } from "../../src/lib/supabase";
@@ -81,9 +85,9 @@ export default function NavigationScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const bottomLift = Math.max(0, tabBarHeight + insets.bottom - 100);
-  const SCENE_EXTRA_PAD = 110;   
-  const DESIRED_GAP = 0;         
-  const bottomGap = Math.max(0, tabBarHeight - SCENE_EXTRA_PAD) + DESIRED_GAP; 
+  const SCENE_EXTRA_PAD = 110;
+  const DESIRED_GAP = 0;
+  const bottomGap = Math.max(0, tabBarHeight - SCENE_EXTRA_PAD) + DESIRED_GAP;
 
   const [location, setLocation] = useState<LatLng | null>(null);
   const [query, setQuery] = useState("");
@@ -91,12 +95,21 @@ export default function NavigationScreen() {
 
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
   const [steps, setSteps] = useState<
-    { id: string; html: string; dist: string; endLoc: { lat: number; lng: number } }[]
+    {
+      id: string;
+      html: string;
+      dist: string;
+      endLoc: { lat: number; lng: number };
+    }[]
   >([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [stepDistanceM, setStepDistanceM] = useState<number | null>(null);
-  const [eta, setEta] = useState<{ duration: string; distance: string } | null>(null);
-  const [mode, setMode] = useState<"driving" | "walking" | "bicycling" | "transit">("driving");
+  const [eta, setEta] = useState<{ duration: string; distance: string } | null>(
+    null
+  );
+  const [mode, setMode] = useState<
+    "driving" | "walking" | "bicycling" | "transit"
+  >("driving");
   const [navigating, setNavigating] = useState(false);
   const [showAllSteps, setShowAllSteps] = useState(false);
 
@@ -116,6 +129,7 @@ export default function NavigationScreen() {
   const [sheetLoading, setSheetLoading] = useState(false);
   const [sheetEvents, setSheetEvents] = useState<CCEvent[]>([]);
   const [sheetCcName, setSheetCcName] = useState<string>("");
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const inputRef = useRef<TextInput | null>(null);
@@ -145,13 +159,19 @@ export default function NavigationScreen() {
   const presetQuery = params.presetQuery as string | undefined;
   const [searchInput, setSearchInput] = useState(presetQuery || "");
   const autoRanRef = useRef(false);
-  const presetLat = params.presetLat ? parseFloat(params.presetLat as string) : null;
-  const presetLng = params.presetLng ? parseFloat(params.presetLng as string) : null;
+  const presetLat = params.presetLat
+    ? parseFloat(params.presetLat as string)
+    : null;
+  const presetLng = params.presetLng
+    ? parseFloat(params.presetLng as string)
+    : null;
 
   const prevPresetQueryRef = useRef<string | undefined>(undefined);
   const freshStart = params.freshStart == "true";
   const fillOnly = params.fillOnly === "true";
-  const [userSelectedMode, setUserSelectedMode] = useState<"driving" | "walking" | "bicycling" | "transit" | null>(null);
+  const [userSelectedMode, setUserSelectedMode] = useState<
+    "driving" | "walking" | "bicycling" | "transit" | null
+  >(null);
 
   const autoStart =
     String((params as any).autoStart ?? "").toLowerCase() === "1" ||
@@ -178,7 +198,10 @@ export default function NavigationScreen() {
 
       const route = data.routes[0];
       const pts = polyline.decode(route.overview_polyline.points);
-      const coords = pts.map(([lat, lng]: number[]) => ({ latitude: lat, longitude: lng }));
+      const coords = pts.map(([lat, lng]: number[]) => ({
+        latitude: lat,
+        longitude: lng,
+      }));
       setRouteCoords(coords);
 
       const leg = route.legs[0];
@@ -196,7 +219,10 @@ export default function NavigationScreen() {
       setSteps(mappedSteps);
 
       setStepDistanceM(
-        distanceMeters(origin, { latitude: mappedSteps[0].endLoc.lat, longitude: mappedSteps[0].endLoc.lng })
+        distanceMeters(origin, {
+          latitude: mappedSteps[0].endLoc.lat,
+          longitude: mappedSteps[0].endLoc.lng,
+        })
       );
 
       if (speak && mappedSteps.length) {
@@ -252,7 +278,10 @@ export default function NavigationScreen() {
   const updateStepProgress = (pos: LatLng) => {
     if (!steps.length) return;
     const step = steps[currentStepIndex];
-    const dist = distanceMeters(pos, { latitude: step.endLoc.lat, longitude: step.endLoc.lng });
+    const dist = distanceMeters(pos, {
+      latitude: step.endLoc.lat,
+      longitude: step.endLoc.lng,
+    });
     setStepDistanceM(dist);
     const THRESHOLD_M = 25;
     if (dist < THRESHOLD_M) {
@@ -276,9 +305,15 @@ export default function NavigationScreen() {
       if (status === "granted") {
         setPermissionGranted(true);
         const pos = await Location.getCurrentPositionAsync({});
-        setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
       } else {
-        Alert.alert(t("navigation.search.permissionTitle"), t("navigation.search.permissionBody"));
+        Alert.alert(
+          t("navigation.search.permissionTitle"),
+          t("navigation.search.permissionBody")
+        );
       }
     })();
   }, [i18n.language]);
@@ -292,12 +327,23 @@ export default function NavigationScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted" && isMounted) {
         sub = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 5 },
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 3000,
+            distanceInterval: 5,
+          },
           (pos) => {
             if (!isMounted || !navigating) return;
-            const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+            const coords = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            };
             setLocation(coords);
-            if (navigating && destination && Date.now() - lastRouteRefreshRef.current > 15000) {
+            if (
+              navigating &&
+              destination &&
+              Date.now() - lastRouteRefreshRef.current > 15000
+            ) {
               lastRouteRefreshRef.current = Date.now();
               fetchDirections(coords, destination, false, mode);
             }
@@ -327,7 +373,7 @@ export default function NavigationScreen() {
 
   useEffect(() => {
     if (!presetQuery || presetQuery === prevPresetQueryRef.current) return;
-    if (!location) return; 
+    if (!location) return;
 
     prevPresetQueryRef.current = presetQuery;
     resetNavigationState();
@@ -356,7 +402,12 @@ export default function NavigationScreen() {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      if (query.length > 2 && location && inputFocused && !suppressSuggestionsRef.current) {
+      if (
+        query.length > 2 &&
+        location &&
+        inputFocused &&
+        !suppressSuggestionsRef.current
+      ) {
         fetchAutocompleteSuggestions(query);
       }
     }, 300);
@@ -413,7 +464,10 @@ export default function NavigationScreen() {
         Keyboard.dismiss();
         setInputFocused(false);
         setDestinationOnly(dest);
-        presentNow({ title: t("navigation.title"), body: t("navigation.search.destinationSet") });
+        presentNow({
+          title: t("navigation.title"),
+          body: t("navigation.search.destinationSet"),
+        });
       }
     } catch {}
   };
@@ -448,9 +502,15 @@ export default function NavigationScreen() {
         let name: string | undefined;
         let postal: string | undefined;
         if (kind === "clinic") {
-          name = extractFromDescription(desc, "HCI_NAME") || props.HCI_NAME || props.hci_name;
+          name =
+            extractFromDescription(desc, "HCI_NAME") ||
+            props.HCI_NAME ||
+            props.hci_name;
         } else if (kind === "cc") {
-          name = extractFromDescription(desc, "NAME") || props.CC_NAME || props.cc_name;
+          name =
+            extractFromDescription(desc, "NAME") ||
+            props.CC_NAME ||
+            props.cc_name;
           postal = extractFromDescription(desc, "ADDRESSPOSTALCODE");
         } else {
           name = props.NAME || props.Name || props.name;
@@ -464,7 +524,7 @@ export default function NavigationScreen() {
             id: f.id?.toString?.() ?? `${kind}-${idx}`,
             name,
             coords: { latitude: lat, longitude: lng },
-            postal: kind === "cc" ? (postal ?? null) : undefined,
+            postal: kind === "cc" ? postal ?? null : undefined,
           } as POI;
         }
 
@@ -473,7 +533,7 @@ export default function NavigationScreen() {
             id: f.id?.toString?.() ?? `${kind}-${idx}-${j}`,
             name,
             coords: { latitude: lat, longitude: lng },
-            postal: kind === "cc" ? (postal ?? null) : undefined,
+            postal: kind === "cc" ? postal ?? null : undefined,
           })) as POI[];
         }
 
@@ -559,25 +619,38 @@ export default function NavigationScreen() {
 
   const searchDestination = async (override?: string) => {
     const q = (override ?? query).trim();
-    if (!q) return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
+    if (!q)
+      return Alert.alert(
+        t("navigation.search.enterTitle"),
+        t("navigation.search.enterBody")
+      );
     try {
       const url =
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}` +
-        `&region=SG&language=${googleLang}&key=${GOOGLE_WEB_API_KEY}`;
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          q
+        )}` + `&region=SG&language=${googleLang}&key=${GOOGLE_WEB_API_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
       if (!data.results?.length)
-        return Alert.alert(t("navigation.search.notFoundTitle"), t("navigation.search.notFoundBody"));
+        return Alert.alert(
+          t("navigation.search.notFoundTitle"),
+          t("navigation.search.notFoundBody")
+        );
       const loc = data.results[0].geometry.location;
       const dest = { latitude: loc.lat, longitude: loc.lng };
       setDestinationOnly(dest);
-      presentNow({ title: t("navigation.title"), body: t("navigation.search.destinationSet") });
+      presentNow({
+        title: t("navigation.title"),
+        body: t("navigation.search.destinationSet"),
+      });
     } catch (e) {
       Alert.alert(t("common.error"), String(e));
     }
   };
 
-  const handleModeChange = (newMode: "driving" | "walking" | "bicycling" | "transit") => {
+  const handleModeChange = (
+    newMode: "driving" | "walking" | "bicycling" | "transit"
+  ) => {
     setMode(newMode);
     setUserSelectedMode(newMode);
     if (navigating && location && destination) {
@@ -598,7 +671,9 @@ export default function NavigationScreen() {
     const φ2 = (b.latitude * Math.PI) / 180;
     const Δφ = ((b.latitude - a.latitude) * Math.PI) / 180;
     const Δλ = ((b.longitude - a.longitude) * Math.PI) / 180;
-    const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    const x =
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
   };
 
@@ -661,7 +736,10 @@ export default function NavigationScreen() {
 
   const startNavigation = () => {
     if (!location || !destination)
-      return Alert.alert(t("navigation.search.enterTitle"), t("navigation.search.enterBody"));
+      return Alert.alert(
+        t("navigation.search.enterTitle"),
+        t("navigation.search.enterBody")
+      );
     const navigationMode = userSelectedMode || "driving";
     setMode(navigationMode);
     setNavigating(true);
@@ -697,7 +775,10 @@ export default function NavigationScreen() {
     if (cur === "granted") return true;
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(t("navigation.reminders.permTitle"), t("navigation.reminders.permBody"));
+      Alert.alert(
+        t("navigation.reminders.permTitle"),
+        t("navigation.reminders.permBody")
+      );
       return false;
     }
     return true;
@@ -779,6 +860,24 @@ export default function NavigationScreen() {
     hideAllCallouts();
   };
 
+  const getFilterSections = (): FilterSection[] => {
+    return [
+      {
+        id: "categories",
+        type: "chips-single",
+        title: t("navigation.search.filter.title", { defaultValue: "Show" }),
+        options: (["search", "cc", "clinics", "parks"] as const).map((k) => ({
+          key: k,
+          label: activePOILabel(k),
+        })),
+        selected: category,
+        onSelect: (key) => {
+          setCategory(key as any);
+        },
+      },
+    ];
+  };
+
   const activePOILabel = (c: CategoryKey) => {
     switch (c) {
       case "search":
@@ -810,102 +909,27 @@ export default function NavigationScreen() {
 
       {!navigating && (
         <View style={s.searchWrap} pointerEvents="box-none">
-          <View style={s.searchRow} pointerEvents="auto">
-            <View style={s.catWrap}>
-              <Pressable
-                onPress={() => setCatMenuOpen((v) => !v)}
-                style={({ pressed }) => [s.catBtn, pressed && { opacity: 0.8 }]}
-                accessibilityRole="button"
-              >
-                <AppText variant="button" weight="800">
-                  {activePOILabel(category)}
-                </AppText>
-                <Ionicons
-                  name={catMenuOpen ? "chevron-up" : "chevron-down"}
-                  size={16}
-                  color="#6B7280"
-                  style={{ marginLeft: 6 }}
-                />
-              </Pressable>
-
-              {catMenuOpen && (
-                <View style={s.catMenu}>
-                  {(["search", "cc", "clinics", "parks"] as CategoryKey[]).map((key) => (
-                    <Pressable
-                      key={key}
-                      onPress={() => {
-                        setCategory(key);
-                        setCatMenuOpen(false);
-                        closeSheetsForMapInteraction();
-                      }}
-                      style={s.catMenuItem}
-                    >
-                      <AppText
-                        variant="label"
-                        weight={category === key ? "900" : "700"}
-                        color={category === key ? "#111827" : "#4B5563"}
-                      >
-                        {activePOILabel(key)}
-                      </AppText>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <TextInput
-              ref={inputRef}
-              style={s.input}
-              placeholder={t("navigation.search.placeholder")}
-              value={query}
-              clearButtonMode={Platform.OS === "ios" ? "while-editing" : "never"}
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => {
-                setInputFocused(false);
+          <SearchBar
+            value={query}
+            placeholder={t("navigation.search.placeholder")}
+            onChangeText={(text) => {
+              suppressSuggestionsRef.current = false;
+              setQuery(text);
+              setSearchInput(text);
+              // Approximate old focus gating without changing behavior materially:
+              setInputFocused(text.length > 0);
+              if (text.length > 2 && location) {
+                fetchAutocompleteSuggestions(text);
+              } else {
                 setSuggestions([]);
-              }}
-              onChangeText={(text) => {
-                suppressSuggestionsRef.current = false;
-                setQuery(text);
-                setSearchInput(text);
-                if (text.length > 2) {
-                  fetchAutocompleteSuggestions(text);
-                } else {
-                  setSuggestions([]);
-                }
-              }}
-              onSubmitEditing={() => {
-                if (query.trim()) {
-                  searchDestination();
-                }
-              }}
-              returnKeyType="search"
-            />
-
-            {query.trim().length === 0 ? (
-              <TouchableOpacity style={s.iconBtn} onPress={() => searchDestination()}>
-                <Ionicons name="search" size={18} color="#111827" />
-              </TouchableOpacity>
-            ) : Platform.OS !== "ios" ? (
-              <TouchableOpacity
-                style={s.iconBtn}
-                onPress={() => {
-                  setQuery("");
-                  setSearchInput("");
-                  setSuggestions([]);
-                  if (!navigating) {
-                    setDestination(null);
-                    setRouteCoords([]);
-                    setSteps([]);
-                    setEta(null);
-                    setStepDistanceM(null);
-                  }
-                }}
-              >
-                <Ionicons name="close-circle" size={20} color="#111827" />
-              </TouchableOpacity>
-            ) : null}
-          </View>
+              }
+            }}
+            onSubmit={() => {
+              if (query.trim()) searchDestination();
+            }}
+            onPressFilter={() => setShowFilterPanel(true)}
+            style={{ marginBottom: 8 }}
+          />
 
           {suggestions.length > 0 && (
             <FlatList
@@ -913,7 +937,10 @@ export default function NavigationScreen() {
               data={suggestions}
               keyExtractor={(item) => item.place_id}
               renderItem={({ item }) => (
-                <TouchableOpacity style={s.suggestionItem} onPress={() => handleSuggestionPress(item)}>
+                <TouchableOpacity
+                  style={s.suggestionItem}
+                  onPress={() => handleSuggestionPress(item)}
+                >
                   <AppText>{item.description}</AppText>
                 </TouchableOpacity>
               )}
@@ -939,7 +966,11 @@ export default function NavigationScreen() {
         onRegionChangeStart={closeSheetsForMapInteraction}
       >
         {destination && category === "search" && (
-          <Marker coordinate={destination} title={t("navigation.search.destination")} pinColor="#007AFF" />
+          <Marker
+            coordinate={destination}
+            title={t("navigation.search.destination")}
+            pinColor="#007AFF"
+          />
         )}
 
         {activePOIs.map((p) => (
@@ -967,17 +998,37 @@ export default function NavigationScreen() {
           </Marker>
         ))}
 
-        {routeCoords.length > 0 && <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#007AFF" />}
+        {routeCoords.length > 0 && (
+          <Polyline
+            coordinates={routeCoords}
+            strokeWidth={5}
+            strokeColor="#007AFF"
+          />
+        )}
       </MapView>
 
       {navigating && (
         <View style={[s.navOverlay, { bottom: bottomGap }]}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <AppText variant="label" weight="900">
-              {eta ? t("navigation.search.eta", { duration: eta.duration, distance: eta.distance }) : t("navigation.search.loading")}
+              {eta
+                ? t("navigation.search.eta", {
+                    duration: eta.duration,
+                    distance: eta.distance,
+                  })
+                : t("navigation.search.loading")}
             </AppText>
 
-            <TouchableOpacity onPress={() => setShowAllSteps((v) => !v)} style={{ padding: 6 }}>
+            <TouchableOpacity
+              onPress={() => setShowAllSteps((v) => !v)}
+              style={{ padding: 6 }}
+            >
               <AppText variant="button" weight="800" color="#007AFF">
                 {showAllSteps ? t("common.hide") : t("common.show")}
               </AppText>
@@ -985,34 +1036,76 @@ export default function NavigationScreen() {
           </View>
 
           <View style={s.modeSelectorContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.modeScrollContent}>
-              {(["driving", "walking", "bicycling", "transit"] as const).map((m) => (
-                <TouchableOpacity key={m} style={[s.modeSelectorBtn, mode === m && s.modeSelectorBtnActive]} onPress={() => handleModeChange(m)}>
-                  <AppText variant="button" weight="800" color={mode === m ? "#FFF" : "#333"}>
-                    {t(`navigation.search.modes.${m}`)}
-                  </AppText>
-                </TouchableOpacity>
-              ))}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.modeScrollContent}
+            >
+              {(["driving", "walking", "bicycling", "transit"] as const).map(
+                (m) => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[
+                      s.modeSelectorBtn,
+                      mode === m && s.modeSelectorBtnActive,
+                    ]}
+                    onPress={() => handleModeChange(m)}
+                  >
+                    <AppText
+                      variant="button"
+                      weight="800"
+                      color={mode === m ? "#FFF" : "#333"}
+                    >
+                      {t(`navigation.search.modes.${m}`)}
+                    </AppText>
+                  </TouchableOpacity>
+                )
+              )}
             </ScrollView>
           </View>
 
           {steps[currentStepIndex] && (
             <View style={s.currentStepCard}>
-              <AppText variant="label" color="#007AFF" weight="900" style={{ marginBottom: 4 }}>
-                {fmtMeters(stepDistanceM)} · {t("navigation.search.nextStepShort")}
+              <AppText
+                variant="label"
+                color="#007AFF"
+                weight="900"
+                style={{ marginBottom: 4 }}
+              >
+                {fmtMeters(stepDistanceM)} ·{" "}
+                {t("navigation.search.nextStepShort")}
               </AppText>
               <AppText variant="body" weight="900">
                 {toUserInstruction(steps[currentStepIndex].html)}
               </AppText>
               {steps[currentStepIndex + 1] && (
-                <AppText variant="caption" color="#6B7280" style={{ marginTop: 6 }}>
-                  {t("navigation.search.then")} {toUserInstruction(steps[currentStepIndex + 1].html)}
+                <AppText
+                  variant="caption"
+                  color="#6B7280"
+                  style={{ marginTop: 6 }}
+                >
+                  {t("navigation.search.then")}{" "}
+                  {toUserInstruction(steps[currentStepIndex + 1].html)}
                 </AppText>
               )}
 
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 10, alignItems: "center" }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 8,
+                  marginTop: 10,
+                  alignItems: "center",
+                }}
+              >
                 <TouchableOpacity
-                  style={[s.pillBtn, { backgroundColor: "#F3F4F6", width: 40, justifyContent: "center" }]}
+                  style={[
+                    s.pillBtn,
+                    {
+                      backgroundColor: "#F3F4F6",
+                      width: 40,
+                      justifyContent: "center",
+                    },
+                  ]}
                   onPress={() => speakStep(currentStepIndex)}
                   accessibilityRole="button"
                   accessibilityLabel={t("navigation.search.repeat")}
@@ -1032,7 +1125,11 @@ export default function NavigationScreen() {
                     }}
                   >
                     <Ionicons name="play-skip-back" size={16} color="#111827" />
-                    <AppText variant="button" weight="800" style={{ marginLeft: 6 }}>
+                    <AppText
+                      variant="button"
+                      weight="800"
+                      style={{ marginLeft: 6 }}
+                    >
                       {t("common.back")}
                     </AppText>
                   </TouchableOpacity>
@@ -1049,8 +1146,17 @@ export default function NavigationScreen() {
                       });
                     }}
                   >
-                    <Ionicons name="play-skip-forward" size={16} color="#007AFF" />
-                    <AppText variant="button" weight="800" color="#007AFF" style={{ marginLeft: 6 }}>
+                    <Ionicons
+                      name="play-skip-forward"
+                      size={16}
+                      color="#007AFF"
+                    />
+                    <AppText
+                      variant="button"
+                      weight="800"
+                      color="#007AFF"
+                      style={{ marginLeft: 6 }}
+                    >
                       {t("navigation.search.nextStepShort")}
                     </AppText>
                   </TouchableOpacity>
@@ -1065,7 +1171,12 @@ export default function NavigationScreen() {
                   }}
                 >
                   <Ionicons name="stop" size={16} color="#FF3B30" />
-                  <AppText variant="button" weight="800" color="#FF3B30" style={{ marginLeft: 6 }}>
+                  <AppText
+                    variant="button"
+                    weight="800"
+                    color="#FF3B30"
+                    style={{ marginLeft: 6 }}
+                  >
                     {t("navigation.search.stopNav")}
                   </AppText>
                 </TouchableOpacity>
@@ -1079,7 +1190,11 @@ export default function NavigationScreen() {
               keyExtractor={(it) => it.id}
               style={s.stepList}
               renderItem={({ item, index }) => (
-                <AppText variant="body" weight={index === currentStepIndex ? "900" : "700"} style={index === currentStepIndex ? s.stepActive : undefined}>
+                <AppText
+                  variant="body"
+                  weight={index === currentStepIndex ? "900" : "700"}
+                  style={index === currentStepIndex ? s.stepActive : undefined}
+                >
                   • {toUserInstruction(item.html)} ({item.dist})
                 </AppText>
               )}
@@ -1138,7 +1253,10 @@ export default function NavigationScreen() {
             <AppText variant="label" weight="900">
               {selectedPOI.name}
             </AppText>
-            <TouchableOpacity onPress={() => setShowPoiOptions(false)} style={{ padding: 6 }}>
+            <TouchableOpacity
+              onPress={() => setShowPoiOptions(false)}
+              style={{ padding: 6 }}
+            >
               <Ionicons name="close" size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>
@@ -1149,7 +1267,10 @@ export default function NavigationScreen() {
               onPress={() => {
                 setDestinationOnly(selectedPOI.coords);
                 setShowPoiOptions(false);
-                presentNow({ title: t("navigation.title"), body: t("navigation.search.destinationSet") });
+                presentNow({
+                  title: t("navigation.title"),
+                  body: t("navigation.search.destinationSet"),
+                });
               }}
             >
               <AppText variant="button" weight="800" color="#FFF">
@@ -1174,6 +1295,21 @@ export default function NavigationScreen() {
         </View>
       )}
 
+      <FilterSheet
+        visible={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        sections={getFilterSections()}
+        onReset={() => {
+          setCategory(category);
+        }}
+        onApply={() => setShowFilterPanel(false)}
+        title={t("navigation.search.filtersTitle", { defaultValue: "Filters" })}
+        labels={{
+          reset: t("walking.filter.reset"),
+          apply: t("walking.filter.apply"),
+        }}
+      />
+
       {sheetOpen && (
         <View style={[s.activitiesSheet, { bottom: bottomGap }]}>
           <View style={{ alignItems: "center" }}>
@@ -1184,7 +1320,10 @@ export default function NavigationScreen() {
             <AppText variant="label" weight="900">
               {sheetCcName} — {t("community.title")}
             </AppText>
-            <TouchableOpacity onPress={() => setSheetOpen(false)} style={{ padding: 6 }}>
+            <TouchableOpacity
+              onPress={() => setSheetOpen(false)}
+              style={{ padding: 6 }}
+            >
               <Ionicons name="close" size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>
@@ -1206,7 +1345,9 @@ export default function NavigationScreen() {
                 ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 renderItem={({ item }) => {
                   const dateStr = item.start_date || "";
-                  const timeStr = item.start_time ? item.start_time.slice(0, 5) : "";
+                  const timeStr = item.start_time
+                    ? item.start_time.slice(0, 5)
+                    : "";
                   return (
                     <View
                       style={{
@@ -1221,7 +1362,9 @@ export default function NavigationScreen() {
                         {item.title || t("navigation.reminders.untitled")}
                       </AppText>
 
-                      <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
+                      <View
+                        style={{ flexDirection: "row", gap: 8, marginTop: 6 }}
+                      >
                         {!!dateStr && (
                           <View style={s.pill}>
                             <AppText variant="caption" weight="800">
@@ -1237,15 +1380,23 @@ export default function NavigationScreen() {
                           </View>
                         )}
                         {!!item.fee && (
-                          <View style={[s.pill, { backgroundColor: "#EEF2FF" }]}>
-                            <AppText variant="caption" weight="900" color="#1D4ED8">
+                          <View
+                            style={[s.pill, { backgroundColor: "#EEF2FF" }]}
+                          >
+                            <AppText
+                              variant="caption"
+                              weight="900"
+                              color="#1D4ED8"
+                            >
                               {item.fee}
                             </AppText>
                           </View>
                         )}
                       </View>
 
-                      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                      <View
+                        style={{ flexDirection: "row", gap: 8, marginTop: 10 }}
+                      >
                         <TouchableOpacity
                           style={{
                             backgroundColor: "#111827",
@@ -1303,46 +1454,6 @@ const s = StyleSheet.create({
     right: 12,
     zIndex: 5,
   },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    gap: 8,
-  },
-  catWrap: { position: "relative" },
-  catBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: "#F3F4F6",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  catMenu: {
-    position: "absolute",
-    top: 44,
-    left: 0,
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    paddingVertical: 6,
-    minWidth: 170,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-    zIndex: 20,
-  },
-  catMenuItem: { paddingVertical: 10, paddingHorizontal: 12 },
   suggestionsContainer: {
     backgroundColor: "#FFF",
     borderRadius: 12,
@@ -1378,17 +1489,6 @@ const s = StyleSheet.create({
     backgroundColor: "#007AFF",
     borderColor: "#007AFF",
   },
-  input: { flex: 1, paddingVertical: 8, paddingHorizontal: 8 },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F3F4F6",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
   map: { flex: 1 },
   bottomBar: {
     position: "absolute",
@@ -1403,7 +1503,12 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
-  startBtn: { backgroundColor: "#FED787", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
+  startBtn: {
+    backgroundColor: "#FED787",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
   navOverlay: {
     position: "absolute",
     left: 0,
@@ -1502,8 +1607,28 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     elevation: 10,
   },
-  grabber: { width: 36, height: 4, borderRadius: 999, backgroundColor: "#E5E7EB", marginBottom: 8 },
-  optionsHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  optBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: "center" },
-  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#F3F4F6" },
+  grabber: {
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 8,
+  },
+  optionsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  optBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+  },
 });

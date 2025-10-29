@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -13,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import CHASClinics from "../../assets/data/CHASClinics.json";
 import { useAuth } from "../../src/auth/AuthProvider";
@@ -86,6 +87,9 @@ export default function ClinicScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { logout } = useAuth();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomPad = Math.max(0, tabBarHeight + insets.bottom - 100);
   const [allClinics, setAllClinics] = useState([]);
   const [filteredClinics, setFilteredClinics] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -353,14 +357,13 @@ export default function ClinicScreen() {
           router.replace("/Authentication/Welcome");
         }}
       />
-
-      <View style={s.searchBarContainer}>
         <SearchBar
           value={searchQuery}
           placeholder={t("clinics.searchPlaceholder")}
           onChangeText={setSearchQuery}
           onSubmit={() => handleSearch(searchQuery)}
           onPressFilter={() => setShowFilterPanel(true)}
+          style={{ margin: 12}}
         />
         {selectedFilterItems.length > 0 && (
           <View style={s.summaryChipContainer}>
@@ -377,8 +380,6 @@ export default function ClinicScreen() {
             <SummaryChip items={selectedFilterItems} style={{ marginTop: 8 }} />
           </View>
         )}
-      </View>
-
       <FilterSheet
         visible={showFilterPanel}
         onClose={() => setShowFilterPanel(false)}
@@ -396,7 +397,10 @@ export default function ClinicScreen() {
         data={currentClinics}
         renderItem={RenderClinicItem}
         keyExtractor={(item, index) => `${item.name}-${index}`}
-        contentContainerStyle={s.listContainer}
+        contentContainerStyle={[
+          s.listContainer,
+          { paddingBottom: filteredClinics.length > 0 ? 0 : bottomPad },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl 
@@ -431,14 +435,22 @@ export default function ClinicScreen() {
         }
         ListFooterComponent={
           filteredClinics.length > 0 ? (
-            <Pagination
-              page={currentPage}
-              total={totalPages}
-              onChange={handlePageChange}
-            />
+            <View
+              style={{
+                paddingHorizontal: 16,   
+                paddingBottom: bottomPad, 
+                alignItems: "center",
+                marginTop: 8,            
+              }}
+            >
+              <Pagination
+                page={currentPage}
+                total={totalPages}
+                onChange={handlePageChange}
+              />
+            </View>
           ) : null
         }
-        ListFooterComponentStyle={{ padding: 16 }}
       />
 
       {/* Modal */}

@@ -17,7 +17,6 @@ export default function Pagination({ page, total, onChange }: Props) {
     for (let p = start; p <= end; p++) pages.push(p);
     return pages;
   };
-
   const pages = pageWindow(page, Math.max(1, total), 5);
 
   return (
@@ -31,13 +30,25 @@ export default function Pagination({ page, total, onChange }: Props) {
       </Pressable>
 
       <View style={s.nums}>
-        {pages.map((n) => (
-          <Pressable key={n} onPress={() => onChange(n)} style={s.numBtn} disabled={n === page}>
-            <AppText variant="label" weight={n === page ? "900" : "700"} color={n === page ? "#111827" : "#9CA3AF"}>
-              {n}
-            </AppText>
-          </Pressable>
-        ))}
+        {pages.map((n) => {
+          const selected = n === page;
+          return (
+            <Pressable
+              key={n}
+              onPress={() => onChange(n)}
+              style={[s.numBtn, selected && s.numBtnSelected]}
+              disabled={selected}
+            >
+              <AppText
+                variant="label"
+                weight={selected ? "900" : "700"}
+                color={selected ? "#111827" : "#111827"}
+              >
+                {n}
+              </AppText>
+            </Pressable>
+          );
+        })}
       </View>
 
       <Pressable onPress={() => onChange(Math.min(total, page + 1))} disabled={page >= total} style={[s.icon, page >= total && s.dis]}>
@@ -53,20 +64,45 @@ export default function Pagination({ page, total, onChange }: Props) {
 
 const s = StyleSheet.create({
   bar: {
-    marginTop: 8,
-    marginBottom: 16,
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    alignSelf: "center",
+    marginHorizontal: 8,      
+    marginTop: 12,
+    marginBottom: 20,
+    backgroundColor: "#FFF", 
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#000",
+    minHeight: 56,             
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  icon: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+
+  icon: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8 },
   dis: { opacity: 0.5 },
-  nums: { flexDirection: "row", alignItems: "center", gap: 14 },
-  numBtn: { paddingHorizontal: 2, paddingVertical: 2 },
+
+  nums: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 6,
+    flex: 1,
+    minWidth: 0,
+  },
+
+  numBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  numBtnSelected: {
+    backgroundColor: "#FED787", 
+    borderWidth: 2,
+    borderColor: "#000",        
+  },
 });
