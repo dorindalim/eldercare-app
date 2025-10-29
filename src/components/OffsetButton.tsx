@@ -1,12 +1,12 @@
 import React from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    type TextStyle,
-    type ViewStyle,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type TextStyle,
+  type ViewStyle,
 } from "react-native";
 
 type OffsetButtonProps = {
@@ -84,6 +84,7 @@ export default function OffsetButton({
                   backgroundColor: pressed ? "#000" : "#FFFAF0",    
                   borderColor: "#000",            
                   borderWidth: pressed ? 3 : 2,   
+                  opacity: disabled ? 0 : 1,
                 },
               ]}
             />
@@ -97,7 +98,7 @@ export default function OffsetButton({
                   backgroundColor: bgColor,
                   borderColor: pressed ? borderColorActive : borderColor,
                   transform: pressed ? [{ translateX: -1 }, { translateY: -1 }] : [],
-                  opacity: disabled ? 0.6 : 1,
+                  opacity: 1
                 },
                 contentStyle,
               ]}

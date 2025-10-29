@@ -384,7 +384,7 @@ export default function ElderlyProfile() {
     }
 
     if (!token) {
-      Alert.alert("No portal link yet", "Your profile may be incomplete, or a link hasn't been created.");
+      Alert.alert("No portal link yet", "Your profile may be incomplete, or a link hasn’t been created.");
       return;
     }
 
@@ -463,15 +463,7 @@ export default function ElderlyProfile() {
         showsVerticalScrollIndicator={false}
       >
         {/* Basic Information */}
-        <OffsetButton
-          radius={16}
-          bgColor="#FFF"
-          borderColor="#000"
-          borderColorActive="#C9F3D5"
-          contentStyle={s.cardContent}
-          style={s.cardWrapper}
-          disabled={true}
-        >
+        <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.basicInfo")}
           </AppText>
@@ -497,10 +489,10 @@ export default function ElderlyProfile() {
           <OffsetButton
             onPress={() => router.push("/EditBasic")}
             radius={10}
-            bgColor="#FFF"
+            bgColor="#111827"
             borderColor="#000"
-            borderColorActive="#C9F3D5"
-            contentStyle={s.linkButtonContent}
+            borderColorActive="#000"
+            contentStyle={s.buttonContent}
           >
             <View style={s.linkRow}>
               <Ionicons name="create-outline" size={18} color="#000" />
@@ -509,18 +501,10 @@ export default function ElderlyProfile() {
               </AppText>
             </View>
           </OffsetButton>
-        </OffsetButton>
+        </View>
 
         {/* Emergency Health Card */}
-        <OffsetButton
-          radius={16}
-          bgColor="#FFF"
-          borderColor="#000"
-          borderColorActive="#C9F3D5"
-          contentStyle={s.cardContent}
-          style={s.cardWrapper}
-          disabled={true}
-        >
+        <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.healthCard")}
           </AppText>
@@ -569,27 +553,19 @@ export default function ElderlyProfile() {
           <OffsetButton
             onPress={onShareEcPortal}
             radius={10}
-            bgColor="#111827"
+            bgColor="#FFF"
             borderColor="#000"
-            borderColorActive="#C9F3D5"
+            borderColorActive="#000"
             contentStyle={s.buttonContent}
           >
             <AppText variant="button" weight="800" color="#000">
               {t("profile.sharePortal")}
             </AppText>
           </OffsetButton>
-        </OffsetButton>
+        </View>
 
         {/* Conditions */}
-        <OffsetButton
-          radius={16}
-          bgColor="#FFF"
-          borderColor="#000"
-          borderColorActive="#C9F3D5"
-          contentStyle={s.cardContent}
-          style={s.cardWrapper}
-          disabled={true}
-        >
+        <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.conditions")}
           </AppText>
@@ -616,18 +592,10 @@ export default function ElderlyProfile() {
               })}
             </View>
           )}
-        </OffsetButton>
+        </View>
 
         {/* Activity & Rewards */}
-        <OffsetButton
-          radius={16}
-          bgColor="#FFF"
-          borderColor="#000"
-          borderColorActive="#C9F3D5"
-          contentStyle={s.cardContent}
-          style={s.cardWrapper}
-          disabled={true}
-        >
+        <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.activity")}
           </AppText>
@@ -655,25 +623,17 @@ export default function ElderlyProfile() {
             radius={10}
             bgColor="#111827"
             borderColor="#000"
-            borderColorActive="#C9F3D5"
+            borderColorActive="#000"
             contentStyle={s.buttonContent}
           >
             <AppText variant="button" weight="800" color="#000">
               {t("rewards.title")}
             </AppText>
           </OffsetButton>
-        </OffsetButton>
+        </View>
 
         {/* Accessibility */}
-        <OffsetButton
-          radius={16}
-          bgColor="#FFF"
-          borderColor="#000"
-          borderColorActive="#C9F3D5"
-          contentStyle={s.cardContent}
-          style={s.cardWrapper}
-          disabled={true}
-        >
+        <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.accessibility")}
           </AppText>
@@ -690,10 +650,10 @@ export default function ElderlyProfile() {
                 radius={20}
                 bgColor={textScale === sz ? "#000" : "#FFF"}
                 borderColor="#000"
-                borderColorActive="#C9F3D5"
+                borderColorActive="#000"
                 contentStyle={s.chipContent}
               >
-                <AppText variant="button" weight="800" color={textScale === sz ? "#000" : "#000"}>
+                <AppText variant="button" weight="800" color={textScale === sz ? "#FFF" : "#000"}>
                   {sz.toUpperCase()}
                 </AppText>
               </OffsetButton>
@@ -809,18 +769,10 @@ export default function ElderlyProfile() {
               <View style={[s.knob, photoPerm === "granted" ? s.knobOn : s.knobOff]} />
             </Pressable>
           </View>
-        </OffsetButton>
+        </View>
 
         {/* Delete Account */}
-        <OffsetButton
-          radius={16}
-          bgColor="#FFF"
-          borderColor="#000"
-          borderColorActive="#C9F3D5"
-          contentStyle={s.cardContent}
-          style={s.cardWrapper}
-          disabled={true}
-        >
+        <View style={s.card}>
           <AppText variant="h2" weight="800">
             {t("profile.delete.title")}
           </AppText>
@@ -829,19 +781,15 @@ export default function ElderlyProfile() {
             {t("profile.delete.cardExplain")}
           </AppText>
 
-          <OffsetButton
+          <Pressable
+            style={[s.btn, { backgroundColor: "#DC2626", marginTop: 12 }]}
             onPress={() => setShowDeleteModal(true)}
-            radius={10}
-            bgColor="#DC2626"
-            borderColor="#000"
-            borderColorActive="#C9F3D5"
-            contentStyle={s.buttonContent}
           >
-            <AppText variant="button" weight="800" color="#000">
+            <AppText variant="button" weight="800" color="#FFF">
               {t("profile.delete.button")}
             </AppText>
-          </OffsetButton>
-        </OffsetButton>
+          </Pressable>
+        </View>
       </ScrollView>
 
       {/* Delete modal */}
@@ -883,35 +831,24 @@ export default function ElderlyProfile() {
               />
 
               <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 14 }}>
-                <OffsetButton
+                <Pressable
+                  style={[
+                    s.btn,
+                    { backgroundColor: "#DC2626" },
+                    (!confirmChecked || !typedConfirm.trim()) && { opacity: 0.5 },
+                  ]}
                   onPress={() => confirmTypedDeletion(typedConfirm)}
                   disabled={!confirmChecked || !typedConfirm.trim() || deleteProcessing}
-                  radius={10}
-                  bgColor="#DC2626"
-                  borderColor="#000"
-                  borderColorActive="#C9F3D5"
-                  contentStyle={{
-                    ...s.buttonContent,
-                    opacity: (!confirmChecked || !typedConfirm.trim()) ? 0.5 : 1
-                  }}
                 >
                   <AppText variant="button" weight="800" color="#FFF">
                     {t("profile.delete.confirmDeletion")}
                   </AppText>
-                </OffsetButton>
-                
-                <OffsetButton
-                  onPress={() => setShowDeleteModal(false)}
-                  radius={10}
-                  bgColor="#FFF"
-                  borderColor="#000"
-                  borderColorActive="#C9F3D5"
-                  contentStyle={s.buttonContent}
-                >
-                  <AppText variant="button" weight="800" color="#000">
+                </Pressable>
+                <Pressable style={[s.btn, s.btnSecondary]} onPress={() => setShowDeleteModal(false)}>
+                  <AppText variant="button" weight="800" color="#111827">
                     {t("common.cancel")}
                   </AppText>
-                </OffsetButton>
+                </Pressable>
               </View>
 
               <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
@@ -944,13 +881,13 @@ export default function ElderlyProfile() {
 
 const s = StyleSheet.create({
   scroll: { padding: 16, backgroundColor: "#FFFAF0" },
-  cardWrapper: {
-    marginBottom: 12,
-  },
-  cardContent: {
+  card: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
     padding: 16,
-    backgroundColor: 'white',
     borderWidth: 2,
+    borderColor: "#000",
+    marginBottom: 12,
   },
   rowBetween: {
     flexDirection: "row",
@@ -964,29 +901,39 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 2,
-    backgroundColor: 'transparent',
   },
 
+  btn: {
+    backgroundColor: "#111827",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  btnSecondary: { backgroundColor: "transparent",
+     borderWidth: 1, borderColor: "#E5E7EB" },
+  
   buttonContent: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 2,
-    backgroundColor: 'transparent',
+    backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   linkButtonContent: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 2,
-    backgroundColor: 'transparent',
+    backgroundColor: 'white',
   },
 
   linkRow: { 
     flexDirection: "row", 
     alignItems: "center", 
-    gap: 6,
+    gap: 6 
   },
 
   modalOverlay: {
