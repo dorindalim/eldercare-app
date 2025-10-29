@@ -572,20 +572,14 @@
         "wellness": "நல்வாழ்வு"
       },
       "amenities": {
-        "restrooms": "கழிப்பறைகள்",
-        "parking": "பார்க்கிங்",
-        "picnicArea": "பிக்னிக் பகுதி",
-        "walkingTrails": "நடைபாதைகள்",
-        "drinkingFountain": "குடிநீர் குழாய்",
-        "allotmentGarden": "ஒதுக்கீடு தோட்டம்",
-        "artSpace": "கலை அல்லது கண்காட்சி இடம்",
-        "birdPerch": "பறவை உட்காரும் இடம்",
-        "communityGarden": "சமூக தோட்டம்",
-        "dining": "உணவகம்",
-        "fishingFacility": "மீன்பிடிக்கும் வசதி",
-        "therapeuticGarden": "சிகிச்சை தோட்டம்",
-        "venueBooking": "மண்டபம் பதிவு",
-        "wellnessProvider": "நல்வாழ்வு சேவை வழங்குநர்"
+        "playground": "விளையாட்டு மைதானம்",
+        "allotment_garden": "பகுதித் தோட்டம்",
+        "dog_run": "நாய் ஓட்டப் பகுதி",
+        "nature_playgarden": "இயற்கை விளையாட்டுத் தோட்டம்",
+        "therapeutic_garden": "சிகிச்சைத் தோட்டம்",
+        "community_garden": "சமூகத் தோட்டம்",
+        "basketball_court": "கூடைப்பந்து மைதானம்",
+        "amphitheatre": "அரைவட்ட அரங்கம்"
       },
       "regions": {
         "central": "மத்திய",

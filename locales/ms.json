@@ -572,20 +572,14 @@
         "wellness": "Kesejahteraan"
       },
       "amenities": {
-        "restrooms": "Tandas",
-        "parking": "Tempat letak kereta",
-        "picnicArea": "Kawasan berkelah",
-        "walkingTrails": "Denai berjalan",
-        "drinkingFountain": "Pancutan minuman",
-        "allotmentGarden": "Taman peruntukan",
-        "artSpace": "Ruang Seni atau Pameran",
-        "birdPerch": "Tempat burung",
-        "communityGarden": "Taman komuniti",
-        "dining": "Makan",
-        "fishingFacility": "Kemudahan memancing",
-        "therapeuticGarden": "Taman terapeutik",
-        "venueBooking": "Tempat Tempahan",
-        "wellnessProvider": "Pembekal Kesejahteraan"
+        "playground": "Taman permainan",
+        "allotment_garden": "Taman petak",
+        "dog_run": "Kawasan anjing",
+        "nature_playgarden": "Taman permainan semula jadi",
+        "therapeutic_garden": "Taman terapeutik",
+        "community_garden": "Taman komuniti",
+        "basketball_court": "Gelanggang bola keranjang",
+        "amphitheatre": "Amfiteater"
       },
       "regions": {
         "central": "Tengah",

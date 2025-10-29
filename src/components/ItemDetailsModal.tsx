@@ -1,8 +1,8 @@
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { Image, Linking, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from './AppText';
+import OffsetButton from './OffsetButton';
 
 type Activity = {
   title: string;
@@ -234,8 +234,7 @@ const ItemDetailsModal = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
+      {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <AppText style={styles.closeButtonText}>×</AppText>
@@ -306,32 +305,36 @@ const ItemDetailsModal = ({
               <>
                 {/* Register Button */}
                 {eventItem.registration_link && onRegister && (
-                  <TouchableOpacity 
-                    style={styles.registerButton}
+                  <OffsetButton
+                    label={t('community.register')}
                     onPress={() => onRegister(eventItem.registration_link)}
-                  >
-                    <AppText variant="button" weight="700" style={styles.registerButtonText}>
-                      {t('community.register')}
-                    </AppText>
-                  </TouchableOpacity>
+                    height={60}
+                    radius={8}
+                    bgColor="#10B981"
+                    borderColor="#000"
+                    textColor="#FFF"
+                    offsetBgColor="#FFF"
+                    style={styles.flexButton}
+                  />
                 )}
 
                 {/* Set Reminder Button */}
                 {onSetReminder && (
-                  <TouchableOpacity 
-                    style={[
-                      styles.reminderButton,
-                      isScheduled && isScheduled(eventItem) && styles.reminderButtonScheduled
-                    ]}
+                  <OffsetButton
+                    label={isScheduled && isScheduled(eventItem) 
+                      ? t('community.notifs.scheduled') 
+                      : t('community.notifs.setReminder')
+                    }
                     onPress={() => onSetReminder(eventItem)}
-                  >
-                    <AppText variant="button" weight="700" style={styles.reminderButtonText}>
-                      {isScheduled && isScheduled(eventItem) 
-                        ? t('community.notifs.scheduled') 
-                        : t('community.notifs.setReminder')
-                      }
-                    </AppText>
-                  </TouchableOpacity>
+                    height={60}
+                    radius={8}
+                    bgColor={isScheduled && isScheduled(eventItem) ? "#6B7280" : "#F59E0B"}
+                    borderColor="#000"
+                    textColor="#FFF"
+                    offsetBgColor={isScheduled && isScheduled(eventItem) ? "#FFF" : "#FFF"}
+                    style={styles.flexButton}
+                    textStyle={{ textAlign: 'center' }}
+                  />
                 )}
               </>
             )}
@@ -341,41 +344,53 @@ const ItemDetailsModal = ({
               <>
                 {/* Call Clinic Button */}
                 {clinicItem.phone && onCallClinic && (
-                  <TouchableOpacity 
-                    style={styles.callButton}
+                  <OffsetButton
+                    label={t('clinics.callToEnquire')}
                     onPress={() => onCallClinic(clinicItem.phone!)}
-                  >
-                    <AppText variant="button" weight="700" style={styles.callButtonText}>
-                      {t('clinics.callToEnquire')}
-                    </AppText>
-                  </TouchableOpacity>
+                    height={60}
+                    radius={8}
+                    bgColor="#10B981"
+                    borderColor="#000"
+                    textColor="#FFF"
+                    offsetBgColor="#FFF"
+                    style={styles.flexButton}
+                    textStyle={{ textAlign: 'center' }}
+                  />
                 )}
               </>
             )}
 
             {/* Park-specific button */}
             {!isEvent && !isClinic && parkItem.url && (
-              <TouchableOpacity 
+              <OffsetButton
+                label={t('walking.parkDetails.learnMore')}
                 onPress={() => handleUrlPress(parkItem.url)}
-                style={styles.learnMoreButton}
-              >
-                <AppText variant="button" weight="700" style={styles.learnMoreButtonText}>
-                  {t('walking.parkDetails.learnMore')}
-                </AppText>
-              </TouchableOpacity>
+                height={60}
+                radius={8}
+                bgColor="#6C757D"
+                borderColor="#000"
+                textColor="#FFF"
+                offsetBgColor="#FFF"
+                style={styles.flexButton}
+                textStyle={{ textAlign: 'center' }}
+              />
             )}
 
             {/* Get Directions Button - Always shown */}
-            <TouchableOpacity 
-              style={styles.directionsButton}
+            <OffsetButton
+              label={isEvent ? t('community.getDirections') : 
+                    isClinic ? t('walking.parks.getDirections') : 
+                    t('walking.parkDetails.getDirections')}
               onPress={() => onGetDirections(item)}
-            >
-              <AppText variant="button" weight="700" style={styles.directionsButtonText}>
-                {isEvent ? t('community.getDirections') : 
-                isClinic ? t('walking.parks.getDirections') : 
-                t('walking.parkDetails.getDirections')}
-              </AppText>
-            </TouchableOpacity>
+              height={60}
+              radius={8}
+              bgColor="#007AFF"
+              borderColor="#000"
+              textColor="#FFF"
+              offsetBgColor="#FFF"
+              style={styles.flexButton}
+              textStyle={{ textAlign: 'center' }}
+            />
           </View>
 
           {/* Clinic Specific Info */}
@@ -526,12 +541,17 @@ const ItemDetailsModal = ({
                           {translateActivity(activity.title)}
                         </AppText>
                         {activity.etiquette_link && (
-                          <TouchableOpacity 
+                          <OffsetButton
+                            label="📚"
                             onPress={() => handleEtiquettePress(activity.etiquette_link)}
-                            style={styles.etiquetteIcon}
-                          >
-                            <AppText>📚</AppText>
-                          </TouchableOpacity>
+                            height={60}
+                            radius={12}
+                            bgColor="transparent"
+                            borderColor="transparent"
+                            textColor="#007AFF"
+                            style={{ paddingHorizontal: 4, marginLeft: 4 }}
+                            textStyle={{ textAlign: 'center' }}
+                          />
                         )}
                       </View>
                     ))}
@@ -578,7 +598,6 @@ const ItemDetailsModal = ({
           {/* Spacer */}
           <View style={styles.spacer} />
         </ScrollView>
-      </SafeAreaView>
     </Modal>
   );
 };
@@ -628,11 +647,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 0,
   },
   closeButtonText: {
     fontSize: 24,
@@ -711,87 +726,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
     lineHeight: 18,
-  },buttonsContainer: {
-  flexDirection: 'row',
-  gap: 8,
-  margin: 16,
-},
-learnMoreButton: {
-  flex: 1,
-  backgroundColor: '#6C757D',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-  minHeight: 44,
-  justifyContent: 'center',
-},
-learnMoreButtonText: {
-  color: '#FFF',
-  fontSize: 14,
-  textAlign: 'center',
-},
-registerButton: {
-  flex: 1,
-  backgroundColor: '#10B981',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-  minHeight: 44,
-  justifyContent: 'center',
-},
-registerButtonText: {
-  color: '#FFF',
-  fontSize: 14,
-  textAlign: 'center',
-},
-reminderButton: {
-  flex: 1,
-  backgroundColor: '#F59E0B',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-  minHeight: 44,
-  justifyContent: 'center',
-},
-reminderButtonScheduled: {
-  backgroundColor: '#6B7280',
-},
-reminderButtonText: {
-  color: '#FFF',
-  fontSize: 14,
-  textAlign: 'center',
-},
-directionsButton: {
-  flex: 1,
-  backgroundColor: '#007AFF',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-  minHeight: 44,
-  justifyContent: 'center',
-},
-directionsButtonText: {
-  color: '#FFF',
-  fontSize: 14,
-  textAlign: 'center',
-},
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    margin: 16,
+  },
+  flexButton: {
+    flex: 1,
+  },
   spacer: {
     height: 20,
   },
-  callButton: {
-  flex: 1,
-  backgroundColor: '#10B981',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-  minHeight: 44,
-  justifyContent: 'center',
-},
-callButtonText: {
-  color: '#FFF',
-  fontSize: 14,
-  textAlign: 'center',
-},
 });
 
 export default ItemDetailsModal;

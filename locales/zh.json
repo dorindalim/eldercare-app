@@ -572,20 +572,14 @@
         "wellness": "健康"
       },
       "amenities": {
-        "restrooms": "洗手间",
-        "parking": "停车场",
-        "picnicArea": "野餐区",
-        "walkingTrails": "步行道",
-        "drinkingFountain": "饮水机",
-        "allotmentGarden": "分配花园",
-        "artSpace": "艺术或展览空间",
-        "birdPerch": "鸟栖架",
-        "communityGarden": "社区花园",
-        "dining": "餐饮",
-        "fishingFacility": "钓鱼设施",
-        "therapeuticGarden": "疗愈花园",
-        "venueBooking": "场地预订",
-        "wellnessProvider": "健康服务提供商"
+         "playground": "游乐场",
+        "allotment_garden": "分配花园",
+        "dog_run": "狗狗活动区",
+        "nature_playgarden": "自然游乐场",
+        "therapeutic_garden": "疗愈花园",
+        "community_garden": "社区花园",
+        "basketball_court": "篮球场",
+        "amphitheatre": "圆形剧场"
       },
       "regions": {
         "central": "中部",

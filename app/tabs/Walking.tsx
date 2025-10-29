@@ -427,16 +427,17 @@ export default function WalkingScreen() {
     );
     
     // Top 8 most common amenities from your analysis
-    const amenityOptions = [
-      "Playground",
-      "Allotment garden", 
-      "Dog run",
-      "Nature playgarden",
-      "Therapeutic garden",
-      "Community garden",
-      "Basketball court",
-      "Amphitheatre",
+     const amenityOptions = [
+      t("walking.filters.amenities.playground"),
+      t("walking.filters.amenities.allotment_garden"), 
+      t("walking.filters.amenities.dog_run"),
+      t("walking.filters.amenities.nature_playgarden"),
+      t("walking.filters.amenities.therapeutic_garden"),
+      t("walking.filters.amenities.community_garden"),
+      t("walking.filters.amenities.basketball_court"),
+      t("walking.filters.amenities.amphitheatre")
     ];
+
 
     const regionOptions = Object.values(
       t("walking.filters.regions", { returnObjects: true })

@@ -572,20 +572,14 @@
         "wellness": "Wellness"
       },
       "amenities": {
-        "restrooms": "Restrooms",
-        "parking": "Parking",
-        "picnicArea": "Picnic Area",
-        "walkingTrails": "Walking Trails",
-        "drinkingFountain": "Drinking Fountain",
-        "allotmentGarden": "Allotment Garden",
-        "artSpace": "Art or Exhibition Space",
-        "birdPerch": "Bird Perch",
-        "communityGarden": "Community Garden",
-        "dining": "Dining",
-        "fishingFacility": "Fishing Facility",
-        "therapeuticGarden": "Therapeutic Garden",
-        "venueBooking": "Venue for Booking",
-        "wellnessProvider": "Wellness Provider"
+        "playground": "Playground",
+        "allotment_garden": "Allotment garden",
+        "dog_run": "Dog run",
+        "nature_playgarden": "Nature playgarden",
+        "therapeutic_garden": "Therapeutic garden",
+        "community_garden": "Community garden",
+        "basketball_court": "Basketball court",
+        "amphitheatre": "Amphitheatre"
       },
       "regions": {
         "central": "Central",
