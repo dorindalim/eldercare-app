@@ -977,7 +977,7 @@ export default function Bulletin() {
   }
 
   return (
-    <SafeAreaView style={s.safe} edges={["left", "right"]}>
+    <SafeAreaView style={styles.safe} edges={["left", "right"]}>
       <TopBar
         leftMode="settings"
         language={lang}
@@ -992,9 +992,9 @@ export default function Bulletin() {
           router.replace("/Authentication/Welcome");
         }}
       />
-      <View style={s.headerRow}>
-        <View style={s.createBtnWrap}>
-          <View style={s.createBtnOffset} />
+      <View style={styles.headerRow}>
+        <View style={styles.createBtnWrap}>
+          <View style={styles.createBtnOffset} />
           <Pressable
             onPress={() => {
               setCreating(true);
@@ -1002,7 +1002,7 @@ export default function Bulletin() {
               resetForm();
             }}
             style={({ pressed }) => [
-              s.createBtn,
+              styles.createBtn,
               pressed && { transform: [{ translateY: 6 }] },
             ]}
             accessibilityRole="button"
@@ -1010,7 +1010,7 @@ export default function Bulletin() {
             hitSlop={8}
           >
             <Ionicons name="add-circle-outline" size={22} color="#000" />
-            <Text style={s.createText}>{t("bulletin.create")}</Text>
+            <Text style={styles.createText}>{t("bulletin.create")}</Text>
           </Pressable>
         </View>
 
@@ -1199,10 +1199,10 @@ export default function Bulletin() {
         statusBarTranslucent
       >
         <SafeAreaView
-          style={[s.modalSafe, { paddingTop: insets.top }]}
+          style={[styles.modalSafe, { paddingTop: insets.top }]}
           edges={["top", "left", "right"]}
         >
-          <View style={s.modalHead}>
+          <View style={styles.modalHead}>
             <AppText variant="h1" weight="900">
               {editingRow
                 ? t("bulletin.form.titleEdit")
@@ -1229,7 +1229,7 @@ export default function Bulletin() {
                   value={title}
                   onChangeText={setTitle}
                   placeholder={t("bulletin.form.namePH")}
-                  style={[s.input, { color: "#000000" }]}
+                  style={[styles.input, { color: "#000000" }]}
                 />
               </Labeled>
 
@@ -1240,7 +1240,7 @@ export default function Bulletin() {
                       key={c.key}
                       onPress={() => setCat(c.key)}
                       style={[
-                        s.catPill,
+                        styles.catPill,
                         cat === c.key && {
                           backgroundColor: "#CFADE8",
                           borderColor: "#CFADE8",
@@ -1255,7 +1255,7 @@ export default function Bulletin() {
                       />
                       <Text
                         style={[
-                          s.catPillText,
+                          styles.catPillText,
                           cat === c.key && { color: "#000" },
                         ]}
                       >
@@ -1285,10 +1285,10 @@ export default function Bulletin() {
                     setPlaceChosen(null);
                   }}
                   placeholder={t("bulletin.form.locationPH")}
-                  style={s.input}
+                  style={styles.input}
                 />
                 {!!GOOGLE_PLACES_KEY && !!placePreds.length && (
-                  <View style={s.suggestBox}>
+                  <View style={styles.suggestBox}>
                     {placePreds.map((p) => {
                       const main =
                         p.structured_formatting?.main_text || p.description;
@@ -1296,7 +1296,7 @@ export default function Bulletin() {
                       return (
                         <Pressable
                           key={p.place_id}
-                          style={s.suggestRow}
+                          style={styles.suggestRow}
                           onPress={() => pickPrediction(p)}
                         >
                           <Ionicons
@@ -1333,7 +1333,7 @@ export default function Bulletin() {
                   value={desc}
                   onChangeText={setDesc}
                   placeholder={t("bulletin.form.detailsPH")}
-                  style={[s.input, { height: 90, textAlignVertical: "top" }]}
+                  style={[styles.input, { height: 90, textAlignVertical: "top" }]}
                   multiline
                 />
               </Labeled>
@@ -1342,20 +1342,20 @@ export default function Bulletin() {
 
               <Pressable
                 onPress={editingRow ? submitEdit : submitCreate}
-                style={[s.publishBtn]}
+                style={[styles.publishBtn]}
               >
                 <Ionicons
                   name={editingRow ? "save-outline" : "megaphone-outline"}
                   size={20}
                   color="#111827"
                 />
-                <Text style={[s.publishText, { color: "#111827" }]}>
+                <Text style={[styles.publishText, { color: "#111827" }]}>
                   {editingRow ? t("common.save") : t("bulletin.post")}
                 </Text>
               </Pressable>
 
-              <Pressable onPress={() => setCreating(false)} style={s.cancelBtn}>
-                <Text style={s.cancelText}>{t("common.close")}</Text>
+              <Pressable onPress={() => setCreating(false)} style={styles.cancelBtn}>
+                <Text style={styles.cancelText}>{t("common.close")}</Text>
               </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -1390,7 +1390,7 @@ function Chip({
     <Pressable
       onPress={onPress}
       style={[
-        s.chip,
+        styles.chip,
         active && { backgroundColor: "#CFADE8", borderColor: "#CFADE8" },
       ]}
     >
@@ -1402,7 +1402,7 @@ function Chip({
           style={{ marginRight: 6 }}
         />
       )}
-      <Text style={[s.chipText]}>{label}</Text>
+      <Text style={[styles.chipText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -1421,6 +1421,122 @@ function Labeled({
       </AppText>
       {children}
     </View>
+  );
+}
+
+function InterestedModal({
+  visible,
+  onClose,
+  rows,
+  loading,
+  title,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  rows: InterestRow[];
+  loading: boolean;
+  title?: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+        <View
+          style={{
+            height: 52,
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 8,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: "#E5E7EB",
+            backgroundColor: "#fff",
+          }}
+        >
+          <Pressable onPress={onClose} hitSlop={8} style={{ padding: 6 }}>
+            <Ionicons name="chevron-back" size={24} color="#111827" />
+          </Pressable>
+          <Text
+            style={{
+              fontWeight: "800",
+              fontSize: 16,
+              flex: 1,
+              textAlign: "center",
+            }}
+            numberOfLines={1}
+          >
+            {title
+              ? t("bulletin.modal.interestedWith", { title })
+              : t("bulletin.modal.interested")}
+          </Text>
+          <View style={{ width: 30 }} />
+        </View>
+
+        {loading ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator />
+          </View>
+        ) : rows.length === 0 ? (
+          <View style={{ padding: 16 }}>
+            <Text style={{ color: "#6B7280" }}>{t("bulletin.modal.none")}</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={rows}
+            keyExtractor={(r) => r.id}
+            contentContainerStyle={{ padding: 12 }}
+            renderItem={({ item }) => (
+              <View
+                style={{
+                  backgroundColor: "#fff",
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  borderRadius: 12,
+                  padding: 12,
+                  marginBottom: 10,
+                }}
+              >
+                <Text style={{ fontWeight: "800" }}>
+                  {item.interested_name || t("chat.neighbour")}
+                </Text>
+                <Text style={{ color: "#6B7280", marginTop: 2 }}>
+                  {new Date(item.created_at).toLocaleString("en-SG", { hour12: false })}
+                </Text>
+              </View>
+            )}
+          />
+        )}
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+function IconCircle({
+  onPress,
+  icon,
+  label,
+  badge,
+}: {
+  onPress: () => void;
+  icon: IconName;
+  label?: string;
+  badge?: number;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.iconWrap}
+      accessibilityLabel={label}
+      hitSlop={8}
+    >
+      <View style={styles.circleBtn}>
+        <Ionicons name={icon} size={18} color="#0F172A" />
+      </View>
+      {badge ? (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badge}</Text>
+        </View>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -1466,246 +1582,127 @@ function ActivityCard({
   const offsetColor = colorForCat(row.category);
 
   return (
-    <View style={stylesCard.offsetWrap}>
-      <View
-        style={[
-          stylesCard.offsetLayer,
-          { backgroundColor: offsetColor, borderColor: "#000" },
-        ]}
-        pointerEvents="none"
-      />
+    <View style={styles.cardContainer}>
+      <View style={styles.offsetWrap}>
+        <View
+          style={[
+            styles.offsetLayer,
+            { backgroundColor: offsetColor, borderColor: "#000" },
+          ]}
+          pointerEvents="none"
+        />
 
-      <View style={stylesCard.faceCard}>
-        <View style={stylesCard.header}>
-          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-            {catInfo && (
-              <View style={stylesCard.catIconBubble}>
-                <Ionicons name={catInfo.icon} size={16} color="#0F172A" />
-              </View>
+        <View style={styles.faceCard}>
+          <View style={styles.cardHeader}>
+            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+              {catInfo && (
+                <View style={styles.catIconBubble}>
+                  <Ionicons name={catInfo.icon} size={16} color="#0F172A" />
+                </View>
+              )}
+              <AppText
+                variant="title"
+                weight="900"
+                numberOfLines={1}
+                style={{ flex: 1 }}
+              >
+                {row.title}
+              </AppText>
+            </View>
+
+            {isMine && !!onEdit && (
+              <Pressable
+                onPress={onEdit}
+                hitSlop={8}
+                style={styles.iconBtnGhost}
+                accessibilityLabel={t("common.edit")}
+              >
+                <Ionicons name="create-outline" size={18} color="#0EA5E9" />
+              </Pressable>
             )}
-            <AppText
-              variant="title"
-              weight="900"
-              numberOfLines={1}
-              style={{ flex: 1 }}
-            >
-              {row.title}
-            </AppText>
           </View>
 
-          {isMine && !!onEdit && (
-            <Pressable
-              onPress={onEdit}
-              hitSlop={8}
-              style={stylesCard.iconBtnGhost}
-              accessibilityLabel={t("common.edit")}
-            >
-              <Ionicons name="create-outline" size={18} color="#0EA5E9" />
-            </Pressable>
-          )}
-        </View>
-
-        <View style={stylesCard.metaRow}>
-          <View style={stylesCard.metaChip}>
-            <Ionicons name="time-outline" size={14} color="#0F172A" />
-            <Text style={stylesCard.metaText}>{timeStr}</Text>
-          </View>
-          <View style={stylesCard.metaChip}>
-            <Ionicons name="location-outline" size={14} color="#0F172A" />
-            <Text style={stylesCard.metaText} numberOfLines={1}>
-              {row.place_name || "—"} {dist ? `· ${dist}` : ""}
-            </Text>
-          </View>
-
-          <Pressable
-            disabled={!onViewInterested && !isMine}
-            onPress={onViewInterested}
-            style={[stylesCard.metaChip, { paddingHorizontal: 8 }]}
-            accessibilityLabel={t("bulletin.interested")}
-          >
-            <Ionicons name="people-outline" size={14} color="#0F172A" />
-            <Text style={stylesCard.metaText}>{count}</Text>
-          </Pressable>
-        </View>
-
-        {!!row.description && (
-          <Text style={{ color: "#374151", marginTop: 10 }} numberOfLines={3}>
-            {row.description}
-          </Text>
-        )}
-
-        <View style={stylesCard.actionsRow}>
-          <IconCircle
-            onPress={onChat}
-            icon="chatbubble-ellipses-outline"
-            label={t("bulletin.actions.chat")}
-            badge={unreadCount}
-          />
-          <IconCircle
-            onPress={onDirections}
-            icon="navigate-outline"
-            label={t("bulletin.actions.go")}
-          />
-          {!isMine && !!onInterested && (
-            <Pressable
-              onPress={() => {
-                if (alreadyInterested) {
-                  Alert.alert(
-                    t("bulletin.alerts.alreadyInterestedTitle"),
-                    t("bulletin.alerts.alreadyInterestedBody")
-                  );
-                } else {
-                  onInterested();
-                }
-              }}
-              style={[
-                stylesCard.circleBtn,
-                alreadyInterested ? { backgroundColor: "#16A34A" } : null,
-              ]}
-              accessibilityLabel={t("bulletin.actions.interested")}
-            >
-              <Ionicons
-                name={alreadyInterested ? "heart" : "heart-outline"}
-                size={18}
-                color={alreadyInterested ? "#fff" : "#0F172A"}
-              />
-            </Pressable>
-          )}
-          {isMine && (
-            <View style={stylesCard.minePill}>
-              <Text style={stylesCard.mineText}>
-                {t("bulletin.badges.mine")}
+          <View style={styles.metaRow}>
+            <View style={styles.metaChip}>
+              <Ionicons name="time-outline" size={14} color="#0F172A" />
+              <Text style={styles.metaText}>{timeStr}</Text>
+            </View>
+            <View style={styles.metaChip}>
+              <Ionicons name="location-outline" size={14} color="#0F172A" />
+              <Text style={styles.metaText} numberOfLines={1}>
+                {row.place_name || "—"} {dist ? `· ${dist}` : ""}
               </Text>
             </View>
+
+            <Pressable
+              disabled={!onViewInterested && !isMine}
+              onPress={onViewInterested}
+              style={[styles.metaChip, { paddingHorizontal: 8 }]}
+              accessibilityLabel={t("bulletin.interested")}
+            >
+              <Ionicons name="people-outline" size={14} color="#0F172A" />
+              <Text style={styles.metaText}>{count}</Text>
+            </Pressable>
+          </View>
+
+          {!!row.description && (
+            <Text style={{ color: "#374151", marginTop: 10 }} numberOfLines={3}>
+              {row.description}
+            </Text>
           )}
+
+          <View style={styles.actionsRow}>
+            <IconCircle
+              onPress={onChat}
+              icon="chatbubble-ellipses-outline"
+              label={t("bulletin.actions.chat")}
+              badge={unreadCount}
+            />
+            <IconCircle
+              onPress={onDirections}
+              icon="navigate-outline"
+              label={t("bulletin.actions.go")}
+            />
+            {!isMine && !!onInterested && (
+              <Pressable
+                onPress={() => {
+                  if (alreadyInterested) {
+                    Alert.alert(
+                      t("bulletin.alerts.alreadyInterestedTitle"),
+                      t("bulletin.alerts.alreadyInterestedBody")
+                    );
+                  } else {
+                    onInterested();
+                  }
+                }}
+                style={[
+                  styles.circleBtn,
+                  alreadyInterested ? { backgroundColor: "#16A34A" } : null,
+                ]}
+                accessibilityLabel={t("bulletin.actions.interested")}
+              >
+                <Ionicons
+                  name={alreadyInterested ? "heart" : "heart-outline"}
+                  size={18}
+                  color={alreadyInterested ? "#fff" : "#0F172A"}
+                />
+              </Pressable>
+            )}
+            {isMine && (
+              <View style={styles.minePill}>
+                <Text style={styles.mineText}>
+                  {t("bulletin.badges.mine")}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </View>
   );
 }
 
-function IconCircle({
-  onPress,
-  icon,
-  label,
-  filled = false,
-  badge,
-}: {
-  onPress: () => void;
-  icon: IconName;
-  label: string;
-  filled?: boolean;
-  badge?: number;
-}) {
-  return (
-    <View style={stylesCard.iconWrap}>
-      <Pressable
-        onPress={onPress}
-        style={[stylesCard.circleBtn, filled && { backgroundColor: "#16A34A" }]}
-        accessibilityLabel={label}
-      >
-        <Ionicons name={icon} size={18} color={filled ? "#fff" : "#0F172A"} />
-      </Pressable>
-
-      {typeof badge === "number" && badge > 0 && (
-        <View style={stylesCard.badge}>
-          <Text style={stylesCard.badgeText}>{badge > 99 ? "99+" : badge}</Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function InterestedModal({
-  visible,
-  onClose,
-  rows,
-  loading,
-  title,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  rows: InterestRow[];
-  loading: boolean;
-  title?: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-        <View
-          style={{
-            height: 52,
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 8,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: "#E5E7EB",
-            backgroundColor: "#fff",
-          }}
-        >
-          <Pressable onPress={onClose} hitSlop={8} style={{ padding: 6 }}>
-            <Ionicons name="chevron-back" size={24} color="#111827" />
-          </Pressable>
-          <Text
-            style={{
-              fontWeight: "800",
-              fontSize: 16,
-              flex: 1,
-              textAlign: "center",
-            }}
-          >
-            {title
-              ? t("bulletin.modal.interestedWith", { title })
-              : t("bulletin.modal.interested")}
-          </Text>
-          <View style={{ width: 30 }} />
-        </View>
-
-        {loading ? (
-          <View
-            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-          >
-            <ActivityIndicator />
-          </View>
-        ) : rows.length === 0 ? (
-          <View style={{ padding: 16 }}>
-            <Text style={{ color: "#6B7280" }}>{t("bulletin.modal.none")}</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={rows}
-            keyExtractor={(r) => r.id}
-            contentContainerStyle={{ padding: 12 }}
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  backgroundColor: "#fff",
-                  borderWidth: 1,
-                  borderColor: "#E5E7EB",
-                  borderRadius: 12,
-                  padding: 12,
-                  marginBottom: 10,
-                }}
-              >
-                <Text style={{ fontWeight: "800" }}>
-                  {item.interested_name || t("chat.neighbour")}
-                </Text>
-                <Text style={{ color: "#6B7280", marginTop: 2 }}>
-                  {new Date(item.created_at).toLocaleString("en-SG", {
-                    hour12: false,
-                  })}
-                </Text>
-              </View>
-            )}
-          />
-        )}
-      </SafeAreaView>
-    </Modal>
-  );
-}
-
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FFFAF0" },
 
   headerRow: {
@@ -1715,14 +1712,35 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     gap: 8,
   },
+  createBtnWrap: {
+    position: "relative",
+    borderRadius: 10,
+    alignSelf: "flex-start",
+  },
+  createBtnOffset: {
+    position: "absolute",
+    top: 0,
+    left: 5,
+    right: -4,
+    bottom: 0,
+    borderRadius: 10,
+    backgroundColor: "#F6C96D",
+    transform: [{ translateY: 6 }],
+    zIndex: 0,
+  },
   createBtn: {
+    position: "relative",            
+    zIndex: 1,                       
+    elevation: 1,                    
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FED787",
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 10 : 8,
     borderRadius: 10,
-    marginRight: 4,
+    borderWidth: 1,
+    borderColor: "#11182720",
+    transform: [{ translateY: 0 }],
   },
   createText: { color: "#000", fontWeight: "800", marginLeft: 6 },
 
@@ -1806,23 +1824,44 @@ const s = StyleSheet.create({
   },
   cancelBtn: { alignSelf: "center", marginTop: 10, padding: 10 },
   cancelText: { color: "#6B7280", fontWeight: "800" },
-  createBtnWrap: {
-    position: "relative",
-    borderRadius: 10,
-  },
-  createBtnOffset: {
-    position: "absolute",
-    top: 6,
-    left: 0,
-    right: 0,
-    height: Platform.OS === "ios" ? 40 : 38,
-    borderRadius: 10,
-    backgroundColor: "#F6C96D",
-  },
-});
 
-const stylesCard = StyleSheet.create({
-  header: {
+  cardContainer: {
+    alignItems: "center",
+    marginTop: 14,
+    marginBottom: 10,
+  },
+  offsetWrap: {
+    position: "relative",
+    alignSelf: "center",
+    width: "100%",
+    maxWidth: 400,
+  },
+  offsetLayer: {
+    position: "absolute",
+    top: 8, 
+    left: 8, 
+    right: -8, 
+    bottom: -8, 
+    borderRadius: 16,
+    borderWidth: 2,
+    zIndex: 0,
+  },
+  faceCard: {
+    width: "100%",
+    position: "relative",
+    zIndex: 1,
+    borderWidth: 2,
+    borderColor: "#000",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1874,7 +1913,6 @@ const stylesCard = StyleSheet.create({
     marginLeft: 4,
   },
   mineText: { color: "#166534", fontWeight: "900", fontSize: 12 },
-
   iconWrap: {
     position: "relative",
     width: 40,
@@ -1903,59 +1941,4 @@ const stylesCard = StyleSheet.create({
     borderColor: "#fff",
   },
   badgeText: { color: "#fff", fontSize: 10, fontWeight: "900" },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-
-  createBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FED787",
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 10 : 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#11182720",
-    transform: [{ translateY: 0 }],
-  },
-  createText: { color: "#000", fontWeight: "800", marginLeft: 6 },
-
-  offsetWrap: {
-    position: "relative",
-    marginTop: 14,
-    marginRight: 8,
-    marginBottom: 10,
-  },
-
-  offsetLayer: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    right: 0,
-    bottom: 0,
-    borderRadius: 16,
-    borderWidth: 2,
-    zIndex: 0,
-  },
-
-  faceCard: {
-    transform: [{ translateX: -8 }, { translateY: -8 }],
-    position: "relative",
-    zIndex: 1,
-
-    borderWidth: 2,
-    borderColor: "#000",
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
 });
