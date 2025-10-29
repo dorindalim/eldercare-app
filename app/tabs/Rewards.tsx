@@ -7,10 +7,9 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "../../i18n";
@@ -205,7 +204,6 @@ export default function RewardsScreen() {
     },
     [coins, owned, persistOwned, spendCoins, t]
   );
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }} edges={["left", "right"]}>
       <TopBar
@@ -226,7 +224,6 @@ export default function RewardsScreen() {
         contentContainerStyle={[s.scroll, { paddingBottom: bottomLift }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Balance */}
         <View style={s.card}>
           <View style={s.rowBetween}>
             <AppText variant="h2" weight="800">
@@ -240,59 +237,67 @@ export default function RewardsScreen() {
           </View>
         </View>
 
-        {/* Catalog */}
         <View style={s.card}>
           <AppText variant="h2" weight="800" style={{ marginBottom: 6 }}>
             {t("rewards.catalogTitle")}
           </AppText>
 
-          {catalog.map((item) => (
-            <View key={item.id} style={s.rewardRow}>
-              <View style={s.rewardIcon}>
-                <Ionicons
-                  name={item.icon || "gift-outline"}
-                  size={22}
-                  color="#111827"
-                />
-              </View>
+          {catalog.map((item) => {
+            const canRedeem = coins >= item.cost;
 
-              <View style={{ flex: 1 }}>
-                <AppText weight="800">{t(item.titleKey)}</AppText>
-                <AppText color="#6B7280">{t(item.descKey)}</AppText>
-                <AppText weight="800" style={{ marginTop: 4 }}>
-                  {t("rewards.cost", { count: item.cost })}
-                </AppText>
+            return (
+              <View key={item.id} style={s.rewardRow}>
+                <View style={s.rewardIcon}>
+                  <Ionicons
+                    name={item.icon || "gift-outline"}
+                    size={22}
+                    color="#111827"
+                  />
+                </View>
 
-                {/* >>> Half/Half buttons with spacing <<< */}
-                <View style={s.actionsRow}>
-                <OffsetButton
-                  label={t("rewards.viewTerms")}
-                  onPress={() => setTermsOpen(item)}
-                  height={48}
-                  radius={10}
-                  bgColor="#FFF"
-                  borderColor="#111827"
-                  offsetBgColor="#FED787"
-                  textColor="#111827"
-                  style={[s.halfBtn, { marginRight: 8 }]}
-                />
-                
-                <OffsetButton
-                  label={t("rewards.redeem")}
-                  onPress={() => onRedeem(item)}
-                  disabled={coins < item.cost}
-                  height={48}
-                  radius={10}
-                  bgColor="#FFF"
-                  offsetBgColor="#CFADE8"
-                  borderColor="#1F2937"
-                  textColor="#1F2937"
-                  style={s.halfBtn}
-                />
+                <View style={{ flex: 1 }}>
+                  <AppText weight="800">{t(item.titleKey)}</AppText>
+                  <AppText color="#6B7280">{t(item.descKey)}</AppText>
+                  <AppText weight="800" style={{ marginTop: 4 }}>
+                    {t("rewards.cost", { count: item.cost })}
+                  </AppText>
+
+                  <View style={s.actionsRow}>
+                    <OffsetButton
+                      label={t("rewards.viewTerms")}
+                      onPress={() => setTermsOpen(item)}
+                      height={48}
+                      radius={10}
+                      bgColor="#FFF"
+                      borderColor="#111827"
+                      offsetBgColor="#FED787"
+                      textColor="#111827"
+                      style={StyleSheet.flatten([s.halfBtn, { marginRight: 8 }])}
+                    />
+
+                    <OffsetButton
+                      label={t("rewards.redeem")}
+                      onPress={canRedeem ? () => onRedeem(item) : undefined}
+                      disabled={!canRedeem}
+                      height={48}
+                      radius={10}
+                      bgColor={canRedeem ? "#FFF" : "#F9FAFB"}
+                      textColor={canRedeem ? "#1F2937" : "#9CA3AF"}
+                      borderColor={canRedeem ? "#1F2937" : "#D1D5DB"}
+                      offsetBgColor={canRedeem ? "#CFADE8" : "#F9FAFB"}
+                      {...(canRedeem
+                        ? { offsetLeft: 4, offsetTop: 3, offsetRight: -6, offsetBottom: -6 }
+                        : { offsetLeft: 0, offsetTop: 0, offsetRight: 0, offsetBottom: 0 })}
+                      style={StyleSheet.flatten([
+                        s.halfBtn,
+                        !canRedeem && s.redeemNoOffsetNudge,
+                      ])}
+                    />
+                  </View>
+                </View>
               </View>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* Owned */}
@@ -301,46 +306,44 @@ export default function RewardsScreen() {
             {t("rewards.ownedTitle")}
           </AppText>
 
-        {owned.length === 0 ? (
-          <AppText color="#6B7280">{t("rewards.noneOwned")}</AppText>
-        ) : (
-          owned.map((v) => {
-            const def = catalog.find((c) => c.id === v.rewardId);
-            return (
-              <View key={v.id} style={s.voucherRow}>
-                <View style={{ flex: 1 }}>
-                  <AppText weight="800">
-                    {def ? t(def.titleKey) : t("rewards.voucher")}
-                  </AppText>
-                  <AppText color="#6B7280">
-                    {t("rewards.code")}: {v.code}
-                  </AppText>
-                  <AppText color="#6B7280">
-                    {t("rewards.redeemedAt")}{" "}
-                    {new Date(v.redeemedAt).toLocaleString()}
-                  </AppText>
+          {owned.length === 0 ? (
+            <AppText color="#6B7280">{t("rewards.noneOwned")}</AppText>
+          ) : (
+            owned.map((v) => {
+              const def = catalog.find((c) => c.id === v.rewardId);
+              return (
+                <View key={v.id} style={s.voucherRow}>
+                  <View style={{ flex: 1 }}>
+                    <AppText weight="800">
+                      {def ? t(def.titleKey) : t("rewards.voucher")}
+                    </AppText>
+                    <AppText color="#6B7280">
+                      {t("rewards.code")}: {v.code}
+                    </AppText>
+                    <AppText color="#6B7280">
+                      {t("rewards.redeemedAt")}{" "}
+                      {new Date(v.redeemedAt).toLocaleString()}
+                    </AppText>
+                  </View>
+                  {def && (
+                    <OffsetButton
+                      label={t("rewards.howToUse")}
+                      onPress={() => setTermsOpen(def)}
+                      height={40}
+                      radius={8}
+                      bgColor="#FFF"
+                      offsetBgColor="#93E6AA"
+                      borderColor="#111827"
+                      textColor="#111827"
+                    />
+                  )}
                 </View>
-                {def && (
-                  <OffsetButton
-                  label={t("rewards.howToUse")}
-                  onPress={() => setTermsOpen(def)}
-                  height={40}
-                  radius={8}
-                  
-                  bgColor="#FFF"
-                  offsetBgColor="#93E6AA"
-                  borderColor="#111827"
-                  textColor="#111827"
-                />
-                )}
-              </View>
-            );
-          })
-        )}
+              );
+            })
+          )}
         </View>
       </ScrollView>
 
-      {/* Terms modal */}
       <Modal
         visible={!!termsOpen}
         transparent
@@ -378,8 +381,8 @@ const s = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderWidth: 2,
+    borderColor: "#000",
     marginBottom: 12,
   },
   rowBetween: {
@@ -419,11 +422,12 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-
   halfBtn: {
     flex: 1,
   },
-
+  redeemNoOffsetNudge: {
+    transform: [{ translateY: 3 }],
+  },
   voucherRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -449,3 +453,4 @@ const s = StyleSheet.create({
     padding: 16,
   },
 });
+
