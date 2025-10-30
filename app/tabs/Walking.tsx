@@ -467,7 +467,8 @@ export default function WalkingScreen() {
           presetLat: park.latitude.toString(),
           presetLng: park.longitude.toString(),
           presetLabel: park.title || "Selected park",   
-          // fillOnly: "true",                             
+          // fillOnly: "true", 
+          autoStart: "true",                            
         },
       });
     } else {
@@ -480,7 +481,8 @@ export default function WalkingScreen() {
         pathname: "/tabs/Navigation",
         params: { 
           presetQuery: q,
-          fillOnly: "true",                             
+          // fillOnly: "true",
+          autoStart: "true",                              
         },
       });
     }

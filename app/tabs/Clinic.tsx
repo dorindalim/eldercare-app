@@ -292,6 +292,7 @@ export default function ClinicScreen() {
           presetQuery: clinic.name,
           presetLat: clinic.lat ? String(clinic.lat) : undefined,
           presetLng: clinic.lon ? String(clinic.lon) : undefined,
+          autoStart: "true", 
         },
       });
     }, 200); 

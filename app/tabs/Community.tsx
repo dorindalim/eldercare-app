@@ -574,7 +574,7 @@ export default function CommunityScreen() {
     setDetailsOpen(false);
     const q = (evt.address && evt.address.trim()) || (evt.location_name && evt.location_name.trim());
     if (!q) return Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
-    router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q } });
+    router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q, autoStart: "true" } });
   };
 
   const darken = (hex: string, amt = 28) => {
@@ -585,7 +585,7 @@ export default function CommunityScreen() {
   };
 
   const categoryColors = (cat?: string | null) => {
-    const bg = (cat && CATEGORY_BG[cat as keyof typeof CATEGORY_BG]) || "#FFD3CD"; // fallback
+    const bg = (cat && CATEGORY_BG[cat as keyof typeof CATEGORY_BG]) || "#FFD3CD"; 
     const border = darken(bg, 36);
     return { bg, border };
   };
