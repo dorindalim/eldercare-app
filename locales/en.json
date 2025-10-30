@@ -88,7 +88,7 @@
     },
     "signup": {
       "title": "Welcome friend!",
-      "subtitle": "We just need some quick deets to get started. You can add more later.",
+      "subtitle": "We just need some quick details to get started. You can add more later.",
       "phoneLabel": "Phone number",
       "phonePH": "+65 91234567",
       "passwordLabel": "Password",
@@ -112,7 +112,7 @@
     }
   },
   "home": {
-    "navigation": "Maps",
+    "navigation": "Map",
     "walkingRoutes": "Walking Routes",
     "homeTab": "Home",
     "ccActivities": "CC Activities",
@@ -236,7 +236,7 @@
     }
   },
   "navigation": {
-    "title": "Maps",
+    "title": "Map",
     "search": {
       "permissionTitle": "Location Permission Required",
       "permissionBody": "Please grant location permission to use navigation features.",
@@ -261,7 +261,7 @@
       "startNav": "Start Navigation",
       "filter": {
         "everything": "Everything",
-        "cc": "Community Centre",
+        "cc": "Community Centres",
         "clinics": "Clinics",
         "parks": "Parks"
       },

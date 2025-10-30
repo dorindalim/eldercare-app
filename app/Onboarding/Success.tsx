@@ -115,7 +115,7 @@ export default function SuccessScreen() {
             ]}
             pointerEvents="box-none"
           >
-            <Text style={s.infoTitle}>What is this thing?</Text>
+            <Text style={s.infoTitle}> What's next?</Text>
             <Text style={s.infoBody}>
               This EC Portal is a webpage that your emergency contacts can use to access your important
               information during emergencies. Share the link so they have quick access when needed.
