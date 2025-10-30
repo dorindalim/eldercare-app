@@ -459,14 +459,15 @@ export default function WalkingScreen() {
   const handleGetDirections = (park: ParkLocation) => {
     setShowParkDetails(false);
     setSelectedPark(null);
-    
+
     if (park.latitude !== null && park.longitude !== null) {
       router.push({
         pathname: "/tabs/Navigation",
         params: { 
           presetLat: park.latitude.toString(),
           presetLng: park.longitude.toString(),
-          autoStart: "1" 
+          presetLabel: park.title || "Selected park",   
+          // fillOnly: "true",                             
         },
       });
     } else {
@@ -475,12 +476,11 @@ export default function WalkingScreen() {
         Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
         return;
       }
-      
       router.push({
         pathname: "/tabs/Navigation",
         params: { 
-          presetQuery: q, 
-          autoStart: "1" 
+          presetQuery: q,
+          fillOnly: "true",                             
         },
       });
     }
@@ -491,7 +491,6 @@ export default function WalkingScreen() {
       t("walking.filters.activities", { returnObjects: true })
     );
     
-    // Use translation keys for filtering with translated labels
     const amenityOptions = [
       { key: "playground", label: t("walking.filters.amenities.playground") },
       { key: "allotment_garden", label: t("walking.filters.amenities.allotment_garden") },

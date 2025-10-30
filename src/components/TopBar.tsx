@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppText from "../../src/components/AppText";
 import OffsetButton from './OffsetButton';
 
+
 export type LangCode = "en" | "zh" | "ms" | "ta";
 
 export const LANGS: { code: LangCode; label: string }[] = [

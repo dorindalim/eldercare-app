@@ -574,7 +574,7 @@ export default function CommunityScreen() {
     setDetailsOpen(false);
     const q = (evt.address && evt.address.trim()) || (evt.location_name && evt.location_name.trim());
     if (!q) return Alert.alert(t("community.getDirections"), t("alerts.genericFailBody"));
-    router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q, autoStart: "1" } });
+    router.push({ pathname: "/tabs/Navigation", params: { presetQuery: q } });
   };
 
   const darken = (hex: string, amt = 28) => {

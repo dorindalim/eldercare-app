@@ -15,7 +15,8 @@
     "showText": "显示",
     "hideText": "隐藏",
     "skip": "跳过",
-    "continue": "继续"
+    "continue": "继续",
+    "requiredNote": "标有 * 的字段为必填项。"
   },
   "alerts": {
     "loginInvalidTitle": "无效",
@@ -360,7 +361,7 @@
       "otherPH": "描述其他辅助需求"
     },
     "drugAllergiesPH": "药物过敏（可选）",
-    "publicNotePH": "公开备注",
+    "publicNotePH": "公开备注 （可选）",
     "finish": "完成",
     "errors": {
       "missingConditionName": "请输入至少一个状况名称，或选择\"我没有医疗状况\"。",

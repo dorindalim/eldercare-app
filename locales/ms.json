@@ -15,7 +15,8 @@
     "showText": "Tunjukkan",
     "hideText": "Sembunyi",
     "skip": "Langkau",
-    "continue": "Teruskan"
+    "continue": "Teruskan",
+    "requiredNote": "Medan yang ditanda * adalah wajib."
   },
   "alerts": {
     "loginInvalidTitle": "Tidak sah",
@@ -360,7 +361,7 @@
       "otherPH": "Terangkan keperluan bantuan lain"
     },
     "drugAllergiesPH": "Alahan ubat (pilihan)",
-    "publicNotePH": "Nota awam",
+    "publicNotePH": "Nota awam (pilihan)",
     "finish": "Selesai",
     "errors": {
       "missingConditionName": "Sila masukkan sekurang-kurangnya satu nama keadaan, atau pilih \"Saya tiada keadaan perubatan.\"",

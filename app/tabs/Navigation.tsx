@@ -173,6 +173,36 @@ export default function NavigationScreen() {
     "driving" | "walking" | "bicycling" | "transit" | null
   >(null);
 
+  const presetLabel = (params as any).presetLabel as string | undefined;
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=${googleLang}&region=SG&key=${GOOGLE_WEB_API_KEY}`
+      );
+      const data = await res.json();
+      const label = data?.results?.[0]?.formatted_address;
+      if (label) {
+        setQuery(label);
+        setSearchInput(label);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (presetLat != null && presetLng != null) {
+      const dest = { latitude: presetLat, longitude: presetLng };
+      setDestinationOnly(dest);                
+
+      if (presetLabel) {
+        setQuery(presetLabel);
+        setSearchInput(presetLabel);
+      } else {
+        reverseGeocode(dest.latitude, dest.longitude);
+      }
+    }
+  }, [presetLat, presetLng, presetLabel]);
+
   const autoStart =
     String((params as any).autoStart ?? "").toLowerCase() === "1" ||
     String((params as any).autoStart ?? "").toLowerCase() === "true";
@@ -380,16 +410,15 @@ export default function NavigationScreen() {
     setQuery(presetQuery);
     setSearchInput(presetQuery);
 
-    if (fillOnly) {
-      setTimeout(() => {
-        fetchAutocompleteSuggestions(presetQuery);
-      }, 200);
-    } else {
-      setTimeout(() => {
+    setTimeout(() => {
+      if (presetLat != null && presetLng != null) {
+        setDestinationOnly({ latitude: presetLat, longitude: presetLng });
+      } else {
         searchDestination(presetQuery);
-      }, 200);
-    }
-  }, [presetQuery, fillOnly, location]);
+      }
+    }, 200);
+  }, [presetQuery, presetLat, presetLng, location]);
+
 
   useEffect(() => {
     if (!autoStart || !destination || !location || navigating) return;

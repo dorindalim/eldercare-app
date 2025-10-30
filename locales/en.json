@@ -15,7 +15,8 @@
     "showText": "Show",
     "hideText": "Hide",
     "skip": "Skip",
-    "continue": "Continue"
+    "continue": "Continue",
+    "requiredNote": "Fields marked * are required."
   },
   "alerts": {
     "loginInvalidTitle": "Invalid",
@@ -360,7 +361,7 @@
       "otherPH": "Describe other assistive needs"
     },
     "drugAllergiesPH": "Drug allergies (optional)",
-    "publicNotePH": "Public note",
+    "publicNotePH": "Public note (optional)",
     "finish": "Finish",
     "errors": {
       "missingConditionName": "Please enter at least one condition name, or select “I have no medical conditions.”",

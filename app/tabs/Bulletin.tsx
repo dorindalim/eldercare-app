@@ -1440,7 +1440,7 @@ function InterestedModal({
   const { t } = useTranslation();
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFAF0" }}>
         <View
           style={{
             height: 52,
@@ -1449,7 +1449,7 @@ function InterestedModal({
             paddingHorizontal: 8,
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: "#E5E7EB",
-            backgroundColor: "#fff",
+            backgroundColor: "#FFFAF0",
           }}
         >
           <Pressable onPress={onClose} hitSlop={8} style={{ padding: 6 }}>
@@ -1488,8 +1488,8 @@ function InterestedModal({
               <View
                 style={{
                   backgroundColor: "#fff",
-                  borderWidth: 1,
-                  borderColor: "#E5E7EB",
+                  borderWidth: 2,
+                  borderColor: "#000",
                   borderRadius: 12,
                   padding: 12,
                   marginBottom: 10,

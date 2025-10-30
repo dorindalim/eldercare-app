@@ -16,7 +16,9 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { t } from "i18next";
+import { useCallback } from "react";
 import CHASClinics from "../../assets/data/CHASClinics.json";
 import { useAuth } from "../../src/auth/AuthProvider";
 import AppText from "../../src/components/AppText";
@@ -133,6 +135,13 @@ export default function ClinicScreen() {
   const [selectedFilterItems, setSelectedFilterItems] = useState<string[]>([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedClinic, setSelectedClinic] = useState(null);
+
+  const isFocused = useIsFocused();
+  useFocusEffect(
+    useCallback(() => {
+      return () => setDetailsOpen(false);
+    }, [])
+  );
 
   const setLang = (code) => {
     i18n.changeLanguage(code);
@@ -273,21 +282,25 @@ export default function ClinicScreen() {
   };
 
   const handleGetDirections = (clinic) => {
-    router.push({
-      pathname: "/tabs/Navigation",
-      params: {
-        presetQuery: clinic.name,
-        autoStart: "1",
-        presetLat: clinic.lat ? String(clinic.lat) : undefined,
-        presetLng: clinic.lon ? String(clinic.lon) : undefined,
-      },
-    });
+    setDetailsOpen(false);
+    setSelectedClinic(null);
+
+    setTimeout(() => {
+      router.push({
+        pathname: "/tabs/Navigation",
+        params: {
+          presetQuery: clinic.name,
+          presetLat: clinic.lat ? String(clinic.lat) : undefined,
+          presetLng: clinic.lon ? String(clinic.lon) : undefined,
+        },
+      });
+    }, 200); 
   };
 
   const handleCallClinic = (phone) => {
-    if (phone) {
-      Linking.openURL(`tel:${phone}`);
-    }
+    setDetailsOpen(false);
+    setSelectedClinic(null);
+    if (phone) Linking.openURL(`tel:${phone}`);
   };
 
   const onRefresh = () => {
@@ -490,21 +503,22 @@ export default function ClinicScreen() {
         }
       />
 
-      {/* Modal */}
-      <ItemDetailsModal
-        clinic={selectedClinic}
-        visible={detailsOpen}
-        onClose={() => {
-          setDetailsOpen(false);
-          setSelectedClinic(null);
-        }}
-        userLocation={userLocation}
-        onGetDirections={handleGetDirections}
-        onCallClinic={handleCallClinic}
-        distanceMeters={distanceMeters}
-        kmStr={kmStr}
-        chasLogo={chasLogo}
-      />
+      {isFocused && (
+        <ItemDetailsModal
+          clinic={selectedClinic}
+          visible={detailsOpen}
+          onClose={() => {
+            setDetailsOpen(false);
+            setSelectedClinic(null);
+          }}
+          userLocation={userLocation}
+          onGetDirections={handleGetDirections}
+          onCallClinic={handleCallClinic}
+          distanceMeters={distanceMeters}
+          kmStr={kmStr}
+          chasLogo={chasLogo}
+        />
+      )}
     </SafeAreaView>
   );
 }

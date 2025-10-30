@@ -49,9 +49,11 @@ const ASSISTIVE_OPTIONS = [
   { key: "other", labelKey: "elderlyConditions.assistive.other" },
 ];
 
+const OWNER_KEY = "onboarding.owner";
+
 export default function ElderlyConditions() {
   const router = useRouter();
-  const { markOnboarding, saveElderlyConditions } = useAuth();
+  const { markOnboarding, saveElderlyConditions, session } = useAuth();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -64,22 +66,62 @@ export default function ElderlyConditions() {
   const [publicNote, setPublicNote] = useState("");
   const [noConditions, setNoConditions] = useState(false);
 
+  const saveDraftAndGoBack = async () => {
+  const draft = { conditions, assistive, assistiveOther, drugAllergies, publicNote, noConditions };
+  try {
+    await AsyncStorage.setItem(KDRAFT.conditions, JSON.stringify(draft));
+  } catch {}
+  router.replace("/Onboarding/ElderlyBasics");
+};
+
+
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(KDRAFT.conditions);
-        if (raw) {
-          const d = JSON.parse(raw);
-          setConditions(d.conditions ?? conditions);
-          setAssistive(d.assistive ?? []);
-          setAssistiveOther(d.assistiveOther ?? "");
-          setDrugAllergies(d.drugAllergies ?? "");
-          setPublicNote(d.publicNote ?? "");
-          setNoConditions(!!d.noConditions);
+        const uid = session?.userId || session?.userId || session?.phone || "";
+        if (!uid) {
+          const raw = await AsyncStorage.getItem(KDRAFT.conditions);
+          if (raw) {
+            const d = JSON.parse(raw);
+            setConditions(d.conditions ?? conditions);
+            setAssistive(d.assistive ?? []);
+            setAssistiveOther(d.assistiveOther ?? "");
+            setDrugAllergies(d.drugAllergies ?? "");
+            setPublicNote(d.publicNote ?? "");
+            setNoConditions(!!d.noConditions);
+          }
+          return;
         }
-      } catch {}
+
+        const owner = await AsyncStorage.getItem(OWNER_KEY);
+        if (owner && owner === String(uid)) {
+          const raw = await AsyncStorage.getItem(KDRAFT.conditions);
+          if (raw) {
+            const d = JSON.parse(raw);
+            setConditions(d.conditions ?? conditions);
+            setAssistive(d.assistive ?? []);
+            setAssistiveOther(d.assistiveOther ?? "");
+            setDrugAllergies(d.drugAllergies ?? "");
+            setPublicNote(d.publicNote ?? "");
+            setNoConditions(!!d.noConditions);
+          }
+        } else {
+          const allKeys = await AsyncStorage.getAllKeys();
+          const purgeKeys = allKeys.filter(
+            (k) =>
+              k.includes("draft") ||
+              k.includes("progress") ||
+              k.includes("onboarding") ||
+              k === KDRAFT.conditions ||
+              k === KDRAFT.basics
+          );
+          if (purgeKeys.length) await AsyncStorage.multiRemove(purgeKeys);
+          await AsyncStorage.setItem(OWNER_KEY, String(uid));
+        }
+      } catch (e) {
+      }
     })();
-  }, []);
+  }, [session?.userId]);
 
   const setCond = (idx: number, patch: Partial<ConditionCard>) =>
     setConditions((prev) => {
@@ -222,41 +264,18 @@ export default function ElderlyConditions() {
     await markOnboarding(true);
     await markAllComplete();
 
-    const keysToKeep = [
-      'user-session',
-      'auth-token', 
-      'user-id',
-      'lang', 
-    ];
-
     try {
-      console.log("Clearing all onboarding data...");
-      
       const allKeys = await AsyncStorage.getAllKeys();
-      
-      // Filter for any keys related to onboarding/drafts/progress
-      const onboardingKeys = allKeys.filter(key => 
-        key.includes('draft') || 
-        key.includes('progress') ||
-        key.includes('onboarding')
+      const onboardingKeys = allKeys.filter(
+        (k) =>
+          k.includes("draft") ||
+          k.includes("progress") ||
+          k.includes("onboarding") ||
+          k === KDRAFT.conditions ||
+          k === KDRAFT.basics
       );
-      
-      console.log("Deleting onboarding keys:", onboardingKeys);
-      
-      if (onboardingKeys.length > 0) {
-        await AsyncStorage.multiRemove(onboardingKeys);
-      }
-      
-      console.log("All onboarding data cleared successfully");
-      
-    } catch (error) {
-      console.log("Error clearing onboarding data:", error);
-    }
-
-    await AsyncStorage.setItem(
-      KDRAFT.conditions,
-      JSON.stringify({ conditions, assistive, assistiveOther, drugAllergies, publicNote, noConditions })
-    );
+      if (onboardingKeys.length) await AsyncStorage.multiRemove(onboardingKeys);
+    } catch {}
 
     router.replace("/Onboarding/Success");
   };
@@ -268,12 +287,8 @@ export default function ElderlyConditions() {
       <StatusBar translucent barStyle="dark-content" backgroundColor="transparent" />
       <ImageBackground source={BG} style={s.bg} resizeMode="cover">
         <SafeAreaView style={s.safe}>
-          {/* Top bar */}
           <AuthTopBar
-            onBack={() => {
-              if (router.canGoBack?.()) router.back();
-              else router.replace("/Onboarding/ElderlyBasics");
-            }}
+            onBack={saveDraftAndGoBack}
             langShort={short(i18n.language)}
             onOpenLanguage={async () => {
               const order: LangCode[] = ["en", "zh", "ms", "ta"];
@@ -286,7 +301,6 @@ export default function ElderlyConditions() {
             progress={combined}
           />
 
-          {/* Content */}
           <KeyboardAwareScrollView
             style={{ flex: 1, backgroundColor: "transparent" }}
             contentContainerStyle={[s.scroll, { paddingBottom: extraBottomSpace }]}
@@ -298,11 +312,8 @@ export default function ElderlyConditions() {
             showsVerticalScrollIndicator={false}
           >
             <View style={s.card}>
-              <Text style={s.heroTitle}>
-                {t("elderlyConditions.hero")}
-              </Text>
+              <Text style={s.heroTitle}>{t("elderlyConditions.hero")}</Text>
 
-              {/* Top switches */}
               <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                 <Pressable
                   onPress={() => setNoConditions((v) => !v)}
@@ -427,27 +438,29 @@ export default function ElderlyConditions() {
               </View>
 
               {assistive.includes("other") && (
-                <TextInput
-                  placeholder={t("elderlyConditions.assistive.otherPH")}
-                  placeholderTextColor="#9CA3AF"
-                  value={assistiveOther}
-                  onChangeText={setAssistiveOther}
-                  style={s.input}
-                />
+                <>
+                  <Text style={s.subLabel}>{t("elderlyConditions.assistive.otherPH")}</Text>
+                  <TextInput
+                    placeholder=""
+                    value={assistiveOther}
+                    onChangeText={setAssistiveOther}
+                    style={s.input}
+                  />
+                </>
               )}
 
+              <Text style={s.subLabel}>{t("elderlyConditions.drugAllergiesPH")}</Text>
               <TextInput
-                placeholder={t("elderlyConditions.drugAllergiesPH")}
-                placeholderTextColor="#9CA3AF"
+                placeholder=""
                 value={drugAllergies}
                 onChangeText={setDrugAllergies}
                 style={[s.input, s.multiline]}
                 multiline
               />
 
+              <Text style={s.subLabel}>{t("elderlyConditions.publicNotePH")}</Text>
               <TextInput
-                placeholder={t("elderlyConditions.publicNotePH")}
-                placeholderTextColor="#9CA3AF"
+                placeholder=""
                 value={publicNote}
                 onChangeText={setPublicNote}
                 style={[s.input, s.multiline]}
@@ -456,7 +469,6 @@ export default function ElderlyConditions() {
             </View>
           </KeyboardAwareScrollView>
 
-          {/* Sticky footer overlay */}
           <View style={s.footerOverlay} pointerEvents="box-none">
             <View style={s.footerEdge} />
             <View style={[s.footerRowWrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>

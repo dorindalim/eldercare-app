@@ -6,7 +6,6 @@ import {
   Alert,
   ImageBackground,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -24,23 +23,38 @@ import AuthTopBar from "../../src/components/AuthTopBar";
 import OffsetButton from "../../src/components/OffsetButton";
 import { KDRAFT, useCombinedProgress } from "../../src/lib/progress";
 
+function ReqLabel({ text }: { text: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Text style={s.label}>{text}</Text>
+      <Text style={s.star}> *</Text>
+    </View>
+  );
+}
+
 const BG = require("../../assets/photos/screens/MediumBlob.png");
 
-const SIDE = 16;       
-const MAXW = 640;      
-const INSET = 12;       
+const SIDE = 16;
+const MAXW = 640;
+const INSET = 12;
 
-const BUTTON_H = 57;
-const BAR_PAD = 8;
+const BUTTON_H = 57; 
+const BAR_PAD = 8;  
 
 type LangCode = "en" | "zh" | "ms" | "ta";
-const short = (c: string) => (c === "en" ? "EN" : c === "zh" ? "中文" : c === "ms" ? "BM" : "தமிழ்");
+const short = (c: string) =>
+  c === "en" ? "EN" : c === "zh" ? "中文" : c === "ms" ? "BM" : "தமிழ்";
 
 export default function ElderlyBasics() {
+  const insets = useSafeAreaInsets();
+
+  const FOOTER_TOP_PAD = BAR_PAD + BAR_PAD;
+  const extraBottomSpace =
+    BUTTON_H + FOOTER_TOP_PAD + Math.max(insets.bottom, 8) + 8; 
+
   const router = useRouter();
   const { saveElderlyProfile, session } = useAuth();
   const { t, i18n } = useTranslation();
-  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState("");
   const [yob, setYob] = useState("");
@@ -104,8 +118,27 @@ export default function ElderlyBasics() {
   const saveDraft = async () => {
     const draft = { name, yob, gender, ecName, ecRelation, ecPhone, ecEmail };
     await AsyncStorage.setItem(KDRAFT.basics, JSON.stringify(draft));
-    Alert.alert(t("common.save"), t("elderlyOnboarding.draftSaved") || "Saved as draft.");
+    Alert.alert(
+      t("common.save"),
+      t("elderlyOnboarding.draftSaved") || "Saved as draft."
+    );
   };
+
+  const saveDraftSilent = async () => {
+    try {
+      const draft = { name, yob, gender, ecName, ecRelation, ecPhone, ecEmail };
+      await AsyncStorage.setItem(KDRAFT.basics, JSON.stringify(draft));
+    } catch {}
+  };
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      void saveDraftSilent();
+    }, 400); 
+
+    return () => clearTimeout(id);
+  }, [name, yob, gender, ecName, ecRelation, ecPhone, ecEmail]);
+
 
   const onSubmit = async () => {
     if (!canSubmit || !session) {
@@ -114,7 +147,15 @@ export default function ElderlyBasics() {
 
     await AsyncStorage.setItem(
       KDRAFT.basics,
-      JSON.stringify({ name, yob, gender, ecName, ecRelation, ecPhone, ecEmail })
+      JSON.stringify({
+        name,
+        yob,
+        gender,
+        ecName,
+        ecRelation,
+        ecPhone,
+        ecEmail,
+      })
     );
 
     const result = await saveElderlyProfile({
@@ -131,13 +172,14 @@ export default function ElderlyBasics() {
     });
 
     if (!result?.success) {
-      return Alert.alert(t("elderlyOnboarding.saveErrorTitle"), t("elderlyOnboarding.saveErrorMsg"));
+      return Alert.alert(
+        t("elderlyOnboarding.saveErrorTitle"),
+        t("elderlyOnboarding.saveErrorMsg")
+      );
     }
 
     router.replace("/Onboarding/ElderlyConditions");
   };
-
-  const extraBottomSpace = insets.bottom + BUTTON_H + BAR_PAD * 2 + 18;
 
   return (
     <View style={{ flex: 1 }}>
@@ -153,135 +195,148 @@ export default function ElderlyBasics() {
             style={{ marginBottom: 0 }}
             onOpenLanguage={async () => {
               const order: LangCode[] = ["en", "zh", "ms", "ta"];
-              const next = order[(order.indexOf(i18n.language as LangCode) + 1) % order.length];
+              const next =
+                order[(order.indexOf(i18n.language as LangCode) + 1) % order.length];
               await i18n.changeLanguage(next);
               await AsyncStorage.setItem("lang", next);
             }}
             progress={combined}
           />
 
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={insets.top + 4}
-          >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-              <ScrollView
-                contentContainerStyle={[s.scrollTop, { paddingBottom: extraBottomSpace }]}
-                keyboardDismissMode="on-drag"
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
-                <View style={s.formWrap}>
-                  <Text style={s.heroTitle}>
-                    {t("elderlyOnboarding.hero")}
-                  </Text>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <ScrollView
+              contentContainerStyle={[s.scrollTop, { paddingBottom: extraBottomSpace }]}
+              keyboardDismissMode={Platform.OS === "ios" ? "on-drag" : "none"}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={{ backgroundColor: "transparent" }}
+              automaticallyAdjustKeyboardInsets
+              contentInsetAdjustmentBehavior="automatic"
+            >
+              <View style={s.formWrap}>
+                <Text style={s.heroTitle}>{t("elderlyOnboarding.hero")}</Text>
+                <Text style={s.reqNote}>{t("common.requiredNote")}</Text>
 
-                  <TextInput
-                    placeholder={t("elderlyOnboarding.namePH")}
-                    placeholderTextColor="#9CA3AF"
-                    value={name}
-                    onChangeText={setName}
-                    style={s.input}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => yobRef.current?.focus()}
-                  />
+                <ReqLabel text={t("elderlyOnboarding.namePH")} />
+                <TextInput
+                  placeholderTextColor="#9CA3AF"
+                  value={name}
+                  onChangeText={setName}
+                  onBlur={saveDraftSilent}
+                  style={s.input}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => yobRef.current?.focus()}
+                />
 
-                  <TextInput
-                    ref={yobRef}
-                    placeholder={t("elderlyOnboarding.yobPH")}
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    value={yob}
-                    onChangeText={setYob}
-                    style={s.input}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => ecNameRef.current?.focus()}
-                  />
+                <ReqLabel text={t("elderlyOnboarding.yobPH")} />
+                <TextInput
+                  ref={yobRef}
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  value={yob}
+                  onChangeText={setYob}
+                  onBlur={saveDraftSilent}
+                  style={s.input}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => ecNameRef.current?.focus()}
+                />
 
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Text style={s.label}>{t("elderlyOnboarding.genderLabel")}</Text>
-                  <View style={s.chipsRow}>
-                    {[
-                      { label: t("elderlyOnboarding.male"), value: "male" },
-                      { label: t("elderlyOnboarding.female"), value: "female" },
-                      { label: t("elderlyOnboarding.na"), value: "na" },
-                    ].map((opt) => {
-                      const active = gender === (opt.value as any);
-                      return (
-                        <Pressable
-                          key={opt.value}
-                          onPress={() => setGender(opt.value as any)}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: active }}
-                        >
-                          <Text style={[s.chip, active && s.chipActive]}>{opt.label}</Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  <Text style={s.sectionHeading}>
-                    {t("elderlyOnboarding.emergencySectionTitle")}
-                  </Text>
-
-                  <TextInput
-                    ref={ecNameRef}
-                    placeholder={t("elderlyOnboarding.ecNamePH")}
-                    placeholderTextColor="#9CA3AF"
-                    value={ecName}
-                    onChangeText={setEcName}
-                    style={s.input}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => ecRelationRef.current?.focus()}
-                  />
-                  <TextInput
-                    ref={ecRelationRef}
-                    placeholder={t("elderlyOnboarding.ecRelationPH")}
-                    placeholderTextColor="#9CA3AF"
-                    value={ecRelation}
-                    onChangeText={setEcRelation}
-                    style={s.input}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => ecPhoneRef.current?.focus()}
-                  />
-                  <TextInput
-                    ref={ecPhoneRef}
-                    placeholder={t("elderlyOnboarding.ecPhonePH")}
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="phone-pad"
-                    value={ecPhone}
-                    onChangeText={setEcPhone}
-                    style={s.input}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => ecEmailRef.current?.focus()}
-                  />
-                  <TextInput
-                    ref={ecEmailRef}
-                    placeholder={t("elderlyOnboarding.ecEmailPH")}
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={ecEmail}
-                    onChangeText={setEcEmail}
-                    style={s.input}
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                  />
+                  <Text style={s.star}> *</Text>
                 </View>
-              </ScrollView>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
+                <View style={s.chipsRow}>
+                  {[
+                    { label: t("elderlyOnboarding.male"), value: "male" },
+                    { label: t("elderlyOnboarding.female"), value: "female" },
+                    { label: t("elderlyOnboarding.na"), value: "na" },
+                  ].map((opt) => {
+                    const active = gender === (opt.value as any);
+                    return (
+                      <Pressable
+                        key={opt.value}
+                        onPress={() => setGender(opt.value as any)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                      >
+                        <Text style={[s.chip, active && s.chipActive]}>{opt.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
 
-          {/* Sticky footer */}
+                <Text style={s.sectionHeading}>
+                  {t("elderlyOnboarding.emergencySectionTitle")}
+                </Text>
+
+                <ReqLabel text={t("elderlyOnboarding.ecNamePH")} />
+                <TextInput
+                  ref={ecNameRef}
+                  placeholderTextColor="#9CA3AF"
+                  value={ecName}
+                  onChangeText={setEcName}
+                  onBlur={saveDraftSilent}
+                  style={s.input}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => ecRelationRef.current?.focus()}
+                />
+
+                <ReqLabel text={t("elderlyOnboarding.ecRelationPH")} />
+                <TextInput
+                  ref={ecRelationRef}
+                  placeholderTextColor="#9CA3AF"
+                  value={ecRelation}
+                  onChangeText={setEcRelation}
+                  onBlur={saveDraftSilent}
+                  style={s.input}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => ecPhoneRef.current?.focus()}
+                />
+
+                <ReqLabel text={t("elderlyOnboarding.ecPhonePH")} />
+                <TextInput
+                  ref={ecPhoneRef}
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="phone-pad"
+                  value={ecPhone}
+                  onChangeText={setEcPhone}
+                  onBlur={saveDraftSilent}
+                  style={s.input}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => ecEmailRef.current?.focus()}
+                />
+
+                <Text style={s.label}>{t("elderlyOnboarding.ecEmailPH")}</Text>
+                <TextInput
+                  ref={ecEmailRef}
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={ecEmail}
+                  onChangeText={setEcEmail}
+                  onBlur={saveDraftSilent}
+                  style={s.input}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
+
           <View style={s.footerOverlay} pointerEvents="box-none">
             <View style={s.footerEdge} />
-            <View style={[s.footerRowWrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+            <View
+              style={[
+                s.footerRowWrap,
+                { paddingBottom: Math.max(insets.bottom, 8) },
+              ]}
+            >
               <View style={s.footerRow}>
                 <OffsetButton
                   label={t("common.save")}
@@ -297,10 +352,14 @@ export default function ElderlyBasics() {
                   disabled={!canSubmit}
                   height={BUTTON_H}
                   radius={12}
-                  style={{ flex: 1, marginLeft: 10, opacity: canSubmit ? 1 : 0.6 }}
+                  bgColor="#FED787" 
+                  style={{
+                    flex: 1,
+                    marginLeft: 10,
+                    opacity: canSubmit ? 1 : 0.6,
+                  }}
                 />
               </View>
-
               {/* <View style={s.homePill} /> */}
             </View>
           </View>
@@ -331,8 +390,14 @@ const s = StyleSheet.create({
     marginBottom: 50,
   },
 
-  sectionHeading: { fontSize: 16, fontWeight: "700", marginTop: 8, marginBottom: 16, color: "#0F1724" },
-  label: { marginTop: 6, marginBottom: 6, fontWeight: "700", color: "#111827" },
+  sectionHeading: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 8,
+    marginBottom: 16,
+    color: "#0F1724",
+  },
+  label: { marginTop: 6, marginBottom: 6, fontWeight: "700", color: "#111827", fontSize: 16 },
 
   input: {
     borderWidth: 2,
@@ -347,7 +412,12 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
 
-  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+  chipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 12,
+  },
   chip: {
     borderWidth: 1,
     borderColor: "#E6EDF5",
@@ -358,7 +428,11 @@ const s = StyleSheet.create({
     borderRadius: 999,
     fontWeight: "800",
   },
-  chipActive: { backgroundColor: "#0F1724", borderColor: "#0F1724", color: "#FFFFFF" },
+  chipActive: {
+    backgroundColor: "#0F1724",
+    borderColor: "#0F1724",
+    color: "#FFFFFF",
+  },
 
   footerOverlay: {
     position: "absolute",
@@ -366,11 +440,11 @@ const s = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "#CFADE8",
-    paddingTop: BAR_PAD,
+    paddingTop: BAR_PAD,       
     paddingHorizontal: SIDE,
   },
   footerEdge: {
-    position: "absolute", 
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -378,19 +452,12 @@ const s = StyleSheet.create({
     backgroundColor: "#111827",
   },
   footerRowWrap: {
-    paddingTop: BAR_PAD,
+    paddingTop: BAR_PAD,       
   },
   footerRow: {
     flexDirection: "row",
     alignItems: "center",
   },
-  homePill: {
-    alignSelf: "center",
-    marginTop: 10,
-    width: 140,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#111827",
-    marginBottom: 4,
-  },
+  star: { color: "#B91C1C", fontWeight: "900" },
+  reqNote: { color: "#6B7280", marginBottom: 8, marginTop: -30 },
 });
