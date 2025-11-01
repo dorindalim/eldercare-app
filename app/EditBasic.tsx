@@ -5,8 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,25 +13,29 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { useAuth } from "../src/auth/AuthProvider";
 import OffsetButton from "../src/components/OffsetButton";
-import TopBar, { LangCode } from "../src/components/TopBar";
+import TopBar, { type LangCode } from "../src/components/TopBar";
 import { supabase } from "../src/lib/supabase";
 
-const BUTTON_H = 52;
+const BUTTON_H = 57;
+
+function ReqLabel({ text }: { text: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", marginTop: 6, marginBottom: 6 }}>
+      <Text style={s.label}>{text}</Text>
+      <Text style={s.star}> *</Text>
+    </View>
+  );
+}
 
 export default function EditBasic() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { session, saveElderlyProfile } = useAuth();
-
-  const HEADER_HEIGHT = 56;
-  const keyboardOffset = HEADER_HEIGHT + insets.top;
 
   const [name, setName] = useState("");
   const [yob, setYob] = useState("");
@@ -112,8 +115,8 @@ export default function EditBasic() {
 
     if (!res.success) {
       return Alert.alert(
-        t("elderlyOnboarding.saveErrorTitle") || "Error",
-        t("elderlyOnboarding.saveErrorMsg") || "Could not save profile."
+        t("elderlyOnboarding.saveErrorTitle"),
+        t("elderlyOnboarding.saveErrorMsg")
       );
     }
 
@@ -121,7 +124,7 @@ export default function EditBasic() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFAF0" }}>
+    <SafeAreaView style={s.safe} edges={["left", "right"]}>
       <TopBar
         leftMode="back"
         backTo="/tabs/Profile"
@@ -129,177 +132,189 @@ export default function EditBasic() {
         setLanguage={setLanguage}
         title={t("profile.editBasic")}
         bgColor="#FFFAF0"
+        includeTopInset
+        barHeight={44}
+        topPadding={2}
       />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={keyboardOffset}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <ScrollView
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
-            keyboardDismissMode="on-drag"
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={s.container}>
-              {/* <Text style={s.heading}>{t("profile.editBasic")}</Text> */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          contentContainerStyle={[s.scroll, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={s.form}>
+            {/* Hero/title note like Basics (optional) */}
+            {/* <Text style={s.heroTitle}>{t("elderlyOnboarding.hero")}</Text> */}
+            <Text style={s.reqNote}>{t("common.requiredNote")}</Text>
 
-              <TextInput
-                placeholder={t("elderlyOnboarding.namePH")}
-                placeholderTextColor="#9CA3AF"
-                value={name}
-                onChangeText={setName}
-                style={s.input}
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => yobRef.current?.focus()}
-              />
+            <ReqLabel text={t("elderlyOnboarding.namePH")} />
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              style={s.input}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => yobRef.current?.focus()}
+            />
 
-              <TextInput
-                ref={yobRef}
-                placeholder={t("elderlyOnboarding.yobPH")}
-                placeholderTextColor="#9CA3AF"
-                keyboardType="number-pad"
-                maxLength={4}
-                value={yob}
-                onChangeText={setYob}
-                style={s.input}
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => ecNameRef.current?.focus()}
-              />
+            <ReqLabel text={t("elderlyOnboarding.yobPH")} />
+            <TextInput
+              ref={yobRef}
+              keyboardType="number-pad"
+              maxLength={4}
+              value={yob}
+              onChangeText={setYob}
+              style={s.input}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => ecNameRef.current?.focus()}
+            />
 
+            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 6, marginBottom: 6 }}>
               <Text style={s.label}>{t("elderlyOnboarding.genderLabel")}</Text>
-              <View style={s.chipsRow}>
-                {[
-                  { label: t("elderlyOnboarding.male"), value: "male" },
-                  { label: t("elderlyOnboarding.female"), value: "female" },
-                  { label: t("elderlyOnboarding.na"), value: "na" },
-                ].map((opt) => {
-                  const active = gender === (opt.value as any);
-                  return (
-                    <Text
-                      key={opt.value}
-                      onPress={() => setGender(opt.value as any)}
-                      style={[s.chip, active && s.chipActive]}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: active }}
-                    >
-                      {opt.label}
-                    </Text>
-                  );
-                })}
-              </View>
-
-              <Text style={s.sectionHeading}>
-                {t("elderlyOnboarding.emergencySectionTitle")}
-              </Text>
-
-              <TextInput
-                ref={ecNameRef}
-                placeholder={t("elderlyOnboarding.ecNamePH")}
-                placeholderTextColor="#9CA3AF"
-                value={ecName}
-                onChangeText={setEcName}
-                style={s.input}
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => ecRelationRef.current?.focus()}
-              />
-              <TextInput
-                ref={ecRelationRef}
-                placeholder={t("elderlyOnboarding.ecRelationPH")}
-                placeholderTextColor="#9CA3AF"
-                value={ecRelation}
-                onChangeText={setEcRelation}
-                style={s.input}
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => ecPhoneRef.current?.focus()}
-              />
-              <TextInput
-                ref={ecPhoneRef}
-                placeholder={t("elderlyOnboarding.ecPhonePH")}
-                placeholderTextColor="#9CA3AF"
-                keyboardType="phone-pad"
-                value={ecPhone}
-                onChangeText={setEcPhone}
-                style={s.input}
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => ecEmailRef.current?.focus()}
-              />
-              <TextInput
-                ref={ecEmailRef}
-                placeholder={
-                  t("elderlyOnboarding.ecEmailPH") ||
-                  "Emergency contact email (optional)"
-                }
-                placeholderTextColor="#9CA3AF"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={ecEmail}
-                onChangeText={setEcEmail}
-                style={s.input}
-                returnKeyType="done"
-              />
-
-              <View style={{ height: 8 }} />
-
-              {/* Save (FED787 face, white offset) */}
-              <OffsetButton
-                label={t("common.save") || "Save"}
-                onPress={onSave}
-                disabled={!canSubmit}
-                height={BUTTON_H}
-                radius={8}
-                bgColor="#FED787"
-                borderColor="#1F2937"
-                borderColorActive="#000"
-                textColor="#1F2937"
-                textColorActive="#0B1220"
-                offsetBgColor="#FFFAF0"
-                offsetStrokeColor="#000"
-                offsetLeft={4}
-                offsetTop={3}
-                offsetRight={-6}
-                offsetBottom={-6}
-                style={{ marginTop: 12 }}
-                contentStyle={{}}
-              />
-
-              {/* Cancel (white face, CFADE8 offset) */}
-              <OffsetButton
-                label={t("common.cancel") || "Cancel"}
-                onPress={() => router.back()}
-                height={BUTTON_H}
-                radius={8}
-                bgColor="#FFFFFF"
-                borderColor="#1F2937"
-                borderColorActive="#000"
-                textColor="#111827"
-                textColorActive="#0B1220"
-                offsetBgColor="#CFADE8"
-                offsetStrokeColor="#000"
-                offsetLeft={4}
-                offsetTop={3}
-                offsetRight={-6}
-                offsetBottom={-6}
-                style={{ marginTop: 10 }}
-              />
+              <Text style={s.star}> *</Text>
             </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+
+            <View style={s.chipsRow}>
+              {[
+                { label: t("elderlyOnboarding.male"), value: "male" },
+                { label: t("elderlyOnboarding.female"), value: "female" },
+                { label: t("elderlyOnboarding.na"), value: "na" },
+              ].map((opt) => {
+                const active = gender === (opt.value as any);
+                return (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => setGender(opt.value as any)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                  >
+                    <Text style={[s.chip, active && s.chipActive]}>{opt.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={s.sectionHeading}>
+              {t("elderlyOnboarding.emergencySectionTitle")}
+            </Text>
+
+            <ReqLabel text={t("elderlyOnboarding.ecNamePH")} />
+            <TextInput
+              ref={ecNameRef}
+              value={ecName}
+              onChangeText={setEcName}
+              style={s.input}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => ecRelationRef.current?.focus()}
+            />
+
+            <ReqLabel text={t("elderlyOnboarding.ecRelationPH")} />
+            <TextInput
+              ref={ecRelationRef}
+              value={ecRelation}
+              onChangeText={setEcRelation}
+              style={s.input}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => ecPhoneRef.current?.focus()}
+            />
+
+            <ReqLabel text={t("elderlyOnboarding.ecPhonePH")} />
+            <TextInput
+              ref={ecPhoneRef}
+              keyboardType="phone-pad"
+              value={ecPhone}
+              onChangeText={setEcPhone}
+              style={s.input}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => ecEmailRef.current?.focus()}
+            />
+
+            <Text style={s.label}>
+              {t("elderlyOnboarding.ecEmailPH")}
+            </Text>
+            <TextInput
+              ref={ecEmailRef}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={ecEmail}
+              onChangeText={setEcEmail}
+              style={s.input}
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
+            />
+
+            <View style={{ height: 8 }} />
+
+            {/* Save */}
+            <OffsetButton
+              label={t("common.save") || "Save"}
+              onPress={onSave}
+              disabled={!canSubmit}
+              height={BUTTON_H}
+              radius={12}
+              bgColor="#FED787"
+              borderColor="#1F2937"
+              borderColorActive="#000"
+              textColor="#1F2937"
+              textColorActive="#0B1220"
+              offsetBgColor="#FFFAF0"
+              offsetStrokeColor="#000"
+              offsetLeft={4}
+              offsetTop={3}
+              offsetRight={-6}
+              offsetBottom={-6}
+              style={{ marginTop: 12 }}
+            />
+
+            {/* Cancel */}
+            <OffsetButton
+              label={t("common.cancel") || "Cancel"}
+              onPress={() => router.back()}
+              height={BUTTON_H}
+              radius={12}
+              bgColor="#FFFFFF"
+              borderColor="#1F2937"
+              borderColorActive="#000"
+              textColor="#111827"
+              textColorActive="#0B1220"
+              offsetBgColor="#CFADE8"
+              offsetStrokeColor="#000"
+              offsetLeft={4}
+              offsetTop={3}
+              offsetRight={-6}
+              offsetBottom={-6}
+              style={{ marginTop: 10 }}
+            />
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 12, backgroundColor: "#FFFAF0" },
-  heading: { fontSize: 20, fontWeight: "700", marginBottom: 8, color: "#111827" },
-  sectionHeading: { fontSize: 16, fontWeight: "700", marginTop: 8, color: "#111827" },
+  safe: { flex: 1, backgroundColor: "#FFFAF0" },
+
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 8, backgroundColor: "transparent" },
+
+  form: { flex: 1, width: "100%", alignSelf: "center", maxWidth: 640 },
+
+  heroTitle: { fontSize: 24, fontWeight: "900", color: "#111827", marginTop: 6, marginBottom: 10 },
+
+  sectionHeading: { fontSize: 18, fontWeight: "700", marginTop: 12, marginBottom: 6, color: "#111827" },
+
+  label: { fontSize: 16, fontWeight: "700", color: "#111827", marginBottom: 4 },
+  star: { color: "#B91C1C", fontWeight: "900" },
+  reqNote: { color: "#6B7280", marginBottom: 8 },
+
   input: {
     width: "100%",
     borderWidth: 2,
@@ -312,26 +327,22 @@ const s = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
   },
-  label: { marginTop: 6, marginBottom: 6, fontWeight: "700", color: "#111827" },
-  chipsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 12,
-  },
+
+  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+
   chip: {
-    borderWidth: 2,
-    borderColor: "#1F2937",
+    borderWidth: 1,
+    borderColor: "#E6EDF5",
     backgroundColor: "#FFF",
-    color: "#111827",
+    color: "#0F1724",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   chipActive: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
+    backgroundColor: "#0F1724",
+    borderColor: "#0F1724",
     color: "#FFFFFF",
   },
 });
