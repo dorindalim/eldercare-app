@@ -313,6 +313,7 @@ export default function Bulletin() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const bottomPad = Math.max(24, tabBarHeight + insets.bottom - 100);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { t, i18n } = useTranslation();
   const locale = (i18n.language as string) || undefined;
@@ -608,6 +609,43 @@ export default function Bulletin() {
         : null
     );
     setCreating(true);
+  }
+  async function confirmAndDeleteActivity(row: ActivityRow) {
+    if (!row?.id || deletingId) return;
+
+    const proceed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+      t("bulletin.delete.confirmTitle"),
+      t("bulletin.delete.confirmBody"),
+        [
+          { text: t("bulletin.delete.confirmCancel"), style: "cancel", onPress: () => resolve(false) },
+          {
+            text: t("bulletin.delete.confirmDelete"),
+            style: "destructive",
+            onPress: () => resolve(true),
+          },
+        ]
+      );
+    });
+    if (!proceed) return;
+
+    setDeletingId(row.id);
+    try {
+      const { error } = await supabase.rpc("delete_activity_cascade", {
+        p_activity_id: row.id,
+        p_device_id: deviceId,
+        p_user_id: currentUserId ?? null, 
+      });
+
+      if (error) throw error;
+
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
+      Alert.alert(t("bulletin.delete.successTitle"), t("bulletin.delete.successBody"));
+    } catch (e: any) {
+      Alert.alert(t("bulletin.delete.failTitle"), e?.message || t("bulletin.delete.failBody"));
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   async function submitCreate() {
@@ -1099,6 +1137,7 @@ export default function Bulletin() {
                   isMine
                   onViewInterested={() => openInterested(row)}
                   onEdit={() => startEdit(row)}
+                  onDelete={() => confirmAndDeleteActivity(row)}
                   unreadCount={unreadByActivity[row.id] || 0}
                 />
               ))}
@@ -1333,7 +1372,10 @@ export default function Bulletin() {
                   value={desc}
                   onChangeText={setDesc}
                   placeholder={t("bulletin.form.detailsPH")}
-                  style={[styles.input, { height: 90, textAlignVertical: "top" }]}
+                  style={[
+                    styles.input,
+                    { height: 90, textAlignVertical: "top" },
+                  ]}
                   multiline
                 />
               </Labeled>
@@ -1354,7 +1396,10 @@ export default function Bulletin() {
                 </Text>
               </Pressable>
 
-              <Pressable onPress={() => setCreating(false)} style={styles.cancelBtn}>
+              <Pressable
+                onPress={() => setCreating(false)}
+                style={styles.cancelBtn}
+              >
                 <Text style={styles.cancelText}>{t("common.close")}</Text>
               </Pressable>
             </ScrollView>
@@ -1472,7 +1517,9 @@ function InterestedModal({
         </View>
 
         {loading ? (
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <View
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          >
             <ActivityIndicator />
           </View>
         ) : rows.length === 0 ? (
@@ -1499,7 +1546,9 @@ function InterestedModal({
                   {item.interested_name || t("chat.neighbour")}
                 </Text>
                 <Text style={{ color: "#6B7280", marginTop: 2 }}>
-                  {new Date(item.created_at).toLocaleString("en-SG", { hour12: false })}
+                  {new Date(item.created_at).toLocaleString("en-SG", {
+                    hour12: false,
+                  })}
                 </Text>
               </View>
             )}
@@ -1549,6 +1598,7 @@ function ActivityCard({
   onInterested,
   onViewInterested,
   onEdit,
+  onDelete,
   alreadyInterested,
   unreadCount = 0,
 }: {
@@ -1560,6 +1610,7 @@ function ActivityCard({
   onInterested?: () => void;
   onViewInterested?: () => void;
   onEdit?: () => void;
+  onDelete?: () => void;
   alreadyInterested?: boolean;
   unreadCount?: number;
 }) {
@@ -1594,7 +1645,9 @@ function ActivityCard({
 
         <View style={styles.faceCard}>
           <View style={styles.cardHeader}>
-            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+            >
               {catInfo && (
                 <View style={styles.catIconBubble}>
                   <Ionicons name={catInfo.icon} size={16} color="#0F172A" />
@@ -1618,6 +1671,16 @@ function ActivityCard({
                 accessibilityLabel={t("common.edit")}
               >
                 <Ionicons name="create-outline" size={18} color="#0EA5E9" />
+              </Pressable>
+            )}
+            {isMine && !!onDelete && (
+              <Pressable
+                onPress={onDelete}
+                hitSlop={8}
+                style={[styles.iconBtnGhost, { marginLeft: 2 }]}
+                accessibilityLabel="Delete"
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
               </Pressable>
             )}
           </View>
@@ -1690,9 +1753,7 @@ function ActivityCard({
             )}
             {isMine && (
               <View style={styles.minePill}>
-                <Text style={styles.mineText}>
-                  {t("bulletin.badges.mine")}
-                </Text>
+                <Text style={styles.mineText}>{t("bulletin.badges.mine")}</Text>
               </View>
             )}
           </View>
@@ -1729,9 +1790,9 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   createBtn: {
-    position: "relative",            
-    zIndex: 1,                       
-    elevation: 1,                    
+    position: "relative",
+    zIndex: 1,
+    elevation: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FED787",
@@ -1838,10 +1899,10 @@ const styles = StyleSheet.create({
   },
   offsetLayer: {
     position: "absolute",
-    top: 8, 
-    left: 8, 
-    right: -8, 
-    bottom: -8, 
+    top: 8,
+    left: 8,
+    right: -8,
+    bottom: -8,
     borderRadius: 16,
     borderWidth: 2,
     zIndex: 0,

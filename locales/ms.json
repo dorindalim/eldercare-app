@@ -613,6 +613,18 @@
   },
   "bulletin": {
     "create": "Buat",
+    "delete": {
+      "confirmTitle": "Padam aktiviti?",
+      "confirmBody": "Tindakan ini akan memadam aktiviti serta semua mesej sembang dan rekod minat yang berkaitan. Tindakan ini tidak boleh dibuat asal.",
+      "confirmCancel": "Batal",
+      "confirmDelete": "Padam",
+      "successTitle": "Dipadam",
+      "successBody": "Aktiviti dan data berkaitan telah dipadam.",
+      "failTitle": "Gagal dipadam",
+      "failBody": "Sila cuba lagi.",
+      "notOwnerTitle": "Tidak dibenarkan",
+      "notOwnerBody": "Anda hanya boleh memadam aktiviti yang anda cipta."
+    },
     "post": "Siar",
     "sections": {
       "yours": "Aktiviti Anda",

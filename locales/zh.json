@@ -613,6 +613,18 @@
   },
   "bulletin": {
     "create": "创建",
+    "delete": {
+      "confirmTitle": "删除活动？",
+      "confirmBody": "这将删除该活动以及所有相关的聊天消息和感兴趣的记录。此操作无法撤销。",
+      "confirmCancel": "取消",
+      "confirmDelete": "删除",
+      "successTitle": "已删除",
+      "successBody": "活动及其相关数据已被删除。",
+      "failTitle": "删除失败",
+      "failBody": "请重试。",
+      "notOwnerTitle": "不允许",
+      "notOwnerBody": "你只能删除自己创建的活动。"
+    },
     "post": "发布",
     "sections": {
       "yours": "您的活动",

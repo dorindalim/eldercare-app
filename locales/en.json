@@ -613,6 +613,18 @@
   },
   "bulletin": {
     "create": "Create",
+    "delete": {
+      "confirmTitle": "Delete activity?",
+      "confirmBody": "This will remove the activity and all related chat messages and interested entries. This cannot be undone.",
+      "confirmCancel": "Cancel",
+      "confirmDelete": "Delete",
+      "successTitle": "Deleted",
+      "successBody": "Activity and related data removed.",
+      "failTitle": "Delete failed",
+      "failBody": "Please try again.",
+      "notOwnerTitle": "Not allowed",
+      "notOwnerBody": "You can only delete activities you created."
+    },
     "post": "Post",
     "sections": {
       "yours": "Your Activities",
