@@ -345,6 +345,17 @@ export default function ClinicScreen() {
   };
 
   const RenderClinicItem = ({ item }: { item: any }) => {
+    const clinicForModal = {
+      title: item.name,     
+      phone: item.phone,
+      lat: item.lat,
+      lon: item.lon,
+      distance: item.distance,
+      minutes: item.minutes,
+      totalTime: item.totalTime,
+      region: item.region
+    };
+
     const subtitle = item.distance != null ? `${kmStr(item.distance)}` : '';
     
     const details = [
@@ -366,7 +377,7 @@ export default function ClinicScreen() {
         metadata={metadata} 
         showArrow={true}
         onPress={() => {
-          setSelectedClinic(item);
+          setSelectedClinic(clinicForModal);
           setDetailsOpen(true);
         }}
         subtitleIcon="location-on"
